@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2, Info, Plus, X } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
@@ -59,6 +59,11 @@ function Onboarding() {
     agreeTerms: false,
     agreeCredit: false,
     idDoc: false,
+    // Document type for step 3
+    docType: "nationalId" as "nationalId" | "passport",
+    passportNumber: "",
+    dob: "",
+    proofResidence: false,
     // Tax details
     fatcaUs: "" as "" | "yes" | "no",
     usTin: "",
@@ -74,7 +79,13 @@ function Onboarding() {
     switch (step) {
       case 0: return !!data.productChoice;
       case 1: return data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail;
-      case 2: return data.idDoc && data.nationalId.length === 14 && data.fullName.trim().length > 3;
+      case 2: {
+        if (!data.idDoc || data.fullName.trim().length <= 3) return false;
+        if (data.docType === "passport") {
+          return !!data.passportNumber.trim() && !!data.nationality.trim() && !!data.dob && !!data.expiry;
+        }
+        return data.nationalId.length === 14;
+      }
       case 3: {
         const baseOk = !!data.employment && !!data.income && !!data.employer.trim() && !!data.jobTitle.trim() && !!data.sourceOfFunds;
         const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
@@ -370,26 +381,80 @@ function ContactStep({ data, update }: any) {
 }
 
 function CaptureIdStep({ data, update }: any) {
-  const handleUpload = () => {
+  const isPassport = data.docType === "passport";
+  const handleUploadNid = () => {
     update("idDoc", true);
-    if (!data.fullName) update("fullName", "Mohamed Ahmed Hassan");
-    if (!data.nationalId) update("nationalId", "29001011234567");
-    if (!data.nationality) update("nationality", "Egyptian");
-    if (!data.expiry) update("expiry", "2030-05-12");
+    update("fullName", "Mohamed Ahmed Hassan");
+    update("nationalId", "29001011234567");
+    update("nationality", "Egypt");
+    update("expiry", "2030-05-12");
+  };
+  const handleUploadPassport = () => {
+    update("idDoc", true);
+    update("fullName", "John Michael Smith");
+    update("passportNumber", "P12345678");
+    update("nationality", "United Kingdom");
+    update("dob", "1990-04-22");
+    update("expiry", "2031-09-15");
+  };
+  const onDocTypeChange = (v: string) => {
+    update("docType", v);
+    // Reset upload + OCR fields when switching
+    update("idDoc", false);
+    update("fullName", "");
+    update("nationalId", "");
+    update("passportNumber", "");
+    update("nationality", v === "nationalId" ? "Egypt" : "");
+    update("dob", "");
+    update("expiry", "");
   };
   return (
     <div>
-      <StepHeader title="Please capture/upload your National ID" />
+      <div className="mb-6">
+        <Field label="Which document would you like to upload?">
+          <select
+            className={inputCls}
+            value={data.docType}
+            onChange={(e) => onDocTypeChange(e.target.value)}
+          >
+            <option value="nationalId">Egyptian National ID</option>
+            <option value="passport">Passport (foreign nationals)</option>
+          </select>
+        </Field>
+      </div>
+      <StepHeader
+        title={
+          isPassport
+            ? "Please capture/upload your passport"
+            : "Please capture/upload your National ID"
+        }
+      />
       <div className="overflow-hidden rounded-xl border border-border bg-background">
         <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <div>Documents</div>
           <div className="text-center">Status</div>
           <div className="text-center">Actions</div>
         </div>
-        <UploadRow label="National ID" fileName="NID.jpg" done={data.idDoc} onClick={handleUpload} onDelete={() => update("idDoc", false)} />
+        {isPassport ? (
+          <UploadRow
+            label="Passport (bio page)"
+            fileName="passport.jpg"
+            done={data.idDoc}
+            onClick={handleUploadPassport}
+            onDelete={() => update("idDoc", false)}
+          />
+        ) : (
+          <UploadRow
+            label="National ID"
+            fileName="NID.jpg"
+            done={data.idDoc}
+            onClick={handleUploadNid}
+            onDelete={() => update("idDoc", false)}
+          />
+        )}
       </div>
 
-      {data.idDoc && (
+      {data.idDoc && !isPassport && (
         <div className="mt-8 rounded-xl border border-border bg-secondary/30 p-6">
           <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
           <p className="mt-1 text-sm text-muted-foreground">Your personal info has been captured from your National ID</p>
@@ -408,7 +473,42 @@ function CaptureIdStep({ data, update }: any) {
                 <input inputMode="numeric" maxLength={14} className={inputCls} placeholder="14 digits" value={data.nationalId} onChange={(e) => update("nationalId", e.target.value.replace(/\D/g, ""))} />
               </Field>
               <Field label="Nationality">
-                <input className={inputCls} value={data.nationality} onChange={(e) => update("nationality", e.target.value)} />
+                <input readOnly className={`${inputCls} bg-secondary/20 cursor-not-allowed`} value={data.nationality} />
+              </Field>
+              <Field label="Expiry date">
+                <input type="date" className={inputCls} value={data.expiry} onChange={(e) => update("expiry", e.target.value)} />
+              </Field>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {data.idDoc && isPassport && (
+        <div className="mt-8 rounded-xl border border-border bg-secondary/30 p-6">
+          <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Your personal info has been captured from your passport</p>
+          <div className="mt-5 rounded-lg border border-border bg-background p-5">
+            <div className="flex items-center gap-3 border-b border-border pb-4">
+              <IdCard className="h-5 w-5 text-primary" />
+              <input
+                className="flex-1 bg-transparent text-base font-semibold outline-none"
+                placeholder="Full name as per passport"
+                value={data.fullName}
+                onChange={(e) => update("fullName", e.target.value)}
+              />
+            </div>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <Field label="Passport number">
+                <input className={inputCls} value={data.passportNumber} onChange={(e) => update("passportNumber", e.target.value)} />
+              </Field>
+              <Field label="Nationality">
+                <select className={inputCls} value={data.nationality} onChange={(e) => update("nationality", e.target.value)}>
+                  <option value="">Select country</option>
+                  {COUNTRIES.map((c) => <option key={c}>{c}</option>)}
+                </select>
+              </Field>
+              <Field label="Date of birth">
+                <input type="date" className={inputCls} value={data.dob} onChange={(e) => update("dob", e.target.value)} />
               </Field>
               <Field label="Expiry date">
                 <input type="date" className={inputCls} value={data.expiry} onChange={(e) => update("expiry", e.target.value)} />
@@ -421,7 +521,7 @@ function CaptureIdStep({ data, update }: any) {
   );
 }
 
-function UploadRow({ label, fileName, done, onClick, onDelete }: { label: string; fileName: string; done: boolean; onClick: () => void; onDelete: () => void }) {
+function UploadRow({ label, fileName, done, onClick, onDelete, optional }: { label: string; fileName: string; done: boolean; onClick: () => void; onDelete: () => void; optional?: boolean }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 px-5 py-4">
       <div className="flex items-center gap-3">
@@ -431,7 +531,7 @@ function UploadRow({ label, fileName, done, onClick, onDelete }: { label: string
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-bold text-foreground">{label}</span>
-            <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">Required</span>
+            <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${optional ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"}`}>{optional ? "Optional" : "Required"}</span>
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">Max 5MB</div>
           {done && (
@@ -588,6 +688,27 @@ function AddressStep({ data, update }: any) {
           <Field label="Postal code (optional)"><input disabled={disabled} className={fieldCls} value={data.postalCode} onChange={(e) => update("postalCode", e.target.value)} /></Field>
         </div>
       </div>
+      {data.docType === "passport" && (
+        <div className="mt-8">
+          <h3 className="mb-3 text-sm font-bold text-foreground">Proof of residence in Egypt <span className="font-normal text-muted-foreground">(optional)</span></h3>
+          <p className="mb-3 text-xs text-muted-foreground">Upload a recent utility bill or rental contract that confirms your address in Egypt.</p>
+          <div className="overflow-hidden rounded-xl border border-border bg-background">
+            <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div>Document</div>
+              <div className="text-center">Status</div>
+              <div className="text-center">Actions</div>
+            </div>
+            <UploadRow
+              label="Utility bill or rental contract"
+              fileName="proof-of-residence.pdf"
+              done={data.proofResidence}
+              onClick={() => update("proofResidence", true)}
+              onDelete={() => update("proofResidence", false)}
+              optional
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -723,6 +844,16 @@ function TaxStep({ data, update }: any) {
     update("fatcaUs", v);
     if (v === "no") update("usTin", "");
   };
+
+  // For foreign nationals (passport): default CRS to "yes" and pre-fill nationality
+  useEffect(() => {
+    if (data.docType === "passport" && data.crsOther === "") {
+      update("crsOther", "yes");
+      const prefill = data.nationality && data.nationality !== "Egypt" ? data.nationality : "";
+      if (rows.length === 0) setRows([{ country: prefill, tin: "" }]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div>
