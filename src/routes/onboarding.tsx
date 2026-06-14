@@ -103,7 +103,7 @@ function Onboarding() {
               {step === 0 && <ChooseOptionStep data={data} update={update} />}
               {step === 1 && <ContactStep data={data} update={update} />}
               {step === 2 && <CaptureIdStep data={data} update={update} />}
-              {step === 3 && <WorkProductStep data={data} update={update} />}
+              {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(0)} />}
               {step === 4 && <AddressStep data={data} update={update} />}
               {step === 5 && <CredentialsStep data={data} update={update} />}
 
