@@ -2,6 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Check, ShieldCheck, Fingerprint, Upload, CheckCircle2 } from "lucide-react";
+import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -76,8 +77,8 @@ function TopBar() {
   return (
     <header className="border-b border-border bg-background">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <Link to="/" className="text-xl font-bold tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
-          SUMERGE
+        <Link to="/" aria-label="SUMERGE home">
+          <img src={sumergeLogo.url} alt="SUMERGE" width={140} height={28} className="h-7 w-auto" />
         </Link>
         <Link to="/status" className="text-sm text-muted-foreground hover:text-foreground">Save & exit</Link>
       </div>

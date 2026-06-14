@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, Zap, Smartphone, ArrowRight, Wallet, CreditCard, PiggyBank, Globe2, LogIn, CheckCircle2 } from "lucide-react";
 import heroImg from "@/assets/hero-retail-banking.jpg";
+import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -38,8 +39,8 @@ function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link to="/" className="text-3xl font-extrabold tracking-tight text-primary">
-          SUMERGE
+        <Link to="/" aria-label="SUMERGE home">
+          <img src={sumergeLogo.url} alt="SUMERGE" width={160} height={32} className="h-8 w-auto" />
         </Link>
         <nav className="hidden items-center gap-8 text-sm font-medium text-foreground/80 md:flex">
           <a href="#products" className="hover:text-primary">Products</a>
