@@ -13,7 +13,7 @@ export default function Footer() {
           <div>
             <h4 className="text-xs uppercase tracking-[0.14em] font-semibold text-foreground mb-4">Quick Links</h4>
             <ul className="space-y-2.5 text-sm">
-              <li><Link to="/onboarding" className="text-muted-foreground hover:text-secondary transition-colors">Open an Account</Link></li>
+              <li><Link to="/onboarding" className="text-muted-foreground hover:text-secondary transition-colors">Get Started</Link></li>
               <li><Link to="/status" className="text-muted-foreground hover:text-secondary transition-colors">Track Application</Link></li>
               <li><a href="/#faq" className="text-muted-foreground hover:text-secondary transition-colors">FAQ</a></li>
             </ul>
