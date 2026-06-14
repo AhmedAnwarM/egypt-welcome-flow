@@ -91,7 +91,7 @@ function Landing() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link to="/onboarding">
                   <Button size="lg" className="rounded-full px-7 h-12 bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-glow-secondary group">
-                    Open an Account <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                    Get Started <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                   </Button>
                 </Link>
                 <Link to="/status">
@@ -333,7 +333,7 @@ function Landing() {
             <p className="text-primary-foreground/75 mb-7">Open your SUMERGE personal account today.</p>
             <Link to="/onboarding">
               <Button size="lg" className="rounded-full px-7 h-12 bg-secondary hover:bg-secondary/90 text-secondary-foreground group">
-                Open an Account <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                Get Started <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </Button>
             </Link>
           </div>
