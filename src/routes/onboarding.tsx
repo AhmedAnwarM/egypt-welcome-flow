@@ -653,12 +653,6 @@ function SuccessStep() {
           })}
         </ul>
       </div>
-
-      <div className="mt-8">
-        <Button asChild size="lg" className="h-12 rounded-full bg-primary px-8 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
-          <Link to="/status">Go to dashboard</Link>
-        </Button>
-      </div>
     </div>
   );
 }
