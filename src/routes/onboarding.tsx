@@ -698,12 +698,13 @@ function AddressStep({ data, update }: any) {
               <div className="text-center">Status</div>
               <div className="text-center">Actions</div>
             </div>
-            <UploadRowOptional
+            <UploadRow
               label="Utility bill or rental contract"
               fileName="proof-of-residence.pdf"
               done={data.proofResidence}
               onClick={() => update("proofResidence", true)}
               onDelete={() => update("proofResidence", false)}
+              optional
             />
           </div>
         </div>
