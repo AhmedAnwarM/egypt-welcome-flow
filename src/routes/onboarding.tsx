@@ -381,26 +381,80 @@ function ContactStep({ data, update }: any) {
 }
 
 function CaptureIdStep({ data, update }: any) {
-  const handleUpload = () => {
+  const isPassport = data.docType === "passport";
+  const handleUploadNid = () => {
     update("idDoc", true);
-    if (!data.fullName) update("fullName", "Mohamed Ahmed Hassan");
-    if (!data.nationalId) update("nationalId", "29001011234567");
-    if (!data.nationality) update("nationality", "Egyptian");
-    if (!data.expiry) update("expiry", "2030-05-12");
+    update("fullName", "Mohamed Ahmed Hassan");
+    update("nationalId", "29001011234567");
+    update("nationality", "Egypt");
+    update("expiry", "2030-05-12");
+  };
+  const handleUploadPassport = () => {
+    update("idDoc", true);
+    update("fullName", "John Michael Smith");
+    update("passportNumber", "P12345678");
+    update("nationality", "United Kingdom");
+    update("dob", "1990-04-22");
+    update("expiry", "2031-09-15");
+  };
+  const onDocTypeChange = (v: string) => {
+    update("docType", v);
+    // Reset upload + OCR fields when switching
+    update("idDoc", false);
+    update("fullName", "");
+    update("nationalId", "");
+    update("passportNumber", "");
+    update("nationality", v === "nationalId" ? "Egypt" : "");
+    update("dob", "");
+    update("expiry", "");
   };
   return (
     <div>
-      <StepHeader title="Please capture/upload your National ID" />
+      <div className="mb-6">
+        <Field label="Which document would you like to upload?">
+          <select
+            className={inputCls}
+            value={data.docType}
+            onChange={(e) => onDocTypeChange(e.target.value)}
+          >
+            <option value="nationalId">Egyptian National ID</option>
+            <option value="passport">Passport (foreign nationals)</option>
+          </select>
+        </Field>
+      </div>
+      <StepHeader
+        title={
+          isPassport
+            ? "Please capture/upload your passport"
+            : "Please capture/upload your National ID"
+        }
+      />
       <div className="overflow-hidden rounded-xl border border-border bg-background">
         <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <div>Documents</div>
           <div className="text-center">Status</div>
           <div className="text-center">Actions</div>
         </div>
-        <UploadRow label="National ID" fileName="NID.jpg" done={data.idDoc} onClick={handleUpload} onDelete={() => update("idDoc", false)} />
+        {isPassport ? (
+          <UploadRow
+            label="Passport (bio page)"
+            fileName="passport.jpg"
+            done={data.idDoc}
+            onClick={handleUploadPassport}
+            onDelete={() => update("idDoc", false)}
+          />
+        ) : (
+          <UploadRow
+            label="National ID"
+            fileName="NID.jpg"
+            done={data.idDoc}
+            onClick={handleUploadNid}
+            onDelete={() => update("idDoc", false)}
+          />
+        )}
       </div>
 
-      {data.idDoc && (
+      {data.idDoc && !isPassport && (
         <div className="mt-8 rounded-xl border border-border bg-secondary/30 p-6">
           <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
           <p className="mt-1 text-sm text-muted-foreground">Your personal info has been captured from your National ID</p>
@@ -419,7 +473,42 @@ function CaptureIdStep({ data, update }: any) {
                 <input inputMode="numeric" maxLength={14} className={inputCls} placeholder="14 digits" value={data.nationalId} onChange={(e) => update("nationalId", e.target.value.replace(/\D/g, ""))} />
               </Field>
               <Field label="Nationality">
-                <input className={inputCls} value={data.nationality} onChange={(e) => update("nationality", e.target.value)} />
+                <input readOnly className={`${inputCls} bg-secondary/20 cursor-not-allowed`} value={data.nationality} />
+              </Field>
+              <Field label="Expiry date">
+                <input type="date" className={inputCls} value={data.expiry} onChange={(e) => update("expiry", e.target.value)} />
+              </Field>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {data.idDoc && isPassport && (
+        <div className="mt-8 rounded-xl border border-border bg-secondary/30 p-6">
+          <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Your personal info has been captured from your passport</p>
+          <div className="mt-5 rounded-lg border border-border bg-background p-5">
+            <div className="flex items-center gap-3 border-b border-border pb-4">
+              <IdCard className="h-5 w-5 text-primary" />
+              <input
+                className="flex-1 bg-transparent text-base font-semibold outline-none"
+                placeholder="Full name as per passport"
+                value={data.fullName}
+                onChange={(e) => update("fullName", e.target.value)}
+              />
+            </div>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <Field label="Passport number">
+                <input className={inputCls} value={data.passportNumber} onChange={(e) => update("passportNumber", e.target.value)} />
+              </Field>
+              <Field label="Nationality">
+                <select className={inputCls} value={data.nationality} onChange={(e) => update("nationality", e.target.value)}>
+                  <option value="">Select country</option>
+                  {COUNTRIES.map((c) => <option key={c}>{c}</option>)}
+                </select>
+              </Field>
+              <Field label="Date of birth">
+                <input type="date" className={inputCls} value={data.dob} onChange={(e) => update("dob", e.target.value)} />
               </Field>
               <Field label="Expiry date">
                 <input type="date" className={inputCls} value={data.expiry} onChange={(e) => update("expiry", e.target.value)} />
