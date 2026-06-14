@@ -39,7 +39,7 @@ function Onboarding() {
     fullName: "",
     firstName: "",
     lastName: "",
-    nationality: "Egypt",
+    nationality: "Egyptian",
     expiry: "",
     employment: "Employed",
     employer: "",
@@ -386,7 +386,7 @@ function CaptureIdStep({ data, update }: any) {
     update("idDoc", true);
     update("fullName", "Mohamed Ahmed Hassan");
     update("nationalId", "29001011234567");
-    update("nationality", "Egypt");
+    update("nationality", "Egyptian");
     update("expiry", "2030-05-12");
   };
   const handleUploadPassport = () => {
@@ -404,7 +404,7 @@ function CaptureIdStep({ data, update }: any) {
     update("fullName", "");
     update("nationalId", "");
     update("passportNumber", "");
-    update("nationality", v === "nationalId" ? "Egypt" : "");
+    update("nationality", v === "nationalId" ? "Egyptian" : "");
     update("dob", "");
     update("expiry", "");
   };
@@ -850,7 +850,7 @@ function TaxStep({ data, update }: any) {
   useEffect(() => {
     if (data.docType === "passport" && data.crsOther === "") {
       update("crsOther", "yes");
-      const prefill = data.nationality && data.nationality !== "Egypt" ? data.nationality : "";
+      const prefill = data.nationality && data.nationality !== "Egyptian" ? data.nationality : "";
       if (rows.length === 0) setRows([{ country: prefill, tin: "" }]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
