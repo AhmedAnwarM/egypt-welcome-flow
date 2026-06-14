@@ -81,10 +81,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Open a SUMERGE personal account online in minutes. Cards, savings, and instant transfers across Egypt." },
       { name: "author", content: "SUMERGE" },
       { property: "og:title", content: "SUMERGE — Retail Banking, Egypt" },
-      { property: "og:description", content: "Open a SUMERGE personal account online in minutes." },
+      { property: "og:description", content: "Open a SUMERGE personal account online in minutes. Cards, savings, and instant transfers across Egypt." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "SUMERGE — Retail Banking, Egypt" },
+      { name: "twitter:description", content: "Open a SUMERGE personal account online in minutes. Cards, savings, and instant transfers across Egypt." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9eaa454f-3682-461a-8425-0cf9938e4574/id-preview-16d1109c--23003bf9-a03d-46a6-81cf-a6eccd8bf5e4.lovable.app-1781460870784.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9eaa454f-3682-461a-8425-0cf9938e4574/id-preview-16d1109c--23003bf9-a03d-46a6-81cf-a6eccd8bf5e4.lovable.app-1781460870784.png" },
     ],
     links: [
       {
