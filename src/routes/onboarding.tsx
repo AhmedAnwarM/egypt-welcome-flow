@@ -59,6 +59,11 @@ function Onboarding() {
     agreeTerms: false,
     agreeCredit: false,
     idDoc: false,
+    // Document type for step 3
+    docType: "nationalId" as "nationalId" | "passport",
+    passportNumber: "",
+    dob: "",
+    proofResidence: false,
     // Tax details
     fatcaUs: "" as "" | "yes" | "no",
     usTin: "",
@@ -74,7 +79,13 @@ function Onboarding() {
     switch (step) {
       case 0: return !!data.productChoice;
       case 1: return data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail;
-      case 2: return data.idDoc && data.nationalId.length === 14 && data.fullName.trim().length > 3;
+      case 2: {
+        if (!data.idDoc || data.fullName.trim().length <= 3) return false;
+        if (data.docType === "passport") {
+          return !!data.passportNumber.trim() && !!data.nationality.trim() && !!data.dob && !!data.expiry;
+        }
+        return data.nationalId.length === 14;
+      }
       case 3: {
         const baseOk = !!data.employment && !!data.income && !!data.employer.trim() && !!data.jobTitle.trim() && !!data.sourceOfFunds;
         const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
