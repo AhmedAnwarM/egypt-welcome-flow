@@ -174,3 +174,26 @@
     letter-spacing: -0.025em;
   }
 }
+
+@utility bg-gradient-hero {
+  background: var(--gradient-hero);
+}
+@utility bg-gradient-primary {
+  background: var(--gradient-primary);
+}
+@utility shadow-elegant {
+  box-shadow: var(--shadow-elegant);
+}
+@utility shadow-glow {
+  box-shadow: 0 10px 40px -10px hsl(252 55% 22% / .35);
+}
+@utility shadow-glow-secondary {
+  box-shadow: var(--shadow-mint);
+}
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, hsl(220 16% 90% / 0.6) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(220 16% 90% / 0.6) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 30%, transparent 80%);
+}
