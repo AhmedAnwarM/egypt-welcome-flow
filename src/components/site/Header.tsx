@@ -47,7 +47,7 @@ export default function Header({ refId }: { refId?: string }) {
           {!isOnboarding && (
             <Link to="/onboarding">
               <Button size="sm" className="rounded-full px-5 h-10 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
-                Open an Account
+                Get Started
               </Button>
             </Link>
           )}
