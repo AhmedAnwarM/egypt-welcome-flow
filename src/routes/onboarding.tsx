@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2, Info, Plus, X } from "lucide-react";
+import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2, Info, Plus, X, BookUser, AlertTriangle } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 import Footer from "@/components/site/Footer";
 
@@ -29,6 +29,7 @@ function Onboarding() {
   const [step, setStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
   const [data, setData] = useState({
+    residency: "" as "" | "egyptian" | "foreign",
     productChoice: "",
     phone: "",
     email: "",
@@ -73,6 +74,14 @@ function Onboarding() {
     taxDeclaration: false,
   });
   const update = (k: keyof typeof data, v: any) => setData((d) => ({ ...d, [k]: v }));
+  const chooseResidency = (r: "egyptian" | "foreign") => {
+    setData((d) => ({
+      ...d,
+      residency: r,
+      docType: r === "foreign" ? "passport" : "nationalId",
+      nationality: r === "foreign" ? "" : "Egyptian",
+    }));
+  };
   const next = () =>
     setStep((s) => {
       const n = Math.min(steps.length, s + 1);
@@ -119,7 +128,11 @@ function Onboarding() {
     <div className="min-h-screen flex flex-col bg-[linear-gradient(180deg,#dff0ea_0%,#e6f3ee_50%,#edf6f2_100%)]">
       <TopBar refId="EGY140626-476" />
       <main className="flex-1">
-      {step >= steps.length ? (
+      {!data.residency ? (
+        <div className="mx-auto max-w-3xl px-6 py-14">
+          <ResidencyPreScreen onChoose={chooseResidency} />
+        </div>
+      ) : step >= steps.length ? (
         <div className="mx-auto max-w-3xl px-6 py-16">
           <SuccessStep />
         </div>
@@ -133,7 +146,7 @@ function Onboarding() {
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
               {step === 0 && <ChooseOptionStep data={data} update={update} />}
               {step === 1 && <ContactStep data={data} update={update} />}
-              {step === 2 && <CaptureIdStep data={data} update={update} />}
+              {step === 2 && <CaptureIdStep data={data} update={update} goToStep1={() => setStep(0)} />}
               {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(0)} />}
               {step === 4 && <TaxStep data={data} update={update} />}
               {step === 5 && <AddressStep data={data} update={update} />}
@@ -268,8 +281,41 @@ function StepHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   );
 }
 
+function ResidencyPreScreen({ onChoose }: { onChoose: (r: "egyptian" | "foreign") => void }) {
+  const opts: { id: "egyptian" | "foreign"; icon: any; label: string }[] = [
+    { id: "egyptian", icon: IdCard, label: "Egyptian national" },
+    { id: "foreign", icon: BookUser, label: "Foreign national" },
+  ];
+  return (
+    <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
+      <StepHeader
+        title="Let's find the right account for you"
+        subtitle="Are you opening this account as..."
+      />
+      <div className="grid gap-4 md:grid-cols-2">
+        {opts.map((o) => {
+          const Icon = o.icon;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => onChoose(o.id)}
+              className="flex flex-col items-center gap-4 rounded-xl border border-border bg-background p-8 text-center transition-all hover:border-primary/60 hover:bg-primary/5"
+            >
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Icon className="h-7 w-7" />
+              </span>
+              <span className="text-base font-bold text-foreground">{o.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function ChooseOptionStep({ data, update }: any) {
-  const options = [
+  const options: Array<{ id: string; icon: any; badge: string | null; t: string; d: string; bullets: string[]; availableTo: ("egyptian" | "foreign")[] }> = [
     {
       id: "saving",
       icon: PiggyBank,
@@ -282,6 +328,7 @@ function ChooseOptionStep({ data, update }: any) {
         "Deposit or withdraw funds at any time",
         "Available in EGP and major foreign currencies",
       ],
+      availableTo: ["egyptian", "foreign"],
     },
     {
       id: "current",
@@ -295,6 +342,7 @@ function ChooseOptionStep({ data, update }: any) {
         "Available for individuals and companies",
         "No minimum monthly balance fees",
       ],
+      availableTo: ["egyptian", "foreign"],
     },
     {
       id: "prime-saving",
@@ -308,6 +356,7 @@ function ChooseOptionStep({ data, update }: any) {
         "Minimum balance to open: EGP 5,000",
         "Minimum amount to earn interest: EGP 5,000",
       ],
+      availableTo: ["egyptian", "foreign"],
     },
     {
       id: "current-365",
@@ -321,6 +370,7 @@ function ChooseOptionStep({ data, update }: any) {
         "Minimum to open the account: EGP 5,000",
         "Interest accrues from EGP 50,000 (individuals) / EGP 1,000,000 (companies)",
       ],
+      availableTo: ["egyptian", "foreign"],
     },
   ];
   return (
@@ -330,18 +380,26 @@ function ChooseOptionStep({ data, update }: any) {
         {options.map((o) => {
           const Icon = o.icon;
           const selected = data.productChoice === o.id;
+          const disabled = !!data.residency && !o.availableTo.includes(data.residency);
           return (
             <button
               key={o.id}
               type="button"
-              onClick={() => update("productChoice", o.id)}
-              className={`flex w-full items-start gap-4 rounded-xl border p-5 text-left transition-all ${selected ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border bg-background hover:border-primary/40"}`}
+              onClick={() => !disabled && update("productChoice", o.id)}
+              disabled={disabled}
+              aria-disabled={disabled}
+              className={`flex w-full items-start gap-4 rounded-xl border p-5 text-left transition-all ${disabled ? "border-border bg-muted/40 opacity-60 cursor-not-allowed" : selected ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border bg-background hover:border-primary/40"}`}
             >
               <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-bold ${selected ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}>
                 {o.badge ? <span className="text-xs">{o.badge}</span> : <Icon className="h-5 w-5" />}
               </span>
               <div className="flex-1">
-                <div className="font-bold text-foreground">{o.t}</div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-bold text-foreground">{o.t}</span>
+                  {disabled && (
+                    <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Not available for foreign nationals</span>
+                  )}
+                </div>
                 <div className="mt-1 text-sm text-muted-foreground">{o.d}</div>
                 <ul className="mt-3 space-y-1.5">
                   {o.bullets.map((b) => (
@@ -352,7 +410,7 @@ function ChooseOptionStep({ data, update }: any) {
                   ))}
                 </ul>
               </div>
-              <span className={`mt-1 h-5 w-5 shrink-0 rounded-full border-2 ${selected ? "border-primary bg-primary" : "border-border"}`}>
+              <span className={`mt-1 h-5 w-5 shrink-0 rounded-full border-2 ${selected && !disabled ? "border-primary bg-primary" : "border-border"}`}>
                 {selected && <Check className="h-4 w-4 text-primary-foreground" strokeWidth={3} />}
               </span>
             </button>
@@ -394,8 +452,21 @@ function ContactStep({ data, update }: any) {
   );
 }
 
-function CaptureIdStep({ data, update }: any) {
+// Eligibility map mirrors ChooseOptionStep's availableTo for cross-step checks.
+// Placeholder until SUMERGE compliance confirms real per-account eligibility.
+const ACCOUNT_AVAILABILITY: Record<string, ("egyptian" | "foreign")[]> = {
+  "saving": ["egyptian", "foreign"],
+  "current": ["egyptian", "foreign"],
+  "prime-saving": ["egyptian", "foreign"],
+  "current-365": ["egyptian", "foreign"],
+};
+
+function CaptureIdStep({ data, update, goToStep1 }: any) {
   const isPassport = data.docType === "passport";
+  const docResidency: "egyptian" | "foreign" = isPassport ? "foreign" : "egyptian";
+  const accountAvail = ACCOUNT_AVAILABILITY[data.productChoice] || ["egyptian", "foreign"];
+  const conflict = !!data.productChoice && !accountAvail.includes(docResidency);
+  const accountLabel = PRODUCT_LABELS[data.productChoice] || "The selected account";
   const handleUploadNid = () => {
     update("idDoc", true);
     update("fullName", "Mohamed Ahmed Hassan");
@@ -442,6 +513,23 @@ function CaptureIdStep({ data, update }: any) {
           ? "Please capture/upload your passport"
           : "Please capture/upload your National ID"}
       </h3>
+      {conflict && (
+        <div className="mb-5 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+          <div className="flex-1">
+            <p>
+              <span className="font-semibold">{accountLabel}</span> isn't available with this document type. Please go back and choose a different account.
+            </p>
+            <button
+              type="button"
+              onClick={goToStep1}
+              className="mt-3 inline-flex h-9 items-center rounded-full border border-amber-400 bg-white px-4 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+            >
+              Back to step 1
+            </button>
+          </div>
+        </div>
+      )}
       <div className="overflow-hidden rounded-xl border border-border bg-background">
         <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <div>Documents</div>
