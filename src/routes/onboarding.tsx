@@ -405,20 +405,3 @@ function SuccessStep() {
 // Removed unused icons appease tree-shaking
 void Users;
 void ArrowRight;
-function SuccessStep() {
-  return (
-    <div className="py-6 text-center">
-      <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-mint/15 text-mint">
-        <CheckCircle2 className="h-8 w-8" />
-      </div>
-      <h2 className="mt-5 text-2xl font-bold">Application submitted</h2>
-      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-        Thank you! We've received your application. You'll get an SMS within 24 hours once your SUMERGE account is activated.
-      </p>
-      <div className="mt-6 flex flex-wrap justify-center gap-3">
-        <Button asChild variant="mint" size="lg"><Link to="/status">Track application</Link></Button>
-        <Button asChild variant="outline" size="lg"><Link to="/">Back to home</Link></Button>
-      </div>
-    </div>
-  );
-}
