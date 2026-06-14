@@ -120,12 +120,11 @@ function Onboarding() {
 function TopBar({ refId }: { refId?: string }) {
   return (
     <header className="bg-background/90 backdrop-blur border-b border-border/60">
-      <div className="mx-auto grid max-w-7xl grid-cols-3 items-center px-6 py-5">
-        <div />
-        <Link to="/" aria-label="SUMERGE home" className="flex items-center justify-self-start">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-10 py-5">
+        <Link to="/" aria-label="SUMERGE home" className="flex items-center">
           <img src={sumergeLogo.url} alt="SUMERGE" className="h-12 w-auto" />
         </Link>
-        <div className="flex items-center justify-end gap-4">
+        <div className="flex items-center gap-4">
           {refId && (
             <div className="text-right leading-tight">
               <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">Reference Number</p>
