@@ -281,6 +281,39 @@ function StepHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   );
 }
 
+function ResidencyPreScreen({ onChoose }: { onChoose: (r: "egyptian" | "foreign") => void }) {
+  const opts: { id: "egyptian" | "foreign"; icon: any; label: string }[] = [
+    { id: "egyptian", icon: IdCard, label: "Egyptian national" },
+    { id: "foreign", icon: BookUser, label: "Foreign national" },
+  ];
+  return (
+    <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
+      <StepHeader
+        title="Let's find the right account for you"
+        subtitle="Are you opening this account as..."
+      />
+      <div className="grid gap-4 md:grid-cols-2">
+        {opts.map((o) => {
+          const Icon = o.icon;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => onChoose(o.id)}
+              className="flex flex-col items-center gap-4 rounded-xl border border-border bg-background p-8 text-center transition-all hover:border-primary/60 hover:bg-primary/5"
+            >
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Icon className="h-7 w-7" />
+              </span>
+              <span className="text-base font-bold text-foreground">{o.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function ChooseOptionStep({ data, update }: any) {
   const options: Array<{ id: string; icon: any; badge: string | null; t: string; d: string; bullets: string[]; availableTo: ("egyptian" | "foreign")[] }> = [
     {
