@@ -121,7 +121,7 @@ function Onboarding() {
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-10 md:grid-cols-[260px_1fr] md:py-14">
           <aside className="space-y-5 md:sticky md:top-10 md:self-start">
             <ProgressCard current={step} total={steps.length} />
-            <SideStepper current={step} />
+            <SideStepper current={step} onJump={(i) => setStep(i)} />
           </aside>
           <section className="min-h-[560px]">
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
@@ -201,15 +201,22 @@ function ProgressCard({ current, total }: { current: number; total: number }) {
   );
 }
 
-function SideStepper({ current }: { current: number }) {
+function SideStepper({ current, onJump }: { current: number; onJump: (i: number) => void }) {
   return (
     <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
       <ol className="space-y-5">
         {steps.map((label, i) => {
           const done = i < current;
           const active = i === current;
+          const clickable = i <= current;
           return (
-            <li key={label} className="flex items-center gap-3">
+            <li key={label}>
+              <button
+                type="button"
+                disabled={!clickable}
+                onClick={() => clickable && onJump(i)}
+                className={`flex w-full items-center gap-3 rounded-md text-left ${clickable ? "cursor-pointer hover:opacity-80" : "cursor-not-allowed"}`}
+              >
               <span
                 className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
                   done
@@ -226,6 +233,7 @@ function SideStepper({ current }: { current: number }) {
                 ) : null}
               </span>
               <span className={`text-sm leading-tight ${active ? "font-semibold text-primary" : done ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
+              </button>
             </li>
           );
         })}
