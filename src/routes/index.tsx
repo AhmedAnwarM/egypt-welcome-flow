@@ -36,24 +36,24 @@ function Index() {
 
 function Header() {
   return (
-    <header className="absolute inset-x-0 top-0 z-20">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-        <Link to="/" className="font-display text-2xl font-bold tracking-tight text-hero-foreground" style={{ fontFamily: "var(--font-display)" }}>
+    <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <Link to="/" className="text-3xl font-extrabold tracking-tight text-primary">
           SUMERGE
         </Link>
-        <nav className="hidden items-center gap-8 text-sm text-hero-foreground/80 md:flex">
-          <a href="#products" className="hover:text-hero-foreground">Products</a>
-          <a href="#about" className="hover:text-hero-foreground">About</a>
-          <a href="#how" className="hover:text-hero-foreground">How It Works</a>
-          <a href="#faq" className="hover:text-hero-foreground">FAQ</a>
-          <a href="#contact" className="hover:text-hero-foreground">Contact</a>
-          <Link to="/status" className="hover:text-hero-foreground">Track Application</Link>
+        <nav className="hidden items-center gap-8 text-sm font-medium text-foreground/80 md:flex">
+          <a href="#products" className="hover:text-primary">Products</a>
+          <a href="#about" className="hover:text-primary">About Us</a>
+          <a href="#how" className="hover:text-primary">How It Works</a>
+          <a href="#faq" className="hover:text-primary">FAQ</a>
+          <a href="#contact" className="hover:text-primary">Contact Us</a>
+          <Link to="/status" className="hover:text-primary">Track Application</Link>
         </nav>
         <div className="flex items-center gap-3">
-          <Link to="/status" className="hidden text-hero-foreground/80 hover:text-hero-foreground md:inline-flex" aria-label="Sign in">
+          <Link to="/status" className="hidden text-foreground/70 hover:text-primary md:inline-flex" aria-label="Sign in">
             <LogIn className="h-5 w-5" />
           </Link>
-          <Button asChild variant="hero" size="lg">
+          <Button asChild size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full">
             <Link to="/onboarding">Open an Account</Link>
           </Button>
         </div>
@@ -66,7 +66,7 @@ function Hero() {
   return (
     <section className="relative overflow-hidden text-hero-foreground" style={{ background: "var(--gradient-hero)" }}>
       <div className="absolute inset-0 opacity-[0.08]" style={{ backgroundImage: "linear-gradient(var(--mint) 1px, transparent 1px), linear-gradient(90deg, var(--mint) 1px, transparent 1px)", backgroundSize: "56px 56px" }} />
-      <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-6 pb-24 pt-36 md:grid-cols-2 md:pb-32 md:pt-40">
+      <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-6 pb-24 pt-20 md:grid-cols-2 md:pb-32 md:pt-24">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full border border-mint/40 bg-mint/10 px-3 py-1 text-xs font-medium text-mint">
             <span className="h-1.5 w-1.5 rounded-full bg-mint" /> Retail Banking · Egypt

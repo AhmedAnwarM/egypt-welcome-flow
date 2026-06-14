@@ -70,51 +70,54 @@
 }
 
 :root {
-  --radius: 0.75rem;
-  /* Brand: deep indigo navy + mint accent (SUMERGE) */
-  --background: oklch(0.985 0.005 240);
-  --foreground: oklch(0.18 0.07 275);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.07 275);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.07 275);
-  --primary: oklch(0.22 0.09 275);
-  --primary-foreground: oklch(0.985 0.005 240);
-  --secondary: oklch(0.96 0.012 250);
-  --secondary-foreground: oklch(0.22 0.09 275);
-  --muted: oklch(0.96 0.012 250);
-  --muted-foreground: oklch(0.48 0.03 270);
-  --accent: oklch(0.78 0.12 165);
-  --accent-foreground: oklch(0.18 0.07 275);
-  --mint: oklch(0.78 0.12 165);
-  --mint-foreground: oklch(0.18 0.07 275);
-  --gold: oklch(0.82 0.13 85);
-  --hero-bg: oklch(0.18 0.07 275);
-  --hero-bg-deep: oklch(0.13 0.06 275);
-  --hero-foreground: oklch(0.985 0.005 240);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0.005 240);
-  --border: oklch(0.92 0.01 260);
-  --input: oklch(0.92 0.01 260);
-  --ring: oklch(0.78 0.12 165);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0.005 240);
-  --sidebar-foreground: oklch(0.18 0.07 275);
-  --sidebar-primary: oklch(0.22 0.09 275);
-  --sidebar-primary-foreground: oklch(0.985 0.005 240);
-  --sidebar-accent: oklch(0.96 0.012 250);
-  --sidebar-accent-foreground: oklch(0.22 0.09 275);
-  --sidebar-border: oklch(0.92 0.01 260);
-  --sidebar-ring: oklch(0.78 0.12 165);
-  --gradient-hero: linear-gradient(135deg, oklch(0.18 0.07 275), oklch(0.13 0.06 275));
-  --gradient-mint: linear-gradient(135deg, oklch(0.82 0.11 165), oklch(0.72 0.13 175));
-  --shadow-elegant: 0 18px 60px -20px color-mix(in oklab, oklch(0.18 0.07 275) 35%, transparent);
-  --shadow-mint: 0 12px 40px -12px color-mix(in oklab, oklch(0.78 0.12 165) 55%, transparent);
-  --font-display: "Instrument Serif", Georgia, serif;
+  --radius: 0.875rem;
+  /* Exact SUMERGE tokens (HSL) — deep indigo + mint */
+  --background: hsl(220 30% 98%);
+  --foreground: hsl(224 30% 14%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(224 30% 14%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(224 30% 14%);
+  --primary: hsl(252 55% 22%);
+  --primary-foreground: hsl(0 0% 100%);
+  --primary-glow: hsl(252 45% 38%);
+  --secondary: hsl(163 47% 49%);
+  --secondary-foreground: hsl(0 0% 100%);
+  --secondary-glow: hsl(170 60% 55%);
+  --muted: hsl(220 18% 94%);
+  --muted-foreground: hsl(220 12% 44%);
+  --accent: hsl(195 64% 61%);
+  --accent-foreground: hsl(0 0% 100%);
+  --mint: hsl(163 47% 49%);
+  --mint-foreground: hsl(0 0% 100%);
+  --gold: hsl(37 92% 60%);
+  --hero-bg: hsl(252 55% 18%);
+  --hero-bg-deep: hsl(252 50% 12%);
+  --hero-foreground: hsl(0 0% 100%);
+  --destructive: hsl(0 72% 55%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(220 16% 90%);
+  --input: hsl(220 16% 90%);
+  --ring: hsl(252 55% 22%);
+  --chart-1: hsl(252 55% 22%);
+  --chart-2: hsl(163 47% 49%);
+  --chart-3: hsl(195 64% 61%);
+  --chart-4: hsl(37 92% 60%);
+  --chart-5: hsl(330 62% 51%);
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(224 30% 14%);
+  --sidebar-primary: hsl(252 55% 22%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(220 18% 94%);
+  --sidebar-accent-foreground: hsl(252 55% 22%);
+  --sidebar-border: hsl(220 16% 90%);
+  --sidebar-ring: hsl(252 55% 22%);
+  --gradient-primary: linear-gradient(135deg, hsl(252 55% 22%) 0%, hsl(252 45% 38%) 100%);
+  --gradient-hero: linear-gradient(135deg, hsl(252 55% 18%) 0%, hsl(252 50% 26%) 100%);
+  --gradient-mint: linear-gradient(135deg, hsl(163 47% 49%) 0%, hsl(170 60% 55%) 100%);
+  --shadow-elegant: 0 12px 40px -8px hsl(224 30% 14% / .12), 0 4px 12px -4px hsl(224 30% 14% / .06);
+  --shadow-mint: 0 10px 40px -10px hsl(163 47% 49% / .35);
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -167,7 +170,7 @@
 
   h1, h2, h3, h4 {
     font-family: var(--font-display);
-    font-weight: 400;
-    letter-spacing: -0.015em;
+    font-weight: 700;
+    letter-spacing: -0.025em;
   }
 }
