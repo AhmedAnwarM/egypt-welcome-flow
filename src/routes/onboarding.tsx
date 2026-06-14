@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText } from "lucide-react";
+import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2 } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 import Footer from "@/components/site/Footer";
 
@@ -369,22 +369,15 @@ function CaptureIdStep({ data, update }: any) {
   return (
     <div>
       <StepHeader title="Please capture/upload both sides of your National ID" />
-      <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_260px]">
-        <div className="overflow-hidden rounded-xl border border-border bg-background">
-          <div className="grid grid-cols-[minmax(0,1fr)_100px_180px] items-center gap-4 border-b border-border bg-secondary/40 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <div>Documents</div>
-            <div className="text-center">Status</div>
-            <div className="text-right">Actions</div>
-          </div>
-          <UploadRow label="National ID front" done={data.idFront} onClick={() => handleUpload("idFront")} />
-          <div className="h-px bg-border" />
-          <UploadRow label="National ID back" done={data.idBack} onClick={() => handleUpload("idBack")} />
+      <div className="overflow-hidden rounded-xl border border-border bg-background">
+        <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <div>Documents</div>
+          <div className="text-center">Status</div>
+          <div className="text-center">Actions</div>
         </div>
-        <aside className="rounded-xl border border-border bg-secondary/40 p-5">
-          <h4 className="font-bold text-foreground">Tips to upload your pictures</h4>
-          <p className="mt-3 text-sm text-muted-foreground">Avoid bright light and avoid shaking your camera.</p>
-          <p className="mt-3 text-sm text-muted-foreground">Ensure you upload images of front and back of your document separately. Allowed formats: JPEG, PNG. Size must not exceed 5 MB.</p>
-        </aside>
+        <UploadRow label="National ID front" fileName="NID_front.jpg" done={data.idFront} onClick={() => handleUpload("idFront")} onDelete={() => update("idFront", false)} />
+        <div className="h-px bg-border" />
+        <UploadRow label="National ID back" fileName="NID_back.jpg" done={data.idBack} onClick={() => handleUpload("idBack")} onDelete={() => update("idBack", false)} />
       </div>
 
       {data.idFront && data.idBack && (
@@ -419,9 +412,9 @@ function CaptureIdStep({ data, update }: any) {
   );
 }
 
-function UploadRow({ label, done, onClick }: { label: string; done: boolean; onClick: () => void }) {
+function UploadRow({ label, fileName, done, onClick, onDelete }: { label: string; fileName: string; done: boolean; onClick: () => void; onDelete: () => void }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_100px_180px] items-center gap-4 px-5 py-4">
+    <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 px-5 py-4">
       <div className="flex items-center gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-secondary/60 text-primary">
           <FileText className="h-5 w-5" />
@@ -432,22 +425,35 @@ function UploadRow({ label, done, onClick }: { label: string; done: boolean; onC
             <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">Required</span>
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">Max 5MB</div>
+          {done && (
+            <button type="button" className="mt-1 truncate text-xs font-medium text-primary hover:underline">{fileName}</button>
+          )}
         </div>
       </div>
       <div className={`text-center text-sm font-medium ${done ? "text-primary" : "text-muted-foreground"}`}>
         {done ? "Uploaded" : "Pending"}
       </div>
-      <div className="flex flex-col items-end gap-1">
-        <button
-          type="button"
-          onClick={onClick}
-          className={`inline-flex w-full max-w-[180px] items-center justify-center gap-2 rounded-full border-2 border-dashed px-4 py-2 text-sm font-semibold transition-colors ${done ? "border-primary bg-primary/5 text-primary" : "border-border bg-background text-foreground hover:border-primary/60 hover:text-primary"}`}
-        >
-          {done ? <CheckCircle2 className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
-          {done ? "Uploaded" : "Upload"}
-        </button>
-        <span className="text-[11px] text-muted-foreground">Accepts .jpg, .png</span>
-      </div>
+      {done ? (
+        <div className="flex items-center justify-center gap-4 text-sm font-medium">
+          <button type="button" className="inline-flex items-center gap-1.5 text-primary hover:underline">
+            <Eye className="h-4 w-4" /> Open
+          </button>
+          <button type="button" onClick={onDelete} className="inline-flex items-center gap-1.5 text-destructive hover:underline">
+            <Trash2 className="h-4 w-4" /> Delete
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-1">
+          <button
+            type="button"
+            onClick={onClick}
+            className="inline-flex w-full max-w-[180px] items-center justify-center gap-2 rounded-full border-2 border-dashed border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/60 hover:text-primary"
+          >
+            <Upload className="h-4 w-4" /> Upload
+          </button>
+          <span className="text-[11px] text-muted-foreground">Accepts .jpg, .png</span>
+        </div>
+      )}
     </div>
   );
 }
