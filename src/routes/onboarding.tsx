@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock } from "lucide-react";
+import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 import Footer from "@/components/site/Footer";
 
@@ -42,14 +42,22 @@ function Onboarding() {
     expiry: "",
     employment: "Employed",
     employer: "",
+    jobTitle: "",
+    businessReg: "",
     income: "",
-    accountType: "everyday",
-    cardType: "debit",
-    governorate: "Cairo",
-    address: "",
-    building: "",
+    sourceOfFunds: "Salary",
+    useIdAddress: false,
+    governorate: "",
+    city: "",
+    street: "",
+    apartment: "",
+    floor: "",
+    postalCode: "",
     username: "",
     password: "",
+    confirmPassword: "",
+    agreeTerms: false,
+    agreeCredit: false,
     idFront: false,
     idBack: false,
   });
@@ -62,9 +70,16 @@ function Onboarding() {
       case 0: return !!data.productChoice;
       case 1: return data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail;
       case 2: return data.idFront && data.idBack && data.nationalId.length === 14 && data.fullName.trim().length > 3;
-      case 3: return !!data.accountType && !!data.cardType && !!data.income;
-      case 4: return !!data.governorate && !!data.address;
-      case 5: return data.username.length >= 4 && data.password.length >= 8;
+      case 3: {
+        const baseOk = !!data.employment && !!data.income && !!data.employer.trim() && !!data.jobTitle.trim() && !!data.sourceOfFunds;
+        const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
+        return baseOk && (!isBiz || !!data.businessReg.trim());
+      }
+      case 4: return !!data.governorate && !!data.city.trim() && !!data.street.trim();
+      case 5: {
+        const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
+        return data.username.length >= 4 && pwOk && data.agreeTerms && data.agreeCredit;
+      }
       default: return true;
     }
   })();
