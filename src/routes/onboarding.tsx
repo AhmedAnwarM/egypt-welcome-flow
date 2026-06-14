@@ -410,6 +410,7 @@ function CaptureIdStep({ data, update }: any) {
   };
   return (
     <div>
+      <StepHeader title="Verify your identity" subtitle="Choose the document you'd like to use to verify your identity." />
       <div className="mb-6">
         <Field label="Which document would you like to upload?">
           <select
@@ -422,13 +423,11 @@ function CaptureIdStep({ data, update }: any) {
           </select>
         </Field>
       </div>
-      <StepHeader
-        title={
-          isPassport
-            ? "Please capture/upload your passport"
-            : "Please capture/upload your National ID"
-        }
-      />
+      <h3 className="mb-4 text-lg font-bold text-primary">
+        {isPassport
+          ? "Please capture/upload your passport"
+          : "Please capture/upload your National ID"}
+      </h3>
       <div className="overflow-hidden rounded-xl border border-border bg-background">
         <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <div>Documents</div>
