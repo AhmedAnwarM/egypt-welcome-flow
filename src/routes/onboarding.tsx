@@ -370,32 +370,26 @@ function ContactStep({ data, update }: any) {
 }
 
 function CaptureIdStep({ data, update }: any) {
-  const handleUpload = (key: "idFront" | "idBack") => {
-    update(key, true);
-    // Simulate OCR auto-capture from the National ID once both sides are present
-    const other = key === "idFront" ? data.idBack : data.idFront;
-    if (other) {
-      if (!data.fullName) update("fullName", "Mohamed Ahmed Hassan");
-      if (!data.nationalId) update("nationalId", "29001011234567");
-      if (!data.nationality) update("nationality", "Egyptian");
-      if (!data.expiry) update("expiry", "2030-05-12");
-    }
+  const handleUpload = () => {
+    update("idDoc", true);
+    if (!data.fullName) update("fullName", "Mohamed Ahmed Hassan");
+    if (!data.nationalId) update("nationalId", "29001011234567");
+    if (!data.nationality) update("nationality", "Egyptian");
+    if (!data.expiry) update("expiry", "2030-05-12");
   };
   return (
     <div>
-      <StepHeader title="Please capture/upload both sides of your National ID" />
+      <StepHeader title="Please capture/upload your National ID" />
       <div className="overflow-hidden rounded-xl border border-border bg-background">
         <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <div>Documents</div>
           <div className="text-center">Status</div>
           <div className="text-center">Actions</div>
         </div>
-        <UploadRow label="National ID front" fileName="NID_front.jpg" done={data.idFront} onClick={() => handleUpload("idFront")} onDelete={() => update("idFront", false)} />
-        <div className="h-px bg-border" />
-        <UploadRow label="National ID back" fileName="NID_back.jpg" done={data.idBack} onClick={() => handleUpload("idBack")} onDelete={() => update("idBack", false)} />
+        <UploadRow label="National ID" fileName="NID.jpg" done={data.idDoc} onClick={handleUpload} onDelete={() => update("idDoc", false)} />
       </div>
 
-      {data.idFront && data.idBack && (
+      {data.idDoc && (
         <div className="mt-8 rounded-xl border border-border bg-secondary/30 p-6">
           <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
           <p className="mt-1 text-sm text-muted-foreground">Your personal info has been captured from your National ID</p>
@@ -550,7 +544,7 @@ function AddressStep({ data, update }: any) {
       update("street", "Abbas El Akkad St., Building 22");
       update("apartment", "5");
       update("floor", "3");
-      update("postalCode", "11371");
+      // postal code not retrieved from National ID
     } else {
       update("governorate", "");
       update("city", "");
@@ -620,8 +614,12 @@ function CredentialsStep({ data, update }: any) {
     <div>
       <StepHeader title="Secure your account" subtitle="You'll use these credentials to sign in to SUMERGE Online and Mobile Banking." />
       <div className="grid gap-5 md:grid-cols-2">
-        <Field label="Username"><input className={inputCls} value={data.username} onChange={(e) => update("username", e.target.value)} /></Field>
-        <div />
+        <div className="md:col-span-2">
+          <Field label="Email (your username)">
+            <input type="email" readOnly className={`${inputCls} bg-secondary/20 cursor-not-allowed`} value={data.email} />
+          </Field>
+          <p className="mt-1.5 text-xs text-muted-foreground">We'll use the email you provided in your contact info as your sign-in username.</p>
+        </div>
         <div className="md:col-span-2">
           <Field label="Password">
             <input type="password" className={inputCls} value={data.password} onChange={(e) => update("password", e.target.value)} />
