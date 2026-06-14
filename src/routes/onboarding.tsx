@@ -215,10 +215,58 @@ function StepHeader({ title, subtitle }: { title: string; subtitle?: string }) {
 
 function ChooseOptionStep({ data, update }: any) {
   const options = [
-    { id: "saving", icon: PiggyBank, badge: "8.75%", t: "Saving Account", d: "A diverse bundle of savings accounts with flexible payment methods. Competitive periodic interest rate of up to 8.75%, with the flexibility to earn interest monthly, quarterly, or yearly — and the freedom to deposit or withdraw funds at any time." },
-    { id: "current", icon: Banknote, badge: null, t: "Non-Interest-Bearing Current Account", d: "Available in EGP and major foreign currencies. Multiple options and a range of benefits, including free cash deposits and withdrawals at any time — carry out all your banking transactions with ease." },
-    { id: "prime-saving", icon: Wallet, badge: null, t: "Prime Saving Account", d: "Interest-bearing account with competitive, tiered interest rates. Interest is calculated on the lowest monthly balance and credited monthly. Individuals only, local currency only. Minimum balance to open: EGP 5,000." },
-    { id: "current-365", icon: CalendarClock, badge: null, t: "Current Account 365 Days", d: "Current account with daily interest rate. Daily interest calculated on daily closing balance and credited daily. Offered for individuals and companies, EGP only. Minimum to open: EGP 5,000 (interest accrues from EGP 50,000 for individuals, EGP 1,000,000 for companies)." },
+    {
+      id: "saving",
+      icon: PiggyBank,
+      badge: "8.75%",
+      t: "Saving Account",
+      d: "A diverse bundle of savings accounts with multiple options and flexible payment methods to suit all your needs.",
+      bullets: [
+        "Competitive periodic interest rate of up to 8.75%",
+        "Earn interest monthly, quarterly, or yearly",
+        "Deposit or withdraw funds at any time",
+        "Available in EGP and major foreign currencies",
+      ],
+    },
+    {
+      id: "current",
+      icon: Banknote,
+      badge: null,
+      t: "Non-Interest-Bearing Current Account",
+      d: "Carry out all your banking transactions with ease, in EGP and major foreign currencies.",
+      bullets: [
+        "Free cash deposits and withdrawals at any time",
+        "Cheque book and debit card included",
+        "Available for individuals and companies",
+        "No minimum monthly balance fees",
+      ],
+    },
+    {
+      id: "prime-saving",
+      icon: Wallet,
+      badge: null,
+      t: "Prime Saving Account",
+      d: "An interest-bearing account with competitive, tiered interest rates for individuals who want to grow their savings.",
+      bullets: [
+        "Interest calculated on lowest monthly balance and credited monthly",
+        "Individuals only · Local currency (EGP) only",
+        "Minimum balance to open: EGP 5,000",
+        "Minimum amount to earn interest: EGP 5,000",
+      ],
+    },
+    {
+      id: "current-365",
+      icon: CalendarClock,
+      badge: null,
+      t: "Current Account 365 Days",
+      d: "A current account that rewards you every single day with a daily interest rate.",
+      bullets: [
+        "Daily interest calculated on daily closing balance and credited daily",
+        "Offered for individuals and companies, in EGP only",
+        "Minimum to open the account: EGP 5,000",
+        "Interest accrues from EGP 50,000 (individuals) / EGP 1,000,000 (companies)",
+      ],
+    },
   ];
   return (
     <div>
@@ -240,6 +288,14 @@ function ChooseOptionStep({ data, update }: any) {
               <div className="flex-1">
                 <div className="font-bold text-foreground">{o.t}</div>
                 <div className="mt-1 text-sm text-muted-foreground">{o.d}</div>
+                <ul className="mt-3 space-y-1.5">
+                  {o.bullets.map((b) => (
+                    <li key={b} className="flex items-start gap-2 text-sm text-foreground/80">
+                      <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-secondary" strokeWidth={3} />
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
               <span className={`mt-1 h-5 w-5 shrink-0 rounded-full border-2 ${selected ? "border-primary bg-primary" : "border-border"}`}>
                 {selected && <Check className="h-4 w-4 text-primary-foreground" strokeWidth={3} />}
