@@ -69,7 +69,7 @@ function Onboarding() {
   })();
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#e8f5ee_0%,#f3f8f4_35%,#f7f9f7_100%)]">
+    <div className="min-h-screen bg-[linear-gradient(115deg,#d4ecdc_0%,#e6f2ea_30%,#f1f6f2_60%,#f7f9f7_100%)]">
       <TopBar refId="EGY140626-476" />
       {step >= steps.length ? (
         <div className="mx-auto max-w-3xl px-6 py-16">
@@ -122,8 +122,8 @@ function TopBar({ refId }: { refId?: string }) {
     <header className="bg-background/90 backdrop-blur border-b border-border/60">
       <div className="mx-auto grid max-w-7xl grid-cols-3 items-center px-6 py-5">
         <div />
-        <Link to="/" aria-label="SUMERGE home" className="flex items-center justify-center">
-          <img src={sumergeLogo.url} alt="SUMERGE" className="h-8 w-auto" />
+        <Link to="/" aria-label="SUMERGE home" className="flex items-center justify-self-start">
+          <img src={sumergeLogo.url} alt="SUMERGE" className="h-12 w-auto" />
         </Link>
         <div className="flex items-center justify-end gap-4">
           {refId && (
