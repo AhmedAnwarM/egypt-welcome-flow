@@ -70,7 +70,7 @@ function Onboarding() {
   })();
 
   return (
-    <div className="min-h-screen flex flex-col bg-[linear-gradient(115deg,#eaf5ef_0%,#f1f7f3_40%,#f5f8f6_70%,#f6f8f7_100%)]">
+    <div className="min-h-screen flex flex-col bg-[linear-gradient(180deg,#dff0ea_0%,#e6f3ee_50%,#edf6f2_100%)]">
       <TopBar refId="EGY140626-476" />
       <main className="flex-1">
       {step >= steps.length ? (
