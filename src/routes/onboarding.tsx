@@ -688,6 +688,26 @@ function AddressStep({ data, update }: any) {
           <Field label="Postal code (optional)"><input disabled={disabled} className={fieldCls} value={data.postalCode} onChange={(e) => update("postalCode", e.target.value)} /></Field>
         </div>
       </div>
+      {data.docType === "passport" && (
+        <div className="mt-8">
+          <h3 className="mb-3 text-sm font-bold text-foreground">Proof of residence in Egypt <span className="font-normal text-muted-foreground">(optional)</span></h3>
+          <p className="mb-3 text-xs text-muted-foreground">Upload a recent utility bill or rental contract that confirms your address in Egypt.</p>
+          <div className="overflow-hidden rounded-xl border border-border bg-background">
+            <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div>Document</div>
+              <div className="text-center">Status</div>
+              <div className="text-center">Actions</div>
+            </div>
+            <UploadRowOptional
+              label="Utility bill or rental contract"
+              fileName="proof-of-residence.pdf"
+              done={data.proofResidence}
+              onClick={() => update("proofResidence", true)}
+              onDelete={() => update("proofResidence", false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
