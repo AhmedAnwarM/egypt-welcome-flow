@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2 } from "lucide-react";
+import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2, Info, Plus, X } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 import Footer from "@/components/site/Footer";
 
@@ -20,6 +20,7 @@ const steps = [
   "Contact information",
   "Capture National ID",
   "Work and product details",
+  "Tax details",
   "Address details",
   "Create login credentials",
 ] as const;
@@ -53,13 +54,17 @@ function Onboarding() {
     apartment: "",
     floor: "",
     postalCode: "",
-    username: "",
     password: "",
     confirmPassword: "",
     agreeTerms: false,
     agreeCredit: false,
-    idFront: false,
-    idBack: false,
+    idDoc: false,
+    // Tax details
+    fatcaUs: "" as "" | "yes" | "no",
+    usTin: "",
+    crsOther: "" as "" | "yes" | "no",
+    crsRows: [] as { country: string; tin: string }[],
+    taxDeclaration: false,
   });
   const update = (k: keyof typeof data, v: any) => setData((d) => ({ ...d, [k]: v }));
   const next = () => setStep((s) => Math.min(steps.length, s + 1));
@@ -69,16 +74,25 @@ function Onboarding() {
     switch (step) {
       case 0: return !!data.productChoice;
       case 1: return data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail;
-      case 2: return data.idFront && data.idBack && data.nationalId.length === 14 && data.fullName.trim().length > 3;
+      case 2: return data.idDoc && data.nationalId.length === 14 && data.fullName.trim().length > 3;
       case 3: {
         const baseOk = !!data.employment && !!data.income && !!data.employer.trim() && !!data.jobTitle.trim() && !!data.sourceOfFunds;
         const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
         return baseOk && (!isBiz || !!data.businessReg.trim());
       }
-      case 4: return !!data.governorate && !!data.city.trim() && !!data.street.trim();
-      case 5: {
+      case 4: {
+        if (!data.fatcaUs || !data.crsOther || !data.taxDeclaration) return false;
+        if (data.fatcaUs === "yes" && !data.usTin.trim()) return false;
+        if (data.crsOther === "yes") {
+          if (data.crsRows.length === 0) return false;
+          if (!data.crsRows.some((r: any) => r.country && r.tin.trim())) return false;
+        }
+        return true;
+      }
+      case 5: return !!data.governorate && !!data.city.trim() && !!data.street.trim();
+      case 6: {
         const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
-        return data.username.length >= 4 && pwOk && data.agreeTerms && data.agreeCredit;
+        return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit;
       }
       default: return true;
     }
@@ -104,8 +118,9 @@ function Onboarding() {
               {step === 1 && <ContactStep data={data} update={update} />}
               {step === 2 && <CaptureIdStep data={data} update={update} />}
               {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(0)} />}
-              {step === 4 && <AddressStep data={data} update={update} />}
-              {step === 5 && <CredentialsStep data={data} update={update} />}
+              {step === 4 && <TaxStep data={data} update={update} />}
+              {step === 5 && <AddressStep data={data} update={update} />}
+              {step === 6 && <CredentialsStep data={data} update={update} />}
 
               <div className="mt-10 flex items-center justify-between border-t border-border/60 pt-6">
                 <button
