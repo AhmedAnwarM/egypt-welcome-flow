@@ -665,6 +665,161 @@ function Consent({ checked, onChange, children }: { checked: boolean; onChange: 
 }
 
 function SuccessStep() {
+  // placeholder anchor
+  return <SuccessStepInner />;
+}
+
+const COUNTRIES = ["United Arab Emirates","Saudi Arabia","United Kingdom","United States","Canada","Germany","France","Italy","Spain","Netherlands","Switzerland","Sweden","Australia","Japan","China","India","Turkey","Lebanon","Jordan","Kuwait","Qatar","Bahrain","Oman","Morocco","Tunisia","Sudan","South Africa","Other"];
+
+function Segmented({ value, onChange }: { value: "" | "yes" | "no"; onChange: (v: "yes" | "no") => void }) {
+  const opts: { v: "yes" | "no"; label: string }[] = [
+    { v: "yes", label: "Yes" },
+    { v: "no", label: "No" },
+  ];
+  return (
+    <div className="inline-flex rounded-full border border-border bg-background p-1">
+      {opts.map((o) => {
+        const active = value === o.v;
+        return (
+          <button
+            key={o.v}
+            type="button"
+            onClick={() => onChange(o.v)}
+            className={`min-w-[80px] rounded-full px-5 py-1.5 text-sm font-semibold transition-colors ${active ? "bg-secondary text-secondary-foreground" : "text-foreground/70 hover:text-foreground"}`}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function InfoHint({ text }: { text: string }) {
+  return (
+    <span className="group relative inline-flex">
+      <Info className="h-3.5 w-3.5 text-muted-foreground" />
+      <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-1 hidden w-64 -translate-x-1/2 rounded-md bg-foreground px-3 py-2 text-[11px] font-medium text-background shadow-lg group-hover:block">
+        {text}
+      </span>
+    </span>
+  );
+}
+
+function TaxStep({ data, update }: any) {
+  const rows: { country: string; tin: string }[] = data.crsRows;
+  const setRows = (r: { country: string; tin: string }[]) => update("crsRows", r);
+  const addRow = () => setRows([...rows, { country: "", tin: "" }]);
+  const updRow = (i: number, patch: Partial<{ country: string; tin: string }>) =>
+    setRows(rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  const removeRow = (i: number) => setRows(rows.filter((_, idx) => idx !== i));
+
+  const toggleCrs = (v: "yes" | "no") => {
+    update("crsOther", v);
+    if (v === "yes" && rows.length === 0) setRows([{ country: "", tin: "" }]);
+    if (v === "no") setRows([]);
+  };
+  const toggleFatca = (v: "yes" | "no") => {
+    update("fatcaUs", v);
+    if (v === "no") update("usTin", "");
+  };
+
+  return (
+    <div>
+      <StepHeader
+        title="Tax residency declaration"
+        subtitle="Under FATCA and the Common Reporting Standard (CRS), banks are required by law to collect tax residency information from account holders and share it with the relevant tax authorities where applicable."
+      />
+
+      {/* Section 1 — Egypt */}
+      <div className="rounded-xl border border-border bg-secondary/20 p-5">
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-background text-base shadow-sm">🇪🇬</span>
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Primary tax residency</div>
+            <div className="text-sm font-bold text-foreground">Based on your National ID, you are a tax resident of Egypt</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 2 — FATCA */}
+      <div className="mt-6 rounded-xl border border-border bg-background p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-foreground">US tax status (FATCA)</h3>
+              <InfoHint text="Required under the US Foreign Account Tax Compliance Act (FATCA)." />
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">Are you a US citizen, US resident, or do you hold a US Green Card?</p>
+          </div>
+          <Segmented value={data.fatcaUs} onChange={toggleFatca} />
+        </div>
+        {data.fatcaUs === "yes" && (
+          <div className="mt-5">
+            <Field label="US Tax Identification Number (SSN or ITIN)">
+              <input className={inputCls} value={data.usTin} onChange={(e) => update("usTin", e.target.value)} />
+            </Field>
+          </div>
+        )}
+      </div>
+
+      {/* Section 3 — CRS */}
+      <div className="mt-6 rounded-xl border border-border bg-background p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-foreground">Other tax residencies (CRS)</h3>
+              <InfoHint text="Required under the OECD Common Reporting Standard (CRS) for international tax transparency." />
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">Are you a tax resident of any country other than Egypt?</p>
+          </div>
+          <Segmented value={data.crsOther} onChange={toggleCrs} />
+        </div>
+        {data.crsOther === "yes" && (
+          <div className="mt-5 space-y-4">
+            {rows.map((row, i) => (
+              <div key={i} className="grid items-end gap-3 md:grid-cols-[1fr_1fr_auto]">
+                <Field label="Country of tax residency">
+                  <select className={inputCls} value={row.country} onChange={(e) => updRow(i, { country: e.target.value })}>
+                    <option value="">Select country</option>
+                    {COUNTRIES.map((c) => <option key={c}>{c}</option>)}
+                  </select>
+                </Field>
+                <Field label="Tax Identification Number">
+                  <input className={inputCls} value={row.tin} onChange={(e) => updRow(i, { tin: e.target.value })} />
+                </Field>
+                <button
+                  type="button"
+                  onClick={() => removeRow(i)}
+                  aria-label="Remove row"
+                  className="mb-1 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground hover:border-destructive hover:text-destructive"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addRow}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-secondary hover:underline"
+            >
+              <Plus className="h-4 w-4" /> Add another country
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Section 4 — Declaration */}
+      <div className="mt-6">
+        <Consent checked={data.taxDeclaration} onChange={(v: boolean) => update("taxDeclaration", v)}>
+          I declare that the information provided in this section is true, accurate, and complete, and I will notify SUMERGE of any change in circumstances that affects my tax residency status.
+        </Consent>
+      </div>
+    </div>
+  );
+}
+
+function SuccessStepInner() {
   const router = useRouter();
   void router;
   const ref = `SM-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
