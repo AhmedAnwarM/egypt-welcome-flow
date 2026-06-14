@@ -824,6 +824,16 @@ function TaxStep({ data, update }: any) {
     if (v === "no") update("usTin", "");
   };
 
+  // For foreign nationals (passport): default CRS to "yes" and pre-fill nationality
+  useEffect(() => {
+    if (data.docType === "passport" && data.crsOther === "") {
+      update("crsOther", "yes");
+      const prefill = data.nationality && data.nationality !== "Egypt" ? data.nationality : "";
+      if (rows.length === 0) setRows([{ country: prefill, tin: "" }]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div>
       <StepHeader
