@@ -369,12 +369,12 @@ function CaptureIdStep({ data, update }: any) {
   return (
     <div>
       <StepHeader title="Please capture/upload both sides of your National ID" />
-      <div className="grid gap-6 md:grid-cols-[1fr_280px]">
+      <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_260px]">
         <div className="overflow-hidden rounded-xl border border-border bg-background">
-          <div className="grid grid-cols-[1fr_120px_180px] items-center gap-4 border-b border-border bg-secondary/40 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <div className="grid grid-cols-[minmax(0,1fr)_100px_180px] items-center gap-4 border-b border-border bg-secondary/40 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             <div>Documents</div>
             <div className="text-center">Status</div>
-            <div className="text-center">Actions</div>
+            <div className="text-right">Actions</div>
           </div>
           <UploadRow label="National ID front" done={data.idFront} onClick={() => handleUpload("idFront")} />
           <div className="h-px bg-border" />
@@ -421,13 +421,13 @@ function CaptureIdStep({ data, update }: any) {
 
 function UploadRow({ label, done, onClick }: { label: string; done: boolean; onClick: () => void }) {
   return (
-    <div className="grid grid-cols-[1fr_120px_180px] items-center gap-4 px-5 py-4">
+    <div className="grid grid-cols-[minmax(0,1fr)_100px_180px] items-center gap-4 px-5 py-4">
       <div className="flex items-center gap-3">
-        <span className="grid h-10 w-10 place-items-center rounded-full bg-secondary/60 text-primary">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-secondary/60 text-primary">
           <FileText className="h-5 w-5" />
         </span>
-        <div>
-          <div className="flex items-center gap-2">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-bold text-foreground">{label}</span>
             <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">Required</span>
           </div>
@@ -437,11 +437,11 @@ function UploadRow({ label, done, onClick }: { label: string; done: boolean; onC
       <div className={`text-center text-sm font-medium ${done ? "text-primary" : "text-muted-foreground"}`}>
         {done ? "Uploaded" : "Pending"}
       </div>
-      <div className="flex flex-col items-center gap-1">
+      <div className="flex flex-col items-end gap-1">
         <button
           type="button"
           onClick={onClick}
-          className={`inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-dashed px-4 py-2 text-sm font-semibold transition-colors ${done ? "border-primary bg-primary/5 text-primary" : "border-border bg-background text-foreground hover:border-primary/60 hover:text-primary"}`}
+          className={`inline-flex w-full max-w-[180px] items-center justify-center gap-2 rounded-full border-2 border-dashed px-4 py-2 text-sm font-semibold transition-colors ${done ? "border-primary bg-primary/5 text-primary" : "border-border bg-background text-foreground hover:border-primary/60 hover:text-primary"}`}
         >
           {done ? <CheckCircle2 className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
           {done ? "Uploaded" : "Upload"}
