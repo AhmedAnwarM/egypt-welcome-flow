@@ -1,232 +1,346 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Check, ShieldCheck, Fingerprint, Upload, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, X, Upload, CheckCircle2, IdCard, Briefcase, Wallet, Users, Globe2 } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
     meta: [
-      { title: "Open an Account — SUMERGE" },
-      { name: "description", content: "Open your SUMERGE personal account in minutes with Digital Egyptian ID." },
+      { title: "Get Started — SUMERGE" },
+      { name: "description", content: "Start your SUMERGE personal account in minutes with your Egyptian National ID." },
     ],
   }),
   component: Onboarding,
 });
 
 const steps = [
-  "Identity",
-  "Personal info",
-  "Account type",
-  "Documents",
-  "Review",
+  "Choose your option",
+  "Contact information",
+  "Capture National ID",
+  "Work and product details",
+  "Address details",
+  "Create login credentials",
 ] as const;
 
 function Onboarding() {
   const [step, setStep] = useState(0);
   const [data, setData] = useState({
-    nationalId: "",
-    firstName: "",
-    lastName: "",
+    productChoice: "",
     phone: "",
     email: "",
+    confirmEmail: "",
+    promo: "",
+    otpSent: false,
+    otp: "",
+    nationalId: "",
+    fullName: "",
+    firstName: "",
+    lastName: "",
+    nationality: "Egypt",
+    expiry: "",
+    employment: "Employed",
+    employer: "",
+    income: "",
+    accountType: "everyday",
+    cardType: "debit",
     governorate: "Cairo",
     address: "",
-    employment: "Employed",
-    income: "",
-    accountType: "current",
-    cardType: "debit",
-    proofUploaded: false,
-    idUploaded: false,
-    verified: false,
+    building: "",
+    username: "",
+    password: "",
+    idFront: false,
+    idBack: false,
   });
   const update = (k: keyof typeof data, v: any) => setData((d) => ({ ...d, [k]: v }));
   const next = () => setStep((s) => Math.min(steps.length, s + 1));
   const back = () => setStep((s) => Math.max(0, s - 1));
 
-  return (
-    <div className="min-h-screen bg-secondary/40">
-      <TopBar />
-      <div className="mx-auto max-w-3xl px-6 py-10">
-        <Stepper current={step} />
-        <div className="mt-8 rounded-2xl border border-border bg-card p-7 shadow-sm md:p-10">
-          {step === 0 && <DigitalIdStep data={data} update={update} onNext={next} />}
-          {step === 1 && <PersonalStep data={data} update={update} />}
-          {step === 2 && <AccountTypeStep data={data} update={update} />}
-          {step === 3 && <DocumentsStep data={data} update={update} />}
-          {step === 4 && <ReviewStep data={data} />}
-          {step === 5 && <SuccessStep />}
+  const canContinue = (() => {
+    switch (step) {
+      case 0: return !!data.productChoice;
+      case 1: return data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail;
+      case 2: return data.idFront && data.idBack && data.nationalId.length === 14 && data.fullName.trim().length > 3;
+      case 3: return !!data.accountType && !!data.cardType && !!data.income;
+      case 4: return !!data.governorate && !!data.address;
+      case 5: return data.username.length >= 4 && data.password.length >= 8;
+      default: return true;
+    }
+  })();
 
-          {step > 0 && step < 5 && (
-            <div className="mt-8 flex items-center justify-between border-t border-border pt-6">
-              <Button variant="ghost" onClick={back}>
+  return (
+    <div className="min-h-screen bg-background">
+      <TopBar />
+      {step >= steps.length ? (
+        <div className="mx-auto max-w-3xl px-6 py-16">
+          <SuccessStep />
+        </div>
+      ) : (
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-10 md:grid-cols-[260px_1fr] md:py-14">
+          <SideStepper current={step} />
+          <section className="min-h-[560px]">
+            <div className="rounded-2xl bg-card p-6 md:p-10">
+              {step === 0 && <ChooseOptionStep data={data} update={update} />}
+              {step === 1 && <ContactStep data={data} update={update} />}
+              {step === 2 && <CaptureIdStep data={data} update={update} />}
+              {step === 3 && <WorkProductStep data={data} update={update} />}
+              {step === 4 && <AddressStep data={data} update={update} />}
+              {step === 5 && <CredentialsStep data={data} update={update} />}
+            </div>
+
+            <div className="mt-10 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={back}
+                disabled={step === 0}
+                className="inline-flex items-center gap-2 text-sm font-semibold text-primary disabled:opacity-40"
+              >
                 <ArrowLeft className="h-4 w-4" /> Back
-              </Button>
-              <Button variant="mint" size="lg" onClick={next}>
-                {step === 4 ? "Submit application" : "Continue"} <ArrowRight className="h-4 w-4" />
+              </button>
+              <Button
+                size="lg"
+                onClick={next}
+                disabled={!canContinue}
+                className="rounded-md bg-primary px-12 text-base font-semibold text-primary-foreground hover:bg-primary/90"
+              >
+                {step === steps.length - 1 ? "Submit application" : step === 0 ? "Continue with application" : "Next"}
               </Button>
             </div>
-          )}
+          </section>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
 function TopBar() {
   return (
-    <header className="border-b border-border bg-background">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <Link to="/" aria-label="SUMERGE home">
-          <img src={sumergeLogo.url} alt="SUMERGE" width={140} height={28} className="h-7 w-auto" />
+    <header className="bg-primary text-primary-foreground">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+        <Link to="/" aria-label="SUMERGE home" className="flex items-center gap-2">
+          <img src={sumergeLogo.url} alt="SUMERGE" className="h-8 w-auto brightness-0 invert" />
         </Link>
-        <Link to="/status" className="text-sm text-muted-foreground hover:text-foreground">Save & exit</Link>
+        <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold opacity-95 hover:opacity-100">
+          <X className="h-4 w-4" /> Cancel
+        </Link>
       </div>
     </header>
   );
 }
 
-function Stepper({ current }: { current: number }) {
+function SideStepper({ current }: { current: number }) {
   return (
-    <ol className="grid grid-cols-5 gap-2">
-      {steps.map((label, i) => {
-        const done = i < current;
-        const active = i === current;
-        return (
-          <li key={label} className="flex flex-col items-start gap-2">
-            <div className={`h-1.5 w-full rounded-full ${done || active ? "bg-mint" : "bg-border"}`} />
-            <div className="flex items-center gap-2 text-xs">
-              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${done ? "bg-mint text-mint-foreground" : active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+    <aside className="md:sticky md:top-10 md:self-start">
+      <ol className="relative space-y-6 border-l border-border pl-6">
+        {steps.map((label, i) => {
+          const done = i < current;
+          const active = i === current;
+          return (
+            <li key={label} className="relative">
+              <span
+                className={`absolute -left-[31px] top-0.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
+                  done ? "bg-primary text-primary-foreground" : active ? "bg-primary text-primary-foreground" : "border border-border bg-background text-muted-foreground"
+                }`}
+              >
                 {done ? <Check className="h-3 w-3" /> : i + 1}
               </span>
-              <span className={active ? "font-semibold text-foreground" : "text-muted-foreground"}>{label}</span>
-            </div>
-          </li>
-        );
-      })}
-    </ol>
+              <span className={`text-sm ${active ? "font-bold text-primary" : done ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
+            </li>
+          );
+        })}
+      </ol>
+    </aside>
   );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-foreground">{label}</span>
+      <span className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
       {children}
     </label>
   );
 }
 
-const inputCls = "h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-mint";
+const inputCls = "h-12 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
 
-function DigitalIdStep({ data, update, onNext }: any) {
+function StepHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="text-center">
-      <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-mint/15 text-primary">
-        <Fingerprint className="h-7 w-7" />
+    <header className="mb-8">
+      <h2 className="text-2xl font-bold text-foreground md:text-3xl">{title}</h2>
+      <div className="mt-2 h-1 w-12 rounded-full bg-primary" />
+      {subtitle && <p className="mt-4 text-sm text-muted-foreground">{subtitle}</p>}
+    </header>
+  );
+}
+
+function ChooseOptionStep({ data, update }: any) {
+  const options = [
+    { id: "everyday", icon: Wallet, badge: null, t: "SUMERGE Everyday", d: "Open a free account when you maintain EGP 3,000 or transfer a minimum salary of EGP 10,000 and earn up to EGP 1,750 cashback as a welcome bonus." },
+    { id: "plus", icon: Globe2, badge: "5%", t: "SUMERGE Plus", d: "Maintain a minimum monthly balance of EGP 50,000 to unlock SUMERGE Plus benefits — 5% p.a. with Plus Saver Account and fee-free banking." },
+    { id: "plus-salary", icon: Briefcase, badge: "6.25%", t: "SUMERGE Plus (Salary)", d: "Transfer a monthly salary of EGP 10,000 or above to unlock SUMERGE Plus — 6.25% p.a. with Plus Saver Account and fee-free banking." },
+  ];
+  return (
+    <div>
+      <StepHeader title="How can SUMERGE work for you?" subtitle="Explore and select an option that works for you:" />
+      <div className="space-y-3">
+        {options.map((o) => {
+          const Icon = o.icon;
+          const selected = data.productChoice === o.id;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => update("productChoice", o.id)}
+              className={`flex w-full items-start gap-4 rounded-xl border p-5 text-left transition-all ${selected ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border bg-background hover:border-primary/40"}`}
+            >
+              <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-bold ${selected ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}>
+                {o.badge ? <span className="text-xs">{o.badge}</span> : <Icon className="h-5 w-5" />}
+              </span>
+              <div className="flex-1">
+                <div className="font-bold text-foreground">{o.t}</div>
+                <div className="mt-1 text-sm text-muted-foreground">{o.d}</div>
+              </div>
+              <span className={`mt-1 h-5 w-5 shrink-0 rounded-full border-2 ${selected ? "border-primary bg-primary" : "border-border"}`}>
+                {selected && <Check className="h-4 w-4 text-primary-foreground" strokeWidth={3} />}
+              </span>
+            </button>
+          );
+        })}
       </div>
-      <h2 className="mt-5 text-2xl font-bold">Verify your identity with Digital Egyptian ID</h2>
-      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-        Sign in with your Digital Egyptian ID to securely verify your identity and pre-fill your application.
-      </p>
-      <div className="mx-auto mt-6 max-w-sm">
-        <Field label="National ID number">
-          <input
-            inputMode="numeric"
-            maxLength={14}
-            placeholder="14-digit national ID"
-            className={inputCls}
-            value={data.nationalId}
-            onChange={(e) => update("nationalId", e.target.value.replace(/\D/g, ""))}
-          />
+      <p className="mt-6 text-sm font-semibold text-foreground">Shari'ah compliant Islamic products available</p>
+    </div>
+  );
+}
+
+function ContactStep({ data, update }: any) {
+  return (
+    <div>
+      <StepHeader title="Let's get to know you better!" />
+      <div className="space-y-5">
+        <Field label="Mobile Number">
+          <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
+            <span className="text-sm font-semibold text-foreground">+20</span>
+            <input
+              className="ml-2 h-full flex-1 bg-transparent text-sm outline-none"
+              placeholder="1XX XXX XXXX"
+              value={data.phone}
+              onChange={(e) => update("phone", e.target.value.replace(/\D/g, ""))}
+              maxLength={11}
+            />
+          </div>
         </Field>
-        <Button
-          variant="mint"
-          size="xl"
-          className="mt-5 w-full"
-          onClick={() => {
-            update("verified", true);
-            onNext();
-          }}
-          disabled={data.nationalId.length !== 14}
-        >
-          <ShieldCheck className="h-4 w-4" /> Continue with Digital ID
-        </Button>
-        <p className="mt-3 text-xs text-muted-foreground">
-          By continuing you agree to share your verified identity data with SUMERGE.
-        </p>
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field label="Email"><input type="email" className={inputCls} value={data.email} onChange={(e) => update("email", e.target.value)} /></Field>
+          <Field label="Confirm Email"><input type="email" className={inputCls} value={data.confirmEmail} onChange={(e) => update("confirmEmail", e.target.value)} /></Field>
+        </div>
+        <div>
+          <p className="mb-1.5 text-sm font-semibold text-foreground">Have a promo code? (Optional)</p>
+          <input className={inputCls} placeholder="Promo code" value={data.promo} onChange={(e) => update("promo", e.target.value)} />
+        </div>
+        <p className="text-sm text-muted-foreground">If we sense an issue during your application, we may reach out via email, mobile, or WhatsApp to help you complete the process.</p>
       </div>
     </div>
   );
 }
 
-function PersonalStep({ data, update }: any) {
+function CaptureIdStep({ data, update }: any) {
   return (
     <div>
-      <h2 className="text-2xl font-bold">A little about you</h2>
-      <p className="mt-1 text-sm text-muted-foreground">We use this to set up your account and contact you.</p>
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <Field label="First name"><input className={inputCls} value={data.firstName} onChange={(e) => update("firstName", e.target.value)} /></Field>
-        <Field label="Last name"><input className={inputCls} value={data.lastName} onChange={(e) => update("lastName", e.target.value)} /></Field>
-        <Field label="Mobile number"><input className={inputCls} placeholder="+20 1XX XXX XXXX" value={data.phone} onChange={(e) => update("phone", e.target.value)} /></Field>
-        <Field label="Email"><input type="email" className={inputCls} value={data.email} onChange={(e) => update("email", e.target.value)} /></Field>
-        <Field label="Governorate">
-          <select className={inputCls} value={data.governorate} onChange={(e) => update("governorate", e.target.value)}>
-            {["Cairo","Giza","Alexandria","Dakahlia","Sharqia","Qalyubia","Gharbia","Aswan","Luxor","Port Said","Suez","Ismailia","Beheira","Minya","Asyut","Sohag","Qena","Beni Suef","Fayoum","Red Sea","South Sinai","North Sinai","Matrouh","New Valley","Kafr El Sheikh","Damietta","Monufia"].map((g) => <option key={g}>{g}</option>)}
-          </select>
-        </Field>
-        <Field label="Address"><input className={inputCls} value={data.address} onChange={(e) => update("address", e.target.value)} /></Field>
+      <StepHeader title="Please capture/upload both sides of your National ID" />
+      <div className="grid gap-4 md:grid-cols-[1fr_1fr_280px]">
+        <UploadCard label="National ID front" sub="Please upload the front image of your National ID" done={data.idFront} onChange={() => update("idFront", true)} />
+        <UploadCard label="National ID back" sub="Please upload the back image of your National ID" done={data.idBack} onChange={() => update("idBack", true)} />
+        <aside className="rounded-xl border border-border bg-secondary/40 p-5">
+          <h4 className="font-bold text-foreground">Tips to upload your pictures</h4>
+          <p className="mt-3 text-sm text-muted-foreground">Avoid bright light and avoid shaking your camera.</p>
+          <p className="mt-3 text-sm text-muted-foreground">Ensure you upload images of front and back of your document separately. Allowed formats: JPEG, PNG, PDF. Size must not exceed 2 MB.</p>
+        </aside>
+      </div>
+
+      {data.idFront && data.idBack && (
+        <div className="mt-8 rounded-xl border border-border bg-secondary/30 p-6">
+          <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Your personal info has been captured from your National ID</p>
+          <div className="mt-5 rounded-lg border border-border bg-background p-5">
+            <div className="flex items-center gap-3 border-b border-border pb-4">
+              <IdCard className="h-5 w-5 text-primary" />
+              <input
+                className="flex-1 bg-transparent text-base font-semibold outline-none"
+                placeholder="Full name as per National ID"
+                value={data.fullName}
+                onChange={(e) => update("fullName", e.target.value)}
+              />
+            </div>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              <Field label="National ID number">
+                <input inputMode="numeric" maxLength={14} className={inputCls} placeholder="14 digits" value={data.nationalId} onChange={(e) => update("nationalId", e.target.value.replace(/\D/g, ""))} />
+              </Field>
+              <Field label="Nationality">
+                <input className={inputCls} value={data.nationality} onChange={(e) => update("nationality", e.target.value)} />
+              </Field>
+              <Field label="Expiry date">
+                <input type="date" className={inputCls} value={data.expiry} onChange={(e) => update("expiry", e.target.value)} />
+              </Field>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function UploadCard({ label, sub, done, onChange }: { label: string; sub: string; done: boolean; onChange: () => void }) {
+  return (
+    <label className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 text-center transition-colors ${done ? "border-primary bg-primary/5" : "border-border bg-background hover:border-primary/60"}`}>
+      <input type="file" className="hidden" accept="image/*,application/pdf" onChange={onChange} />
+      {done ? <CheckCircle2 className="h-8 w-8 text-primary" /> : <Upload className="h-8 w-8 text-primary" />}
+      <div className="text-base font-bold text-foreground">{done ? "Uploaded" : label}</div>
+      <div className="text-xs text-muted-foreground">{sub}</div>
+    </label>
+  );
+}
+
+function WorkProductStep({ data, update }: any) {
+  const accounts = [
+    { id: "current", t: "Everyday Current", d: "Free transfers, debit card, no monthly fees." },
+    { id: "savings", t: "Savings Account", d: "Earn competitive interest with flexible access." },
+    { id: "youth", t: "Youth (18–24)", d: "Lower limits, fee-free, perfect for students." },
+  ];
+  const cards = [
+    { id: "debit", t: "Visa Debit", d: "Free with your account." },
+    { id: "credit", t: "Visa Credit", d: "Subject to credit assessment." },
+    { id: "none", t: "No card right now", d: "You can request one later." },
+  ];
+  return (
+    <div>
+      <StepHeader title="Tell us about your work and product" />
+      <div className="grid gap-5 md:grid-cols-2">
         <Field label="Employment status">
           <select className={inputCls} value={data.employment} onChange={(e) => update("employment", e.target.value)}>
             {["Employed","Self-employed","Student","Retired","Unemployed"].map((g) => <option key={g}>{g}</option>)}
           </select>
         </Field>
+        <Field label="Employer name"><input className={inputCls} value={data.employer} onChange={(e) => update("employer", e.target.value)} /></Field>
         <Field label="Monthly income (EGP)"><input inputMode="numeric" className={inputCls} value={data.income} onChange={(e) => update("income", e.target.value.replace(/\D/g, ""))} /></Field>
       </div>
-    </div>
-  );
-}
 
-function AccountTypeStep({ data, update }: any) {
-  const accounts = [
-    { id: "current", t: "Everyday Current Account", d: "Free transfers, debit card, no monthly fees." },
-    { id: "savings", t: "Savings Account", d: "Earn competitive interest with flexible access." },
-    { id: "youth", t: "Youth Account (18–24)", d: "Lower limits, fee-free, perfect for students." },
-  ];
-  const cards = [
-    { id: "debit", t: "Mastercard Debit", d: "Free with your account." },
-    { id: "credit", t: "Mastercard Credit", d: "Subject to credit assessment." },
-    { id: "none", t: "No card right now", d: "You can request one later." },
-  ];
-  return (
-    <div>
-      <h2 className="text-2xl font-bold">Choose your account</h2>
-      <p className="mt-1 text-sm text-muted-foreground">You can change this later from the app.</p>
-
-      <h3 className="mt-6 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Account type</h3>
+      <h3 className="mt-8 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account type</h3>
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         {accounts.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            onClick={() => update("accountType", a.id)}
-            className={`rounded-xl border p-4 text-left transition-all ${data.accountType === a.id ? "border-mint bg-mint/10 ring-2 ring-mint" : "border-border bg-background hover:border-mint/50"}`}
-          >
+          <button key={a.id} type="button" onClick={() => update("accountType", a.id)}
+            className={`rounded-xl border p-4 text-left transition-all ${data.accountType === a.id ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border bg-background hover:border-primary/40"}`}>
             <div className="font-semibold">{a.t}</div>
             <div className="mt-1 text-xs text-muted-foreground">{a.d}</div>
           </button>
         ))}
       </div>
 
-      <h3 className="mt-8 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Card preference</h3>
+      <h3 className="mt-8 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Card preference</h3>
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         {cards.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            onClick={() => update("cardType", a.id)}
-            className={`rounded-xl border p-4 text-left transition-all ${data.cardType === a.id ? "border-mint bg-mint/10 ring-2 ring-mint" : "border-border bg-background hover:border-mint/50"}`}
-          >
+          <button key={a.id} type="button" onClick={() => update("cardType", a.id)}
+            className={`rounded-xl border p-4 text-left transition-all ${data.cardType === a.id ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border bg-background hover:border-primary/40"}`}>
             <div className="font-semibold">{a.t}</div>
             <div className="mt-1 text-xs text-muted-foreground">{a.d}</div>
           </button>
@@ -236,63 +350,61 @@ function AccountTypeStep({ data, update }: any) {
   );
 }
 
-function DocumentsStep({ data, update }: any) {
+function AddressStep({ data, update }: any) {
   return (
     <div>
-      <h2 className="text-2xl font-bold">Upload your documents</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Both sides of your national ID and a recent proof of address.</p>
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <UploadCard label="National ID (front & back)" done={data.idUploaded} onChange={() => update("idUploaded", true)} />
-        <UploadCard label="Proof of address (utility bill)" done={data.proofUploaded} onChange={() => update("proofUploaded", true)} />
+      <StepHeader title="Where can we reach you?" subtitle="Please provide your current residential address in Egypt." />
+      <div className="grid gap-5 md:grid-cols-2">
+        <Field label="Governorate">
+          <select className={inputCls} value={data.governorate} onChange={(e) => update("governorate", e.target.value)}>
+            {["Cairo","Giza","Alexandria","Dakahlia","Sharqia","Qalyubia","Gharbia","Aswan","Luxor","Port Said","Suez","Ismailia","Beheira","Minya","Asyut","Sohag","Qena","Beni Suef","Fayoum","Red Sea","South Sinai","North Sinai","Matrouh","New Valley","Kafr El Sheikh","Damietta","Monufia"].map((g) => <option key={g}>{g}</option>)}
+          </select>
+        </Field>
+        <Field label="Building / Street"><input className={inputCls} value={data.building} onChange={(e) => update("building", e.target.value)} /></Field>
+        <div className="md:col-span-2">
+          <Field label="Full address"><input className={inputCls} placeholder="Apartment, district, city" value={data.address} onChange={(e) => update("address", e.target.value)} /></Field>
+        </div>
       </div>
-      <p className="mt-4 text-xs text-muted-foreground">Accepted: JPG, PNG, PDF — up to 10 MB each.</p>
     </div>
   );
 }
 
-function UploadCard({ label, done, onChange }: { label: string; done: boolean; onChange: () => void }) {
+function CredentialsStep({ data, update }: any) {
   return (
-    <label className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-8 text-center transition-colors ${done ? "border-mint bg-mint/10" : "border-border bg-background hover:border-mint/60"}`}>
-      <input type="file" className="hidden" accept="image/*,application/pdf" onChange={onChange} />
-      {done ? <CheckCircle2 className="h-7 w-7 text-mint" /> : <Upload className="h-7 w-7 text-muted-foreground" />}
-      <div className="text-sm font-medium">{done ? "Uploaded" : "Click to upload"}</div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-    </label>
+    <div>
+      <StepHeader title="Create your login credentials" subtitle="You'll use these to sign in to SUMERGE Online and Mobile Banking." />
+      <div className="grid gap-5 md:grid-cols-2">
+        <Field label="Username"><input className={inputCls} value={data.username} onChange={(e) => update("username", e.target.value)} /></Field>
+        <Field label="Password"><input type="password" className={inputCls} value={data.password} onChange={(e) => update("password", e.target.value)} /></Field>
+      </div>
+      <p className="mt-4 text-xs text-muted-foreground">Use at least 8 characters, including a number and a symbol.</p>
+    </div>
   );
 }
 
-function ReviewStep({ data }: any) {
-  const rows: [string, string][] = [
-    ["Full name", `${data.firstName} ${data.lastName}`.trim() || "—"],
-    ["National ID", data.nationalId || "—"],
-    ["Mobile", data.phone || "—"],
-    ["Email", data.email || "—"],
-    ["Governorate", data.governorate],
-    ["Address", data.address || "—"],
-    ["Employment", data.employment],
-    ["Monthly income", data.income ? `EGP ${Number(data.income).toLocaleString()}` : "—"],
-    ["Account type", data.accountType],
-    ["Card preference", data.cardType],
-  ];
+function SuccessStep() {
   const router = useRouter();
-  // pre-navigate handled by parent's Submit button -> next() -> success step
   void router;
   return (
-    <div>
-      <h2 className="text-2xl font-bold">Review your application</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Make sure everything is correct before submitting.</p>
-      <dl className="mt-6 divide-y divide-border rounded-xl border border-border bg-background">
-        {rows.map(([k, v]) => (
-          <div key={k} className="flex items-center justify-between px-4 py-3 text-sm">
-            <dt className="text-muted-foreground">{k}</dt>
-            <dd className="font-medium capitalize">{v}</dd>
-          </div>
-        ))}
-      </dl>
+    <div className="rounded-2xl border border-border bg-card p-10 py-12 text-center">
+      <div className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <CheckCircle2 className="h-9 w-9" />
+      </div>
+      <h2 className="mt-5 text-2xl font-bold">Application submitted</h2>
+      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+        Thank you! We've received your application. You'll get an SMS within 24 hours once your SUMERGE account is activated.
+      </p>
+      <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <Button asChild size="lg" className="rounded-md bg-primary text-primary-foreground hover:bg-primary/90"><Link to="/status">Track application</Link></Button>
+        <Button asChild variant="outline" size="lg" className="rounded-md"><Link to="/">Back to home</Link></Button>
+      </div>
     </div>
   );
 }
 
+// Removed unused icons appease tree-shaking
+void Users;
+void ArrowRight;
 function SuccessStep() {
   return (
     <div className="py-6 text-center">
