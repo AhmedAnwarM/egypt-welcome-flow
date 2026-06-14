@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Briefcase, Wallet, Users, Globe2 } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
+import Footer from "@/components/site/Footer";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -69,8 +70,9 @@ function Onboarding() {
   })();
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(115deg,#d4ecdc_0%,#e6f2ea_30%,#f1f6f2_60%,#f7f9f7_100%)]">
+    <div className="min-h-screen flex flex-col bg-[linear-gradient(115deg,#d4ecdc_0%,#e6f2ea_30%,#f1f6f2_60%,#f7f9f7_100%)]">
       <TopBar refId="EGY140626-476" />
+      <main className="flex-1">
       {step >= steps.length ? (
         <div className="mx-auto max-w-3xl px-6 py-16">
           <SuccessStep />
@@ -113,6 +115,8 @@ function Onboarding() {
           </section>
         </div>
       )}
+      </main>
+      <Footer />
     </div>
   );
 }
@@ -122,7 +126,7 @@ function TopBar({ refId }: { refId?: string }) {
     <header className="bg-background/90 backdrop-blur border-b border-border/60">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-10 py-5">
         <Link to="/" aria-label="SUMERGE home" className="flex items-center">
-          <img src={sumergeLogo.url} alt="SUMERGE" className="h-12 w-auto" />
+          <img src={sumergeLogo.url} alt="SUMERGE" className="h-8 w-auto" />
         </Link>
         <div className="flex items-center gap-4">
           {refId && (
