@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Clock, FileSearch, Sparkles, ArrowRight } from "lucide-react";
+import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 
 export const Route = createFileRoute("/status")({
   head: () => ({
@@ -28,7 +29,9 @@ function StatusPage() {
     <div className="min-h-screen bg-secondary/40">
       <header className="border-b border-border bg-background">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link to="/" className="text-xl font-bold tracking-tight" style={{ fontFamily: "var(--font-display)" }}>SUMERGE</Link>
+          <Link to="/" aria-label="SUMERGE home">
+            <img src={sumergeLogo.url} alt="SUMERGE" width={140} height={28} className="h-7 w-auto" />
+          </Link>
           <Button asChild variant="outline" size="sm"><Link to="/onboarding">Start new application</Link></Button>
         </div>
       </header>
