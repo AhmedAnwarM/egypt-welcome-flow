@@ -24,7 +24,7 @@ import {
   Award,
   Lock,
 } from "lucide-react";
-import heroBanking from "@/assets/hero-egypt-banking-v2.jpg.asset.json";
+import heroBanking from "@/assets/hero-egypt-banking-v3.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
