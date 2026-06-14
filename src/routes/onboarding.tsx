@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Briefcase, Wallet, Users, Globe2 } from "lucide-react";
+import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Briefcase, Wallet, Users, PiggyBank, Banknote, CalendarClock } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 import Footer from "@/components/site/Footer";
 
@@ -215,13 +215,14 @@ function StepHeader({ title, subtitle }: { title: string; subtitle?: string }) {
 
 function ChooseOptionStep({ data, update }: any) {
   const options = [
-    { id: "everyday", icon: Wallet, badge: null, t: "SUMERGE Everyday", d: "Open a free account when you maintain EGP 3,000 or transfer a minimum salary of EGP 10,000 and earn up to EGP 1,750 cashback as a welcome bonus." },
-    { id: "plus", icon: Globe2, badge: "5%", t: "SUMERGE Plus", d: "Maintain a minimum monthly balance of EGP 50,000 to unlock SUMERGE Plus benefits — 5% p.a. with Plus Saver Account and fee-free banking." },
-    { id: "plus-salary", icon: Briefcase, badge: "6.25%", t: "SUMERGE Plus (Salary)", d: "Transfer a monthly salary of EGP 10,000 or above to unlock SUMERGE Plus — 6.25% p.a. with Plus Saver Account and fee-free banking." },
+    { id: "saving", icon: PiggyBank, badge: "8.75%", t: "Saving Account", d: "A diverse bundle of savings accounts with flexible payment methods. Competitive periodic interest rate of up to 8.75%, with the flexibility to earn interest monthly, quarterly, or yearly — and the freedom to deposit or withdraw funds at any time." },
+    { id: "current", icon: Banknote, badge: null, t: "Non-Interest-Bearing Current Account", d: "Available in EGP and major foreign currencies. Multiple options and a range of benefits, including free cash deposits and withdrawals at any time — carry out all your banking transactions with ease." },
+    { id: "prime-saving", icon: Wallet, badge: null, t: "Prime Saving Account", d: "Interest-bearing account with competitive, tiered interest rates. Interest is calculated on the lowest monthly balance and credited monthly. Individuals only, local currency only. Minimum balance to open: EGP 5,000." },
+    { id: "current-365", icon: CalendarClock, badge: null, t: "Current Account 365 Days", d: "Current account with daily interest rate. Daily interest calculated on daily closing balance and credited daily. Offered for individuals and companies, EGP only. Minimum to open: EGP 5,000 (interest accrues from EGP 50,000 for individuals, EGP 1,000,000 for companies)." },
   ];
   return (
     <div>
-      <StepHeader title="How can SUMERGE work for you?" subtitle="Explore and select an option that works for you:" />
+      <StepHeader title="How can SUMERGE work for you?" subtitle="Explore and select an account that works for you:" />
       <div className="space-y-3">
         {options.map((o) => {
           const Icon = o.icon;
@@ -247,7 +248,6 @@ function ChooseOptionStep({ data, update }: any) {
           );
         })}
       </div>
-      <p className="mt-6 text-sm font-semibold text-foreground">Shari'ah compliant Islamic products available</p>
     </div>
   );
 }
