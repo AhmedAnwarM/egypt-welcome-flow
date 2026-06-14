@@ -521,7 +521,7 @@ function CaptureIdStep({ data, update }: any) {
   );
 }
 
-function UploadRow({ label, fileName, done, onClick, onDelete }: { label: string; fileName: string; done: boolean; onClick: () => void; onDelete: () => void }) {
+function UploadRow({ label, fileName, done, onClick, onDelete, optional }: { label: string; fileName: string; done: boolean; onClick: () => void; onDelete: () => void; optional?: boolean }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 px-5 py-4">
       <div className="flex items-center gap-3">
@@ -531,7 +531,7 @@ function UploadRow({ label, fileName, done, onClick, onDelete }: { label: string
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-bold text-foreground">{label}</span>
-            <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">Required</span>
+            <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${optional ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"}`}>{optional ? "Optional" : "Required"}</span>
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">Max 5MB</div>
           {done && (
