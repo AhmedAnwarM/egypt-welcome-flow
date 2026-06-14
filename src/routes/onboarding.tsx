@@ -419,8 +419,21 @@ function ContactStep({ data, update }: any) {
   );
 }
 
-function CaptureIdStep({ data, update }: any) {
+// Eligibility map mirrors ChooseOptionStep's availableTo for cross-step checks.
+// Placeholder until SUMERGE compliance confirms real per-account eligibility.
+const ACCOUNT_AVAILABILITY: Record<string, ("egyptian" | "foreign")[]> = {
+  "saving": ["egyptian", "foreign"],
+  "current": ["egyptian", "foreign"],
+  "prime-saving": ["egyptian", "foreign"],
+  "current-365": ["egyptian", "foreign"],
+};
+
+function CaptureIdStep({ data, update, goToStep1 }: any) {
   const isPassport = data.docType === "passport";
+  const docResidency: "egyptian" | "foreign" = isPassport ? "foreign" : "egyptian";
+  const accountAvail = ACCOUNT_AVAILABILITY[data.productChoice] || ["egyptian", "foreign"];
+  const conflict = !!data.productChoice && !accountAvail.includes(docResidency);
+  const accountLabel = PRODUCT_LABELS[data.productChoice] || "The selected account";
   const handleUploadNid = () => {
     update("idDoc", true);
     update("fullName", "Mohamed Ahmed Hassan");
@@ -467,6 +480,23 @@ function CaptureIdStep({ data, update }: any) {
           ? "Please capture/upload your passport"
           : "Please capture/upload your National ID"}
       </h3>
+      {conflict && (
+        <div className="mb-5 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+          <div className="flex-1">
+            <p>
+              <span className="font-semibold">{accountLabel}</span> isn't available with this document type. Please go back and choose a different account.
+            </p>
+            <button
+              type="button"
+              onClick={goToStep1}
+              className="mt-3 inline-flex h-9 items-center rounded-full border border-amber-400 bg-white px-4 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+            >
+              Back to step 1
+            </button>
+          </div>
+        </div>
+      )}
       <div className="overflow-hidden rounded-xl border border-border bg-background">
         <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <div>Documents</div>
