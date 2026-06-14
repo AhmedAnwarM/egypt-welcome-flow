@@ -113,7 +113,7 @@ function Landing() {
                 alt="SUMERGE retail banking"
                 width={1264}
                 height={842}
-                className="w-full h-auto object-contain drop-shadow-2xl scale-110 lg:scale-125 origin-center"
+                className="w-full h-auto object-contain scale-110 lg:scale-125 origin-center mix-blend-luminosity opacity-80 [mask-image:radial-gradient(ellipse_at_center,black_45%,transparent_75%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black_45%,transparent_75%)]"
               />
             </div>
           </div>
