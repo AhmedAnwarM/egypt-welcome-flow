@@ -355,12 +355,23 @@ function ContactStep({ data, update }: any) {
 }
 
 function CaptureIdStep({ data, update }: any) {
+  const handleUpload = (key: "idFront" | "idBack") => {
+    update(key, true);
+    // Simulate OCR auto-capture from the National ID once both sides are present
+    const other = key === "idFront" ? data.idBack : data.idFront;
+    if (other) {
+      if (!data.fullName) update("fullName", "Mohamed Ahmed Hassan");
+      if (!data.nationalId) update("nationalId", "29001011234567");
+      if (!data.nationality) update("nationality", "Egyptian");
+      if (!data.expiry) update("expiry", "2030-05-12");
+    }
+  };
   return (
     <div>
       <StepHeader title="Please capture/upload both sides of your National ID" />
       <div className="grid gap-4 md:grid-cols-[1fr_1fr_280px]">
-        <UploadCard label="National ID front" sub="Please upload the front image of your National ID" done={data.idFront} onChange={() => update("idFront", true)} />
-        <UploadCard label="National ID back" sub="Please upload the back image of your National ID" done={data.idBack} onChange={() => update("idBack", true)} />
+        <UploadCard label="National ID front" sub="Please upload the front image of your National ID" done={data.idFront} onChange={() => handleUpload("idFront")} />
+        <UploadCard label="National ID back" sub="Please upload the back image of your National ID" done={data.idBack} onChange={() => handleUpload("idBack")} />
         <aside className="rounded-xl border border-border bg-secondary/40 p-5">
           <h4 className="font-bold text-foreground">Tips to upload your pictures</h4>
           <p className="mt-3 text-sm text-muted-foreground">Avoid bright light and avoid shaking your camera.</p>
