@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Check, X, Upload, CheckCircle2, IdCard, Briefcase, Wallet, Users, Globe2 } from "lucide-react";
+import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Briefcase, Wallet, Users, Globe2 } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 
 export const Route = createFileRoute("/onboarding")({
@@ -69,42 +69,46 @@ function Onboarding() {
   })();
 
   return (
-    <div className="min-h-screen bg-background">
-      <TopBar />
+    <div className="min-h-screen bg-[linear-gradient(180deg,#e8f5ee_0%,#f3f8f4_35%,#f7f9f7_100%)]">
+      <TopBar refId="EGY140626-476" />
       {step >= steps.length ? (
         <div className="mx-auto max-w-3xl px-6 py-16">
           <SuccessStep />
         </div>
       ) : (
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-10 md:grid-cols-[260px_1fr] md:py-14">
-          <SideStepper current={step} />
+          <aside className="space-y-5 md:sticky md:top-10 md:self-start">
+            <ProgressCard current={step} total={steps.length} />
+            <SideStepper current={step} />
+          </aside>
           <section className="min-h-[560px]">
-            <div className="rounded-2xl bg-card p-6 md:p-10">
+            <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
               {step === 0 && <ChooseOptionStep data={data} update={update} />}
               {step === 1 && <ContactStep data={data} update={update} />}
               {step === 2 && <CaptureIdStep data={data} update={update} />}
               {step === 3 && <WorkProductStep data={data} update={update} />}
               {step === 4 && <AddressStep data={data} update={update} />}
               {step === 5 && <CredentialsStep data={data} update={update} />}
-            </div>
 
-            <div className="mt-10 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={back}
-                disabled={step === 0}
-                className="inline-flex items-center gap-2 text-sm font-semibold text-primary disabled:opacity-40"
-              >
-                <ArrowLeft className="h-4 w-4" /> Back
-              </button>
-              <Button
-                size="lg"
-                onClick={next}
-                disabled={!canContinue}
-                className="rounded-md bg-primary px-12 text-base font-semibold text-primary-foreground hover:bg-primary/90"
-              >
-                {step === steps.length - 1 ? "Submit application" : step === 0 ? "Continue with application" : "Next"}
-              </Button>
+              <div className="mt-10 flex items-center justify-between border-t border-border/60 pt-6">
+                <button
+                  type="button"
+                  onClick={back}
+                  disabled={step === 0}
+                  className="inline-flex h-11 items-center rounded-full border border-border bg-background px-6 text-sm font-semibold text-foreground/80 hover:bg-secondary/40 disabled:opacity-40"
+                >
+                  Back
+                </button>
+                <Button
+                  size="lg"
+                  onClick={next}
+                  disabled={!canContinue}
+                  className="h-11 rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2"
+                >
+                  {step === steps.length - 1 ? "Submit application" : "Continue"}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </section>
         </div>
@@ -113,43 +117,76 @@ function Onboarding() {
   );
 }
 
-function TopBar() {
+function TopBar({ refId }: { refId?: string }) {
   return (
-    <header className="bg-primary text-primary-foreground">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-        <Link to="/" aria-label="SUMERGE home" className="flex items-center gap-2">
-          <img src={sumergeLogo.url} alt="SUMERGE" className="h-8 w-auto brightness-0 invert" />
+    <header className="bg-background/90 backdrop-blur border-b border-border/60">
+      <div className="mx-auto grid max-w-7xl grid-cols-3 items-center px-6 py-5">
+        <div />
+        <Link to="/" aria-label="SUMERGE home" className="flex items-center justify-center">
+          <img src={sumergeLogo.url} alt="SUMERGE" className="h-8 w-auto" />
         </Link>
-        <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold opacity-95 hover:opacity-100">
-          <X className="h-4 w-4" /> Cancel
-        </Link>
+        <div className="flex items-center justify-end gap-4">
+          {refId && (
+            <div className="text-right leading-tight">
+              <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">Reference Number</p>
+              <p className="text-sm font-mono font-bold text-primary">{refId}</p>
+            </div>
+          )}
+          <Link to="/" aria-label="Sign in" className="text-foreground/70 hover:text-primary">
+            <LogIn className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
     </header>
   );
 }
 
+function ProgressCard({ current, total }: { current: number; total: number }) {
+  const pct = Math.round((current / total) * 100);
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">Application Completion Progress</p>
+      <div className="mt-2 flex items-baseline justify-between">
+        <span className="text-sm font-bold text-foreground">Step {current} of {total}</span>
+        <span className="text-sm font-bold text-muted-foreground">{pct}%</span>
+      </div>
+      <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-secondary/30">
+        <div className="h-full rounded-full bg-secondary transition-all" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
 function SideStepper({ current }: { current: number }) {
   return (
-    <aside className="md:sticky md:top-10 md:self-start">
-      <ol className="relative space-y-6 border-l border-border pl-6">
+    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <ol className="space-y-5">
         {steps.map((label, i) => {
           const done = i < current;
           const active = i === current;
           return (
-            <li key={label} className="relative">
+            <li key={label} className="flex items-center gap-3">
               <span
-                className={`absolute -left-[31px] top-0.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
-                  done ? "bg-primary text-primary-foreground" : active ? "bg-primary text-primary-foreground" : "border border-border bg-background text-muted-foreground"
+                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                  done
+                    ? "border-secondary bg-secondary text-secondary-foreground"
+                    : active
+                      ? "border-secondary bg-card"
+                      : "border-border bg-card"
                 }`}
               >
-                {done ? <Check className="h-3 w-3" /> : i + 1}
+                {done ? (
+                  <Check className="h-3 w-3" strokeWidth={3} />
+                ) : active ? (
+                  <span className="h-2 w-2 rounded-full bg-secondary" />
+                ) : null}
               </span>
-              <span className={`text-sm ${active ? "font-bold text-primary" : done ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
+              <span className={`text-sm leading-tight ${active ? "font-semibold text-primary" : done ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
             </li>
           );
         })}
       </ol>
-    </aside>
+    </div>
   );
 }
 
@@ -167,9 +204,8 @@ const inputCls = "h-12 w-full rounded-md border border-border bg-background px-3
 function StepHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <header className="mb-8">
-      <h2 className="text-2xl font-bold text-foreground md:text-3xl">{title}</h2>
-      <div className="mt-2 h-1 w-12 rounded-full bg-primary" />
-      {subtitle && <p className="mt-4 text-sm text-muted-foreground">{subtitle}</p>}
+      <h2 className="text-2xl font-bold text-primary md:text-[28px]">{title}</h2>
+      {subtitle && <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>}
     </header>
   );
 }
