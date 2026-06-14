@@ -27,6 +27,7 @@ const steps = [
 
 function Onboarding() {
   const [step, setStep] = useState(0);
+  const [maxStep, setMaxStep] = useState(0);
   const [data, setData] = useState({
     productChoice: "",
     phone: "",
@@ -72,7 +73,12 @@ function Onboarding() {
     taxDeclaration: false,
   });
   const update = (k: keyof typeof data, v: any) => setData((d) => ({ ...d, [k]: v }));
-  const next = () => setStep((s) => Math.min(steps.length, s + 1));
+  const next = () =>
+    setStep((s) => {
+      const n = Math.min(steps.length, s + 1);
+      setMaxStep((m) => Math.max(m, n));
+      return n;
+    });
   const back = () => setStep((s) => Math.max(0, s - 1));
 
   const canContinue = (() => {
@@ -121,7 +127,7 @@ function Onboarding() {
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-10 md:grid-cols-[260px_1fr] md:py-14">
           <aside className="space-y-5 md:sticky md:top-10 md:self-start">
             <ProgressCard current={step} total={steps.length} />
-            <SideStepper current={step} onJump={(i) => setStep(i)} />
+            <SideStepper current={step} maxReached={maxStep} onJump={(i) => setStep(i)} />
           </aside>
           <section className="min-h-[560px]">
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
@@ -201,14 +207,14 @@ function ProgressCard({ current, total }: { current: number; total: number }) {
   );
 }
 
-function SideStepper({ current, onJump }: { current: number; onJump: (i: number) => void }) {
+function SideStepper({ current, maxReached, onJump }: { current: number; maxReached: number; onJump: (i: number) => void }) {
   return (
     <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
       <ol className="space-y-5">
         {steps.map((label, i) => {
           const done = i < current;
           const active = i === current;
-          const clickable = i <= current;
+          const clickable = i <= maxReached;
           return (
             <li key={label}>
               <button
