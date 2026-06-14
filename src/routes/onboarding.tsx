@@ -659,6 +659,7 @@ function AddressStep({ data, update }: any) {
   return (
     <div>
       <StepHeader title="Where should we send your card and statements?" subtitle="You can update this later from your account settings." />
+      {data.docType !== "passport" && (
       <button
         type="button"
         onClick={toggleIdAddress}
@@ -671,6 +672,7 @@ function AddressStep({ data, update }: any) {
           Use the address from my National ID
         </span>
       </button>
+      )}
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="Governorate">
           <select disabled={disabled} className={fieldCls} value={data.governorate} onChange={(e) => update("governorate", e.target.value)}>
