@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2 } from "lucide-react";
+import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2, Info, Plus, X } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 import Footer from "@/components/site/Footer";
 
@@ -20,6 +20,7 @@ const steps = [
   "Contact information",
   "Capture National ID",
   "Work and product details",
+  "Tax details",
   "Address details",
   "Create login credentials",
 ] as const;
@@ -53,13 +54,17 @@ function Onboarding() {
     apartment: "",
     floor: "",
     postalCode: "",
-    username: "",
     password: "",
     confirmPassword: "",
     agreeTerms: false,
     agreeCredit: false,
-    idFront: false,
-    idBack: false,
+    idDoc: false,
+    // Tax details
+    fatcaUs: "" as "" | "yes" | "no",
+    usTin: "",
+    crsOther: "" as "" | "yes" | "no",
+    crsRows: [] as { country: string; tin: string }[],
+    taxDeclaration: false,
   });
   const update = (k: keyof typeof data, v: any) => setData((d) => ({ ...d, [k]: v }));
   const next = () => setStep((s) => Math.min(steps.length, s + 1));
@@ -69,16 +74,25 @@ function Onboarding() {
     switch (step) {
       case 0: return !!data.productChoice;
       case 1: return data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail;
-      case 2: return data.idFront && data.idBack && data.nationalId.length === 14 && data.fullName.trim().length > 3;
+      case 2: return data.idDoc && data.nationalId.length === 14 && data.fullName.trim().length > 3;
       case 3: {
         const baseOk = !!data.employment && !!data.income && !!data.employer.trim() && !!data.jobTitle.trim() && !!data.sourceOfFunds;
         const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
         return baseOk && (!isBiz || !!data.businessReg.trim());
       }
-      case 4: return !!data.governorate && !!data.city.trim() && !!data.street.trim();
-      case 5: {
+      case 4: {
+        if (!data.fatcaUs || !data.crsOther || !data.taxDeclaration) return false;
+        if (data.fatcaUs === "yes" && !data.usTin.trim()) return false;
+        if (data.crsOther === "yes") {
+          if (data.crsRows.length === 0) return false;
+          if (!data.crsRows.some((r: any) => r.country && r.tin.trim())) return false;
+        }
+        return true;
+      }
+      case 5: return !!data.governorate && !!data.city.trim() && !!data.street.trim();
+      case 6: {
         const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
-        return data.username.length >= 4 && pwOk && data.agreeTerms && data.agreeCredit;
+        return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit;
       }
       default: return true;
     }
@@ -104,8 +118,9 @@ function Onboarding() {
               {step === 1 && <ContactStep data={data} update={update} />}
               {step === 2 && <CaptureIdStep data={data} update={update} />}
               {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(0)} />}
-              {step === 4 && <AddressStep data={data} update={update} />}
-              {step === 5 && <CredentialsStep data={data} update={update} />}
+              {step === 4 && <TaxStep data={data} update={update} />}
+              {step === 5 && <AddressStep data={data} update={update} />}
+              {step === 6 && <CredentialsStep data={data} update={update} />}
 
               <div className="mt-10 flex items-center justify-between border-t border-border/60 pt-6">
                 <button
@@ -355,32 +370,26 @@ function ContactStep({ data, update }: any) {
 }
 
 function CaptureIdStep({ data, update }: any) {
-  const handleUpload = (key: "idFront" | "idBack") => {
-    update(key, true);
-    // Simulate OCR auto-capture from the National ID once both sides are present
-    const other = key === "idFront" ? data.idBack : data.idFront;
-    if (other) {
-      if (!data.fullName) update("fullName", "Mohamed Ahmed Hassan");
-      if (!data.nationalId) update("nationalId", "29001011234567");
-      if (!data.nationality) update("nationality", "Egyptian");
-      if (!data.expiry) update("expiry", "2030-05-12");
-    }
+  const handleUpload = () => {
+    update("idDoc", true);
+    if (!data.fullName) update("fullName", "Mohamed Ahmed Hassan");
+    if (!data.nationalId) update("nationalId", "29001011234567");
+    if (!data.nationality) update("nationality", "Egyptian");
+    if (!data.expiry) update("expiry", "2030-05-12");
   };
   return (
     <div>
-      <StepHeader title="Please capture/upload both sides of your National ID" />
+      <StepHeader title="Please capture/upload your National ID" />
       <div className="overflow-hidden rounded-xl border border-border bg-background">
         <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <div>Documents</div>
           <div className="text-center">Status</div>
           <div className="text-center">Actions</div>
         </div>
-        <UploadRow label="National ID front" fileName="NID_front.jpg" done={data.idFront} onClick={() => handleUpload("idFront")} onDelete={() => update("idFront", false)} />
-        <div className="h-px bg-border" />
-        <UploadRow label="National ID back" fileName="NID_back.jpg" done={data.idBack} onClick={() => handleUpload("idBack")} onDelete={() => update("idBack", false)} />
+        <UploadRow label="National ID" fileName="NID.jpg" done={data.idDoc} onClick={handleUpload} onDelete={() => update("idDoc", false)} />
       </div>
 
-      {data.idFront && data.idBack && (
+      {data.idDoc && (
         <div className="mt-8 rounded-xl border border-border bg-secondary/30 p-6">
           <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
           <p className="mt-1 text-sm text-muted-foreground">Your personal info has been captured from your National ID</p>
@@ -535,7 +544,7 @@ function AddressStep({ data, update }: any) {
       update("street", "Abbas El Akkad St., Building 22");
       update("apartment", "5");
       update("floor", "3");
-      update("postalCode", "11371");
+      // postal code not retrieved from National ID
     } else {
       update("governorate", "");
       update("city", "");
@@ -605,8 +614,12 @@ function CredentialsStep({ data, update }: any) {
     <div>
       <StepHeader title="Secure your account" subtitle="You'll use these credentials to sign in to SUMERGE Online and Mobile Banking." />
       <div className="grid gap-5 md:grid-cols-2">
-        <Field label="Username"><input className={inputCls} value={data.username} onChange={(e) => update("username", e.target.value)} /></Field>
-        <div />
+        <div className="md:col-span-2">
+          <Field label="Email (your username)">
+            <input type="email" readOnly className={`${inputCls} bg-secondary/20 cursor-not-allowed`} value={data.email} />
+          </Field>
+          <p className="mt-1.5 text-xs text-muted-foreground">We'll use the email you provided in your contact info as your sign-in username.</p>
+        </div>
         <div className="md:col-span-2">
           <Field label="Password">
             <input type="password" className={inputCls} value={data.password} onChange={(e) => update("password", e.target.value)} />
@@ -652,6 +665,161 @@ function Consent({ checked, onChange, children }: { checked: boolean; onChange: 
 }
 
 function SuccessStep() {
+  // placeholder anchor
+  return <SuccessStepInner />;
+}
+
+const COUNTRIES = ["United Arab Emirates","Saudi Arabia","United Kingdom","United States","Canada","Germany","France","Italy","Spain","Netherlands","Switzerland","Sweden","Australia","Japan","China","India","Turkey","Lebanon","Jordan","Kuwait","Qatar","Bahrain","Oman","Morocco","Tunisia","Sudan","South Africa","Other"];
+
+function Segmented({ value, onChange }: { value: "" | "yes" | "no"; onChange: (v: "yes" | "no") => void }) {
+  const opts: { v: "yes" | "no"; label: string }[] = [
+    { v: "yes", label: "Yes" },
+    { v: "no", label: "No" },
+  ];
+  return (
+    <div className="inline-flex rounded-full border border-border bg-background p-1">
+      {opts.map((o) => {
+        const active = value === o.v;
+        return (
+          <button
+            key={o.v}
+            type="button"
+            onClick={() => onChange(o.v)}
+            className={`min-w-[80px] rounded-full px-5 py-1.5 text-sm font-semibold transition-colors ${active ? "bg-secondary text-secondary-foreground" : "text-foreground/70 hover:text-foreground"}`}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function InfoHint({ text }: { text: string }) {
+  return (
+    <span className="group relative inline-flex">
+      <Info className="h-3.5 w-3.5 text-muted-foreground" />
+      <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-1 hidden w-64 -translate-x-1/2 rounded-md bg-foreground px-3 py-2 text-[11px] font-medium text-background shadow-lg group-hover:block">
+        {text}
+      </span>
+    </span>
+  );
+}
+
+function TaxStep({ data, update }: any) {
+  const rows: { country: string; tin: string }[] = data.crsRows;
+  const setRows = (r: { country: string; tin: string }[]) => update("crsRows", r);
+  const addRow = () => setRows([...rows, { country: "", tin: "" }]);
+  const updRow = (i: number, patch: Partial<{ country: string; tin: string }>) =>
+    setRows(rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  const removeRow = (i: number) => setRows(rows.filter((_, idx) => idx !== i));
+
+  const toggleCrs = (v: "yes" | "no") => {
+    update("crsOther", v);
+    if (v === "yes" && rows.length === 0) setRows([{ country: "", tin: "" }]);
+    if (v === "no") setRows([]);
+  };
+  const toggleFatca = (v: "yes" | "no") => {
+    update("fatcaUs", v);
+    if (v === "no") update("usTin", "");
+  };
+
+  return (
+    <div>
+      <StepHeader
+        title="Tax residency declaration"
+        subtitle="Under FATCA and the Common Reporting Standard (CRS), banks are required by law to collect tax residency information from account holders and share it with the relevant tax authorities where applicable."
+      />
+
+      {/* Section 1 — Egypt */}
+      <div className="rounded-xl border border-border bg-secondary/20 p-5">
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-background text-base shadow-sm">🇪🇬</span>
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Primary tax residency</div>
+            <div className="text-sm font-bold text-foreground">Based on your National ID, you are a tax resident of Egypt</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 2 — FATCA */}
+      <div className="mt-6 rounded-xl border border-border bg-background p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-foreground">US tax status (FATCA)</h3>
+              <InfoHint text="Required under the US Foreign Account Tax Compliance Act (FATCA)." />
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">Are you a US citizen, US resident, or do you hold a US Green Card?</p>
+          </div>
+          <Segmented value={data.fatcaUs} onChange={toggleFatca} />
+        </div>
+        {data.fatcaUs === "yes" && (
+          <div className="mt-5">
+            <Field label="US Tax Identification Number (SSN or ITIN)">
+              <input className={inputCls} value={data.usTin} onChange={(e) => update("usTin", e.target.value)} />
+            </Field>
+          </div>
+        )}
+      </div>
+
+      {/* Section 3 — CRS */}
+      <div className="mt-6 rounded-xl border border-border bg-background p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-foreground">Other tax residencies (CRS)</h3>
+              <InfoHint text="Required under the OECD Common Reporting Standard (CRS) for international tax transparency." />
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">Are you a tax resident of any country other than Egypt?</p>
+          </div>
+          <Segmented value={data.crsOther} onChange={toggleCrs} />
+        </div>
+        {data.crsOther === "yes" && (
+          <div className="mt-5 space-y-4">
+            {rows.map((row, i) => (
+              <div key={i} className="grid items-end gap-3 md:grid-cols-[1fr_1fr_auto]">
+                <Field label="Country of tax residency">
+                  <select className={inputCls} value={row.country} onChange={(e) => updRow(i, { country: e.target.value })}>
+                    <option value="">Select country</option>
+                    {COUNTRIES.map((c) => <option key={c}>{c}</option>)}
+                  </select>
+                </Field>
+                <Field label="Tax Identification Number">
+                  <input className={inputCls} value={row.tin} onChange={(e) => updRow(i, { tin: e.target.value })} />
+                </Field>
+                <button
+                  type="button"
+                  onClick={() => removeRow(i)}
+                  aria-label="Remove row"
+                  className="mb-1 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground hover:border-destructive hover:text-destructive"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addRow}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-secondary hover:underline"
+            >
+              <Plus className="h-4 w-4" /> Add another country
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Section 4 — Declaration */}
+      <div className="mt-6">
+        <Consent checked={data.taxDeclaration} onChange={(v: boolean) => update("taxDeclaration", v)}>
+          I declare that the information provided in this section is true, accurate, and complete, and I will notify SUMERGE of any change in circumstances that affects my tax residency status.
+        </Consent>
+      </div>
+    </div>
+  );
+}
+
+function SuccessStepInner() {
   const router = useRouter();
   void router;
   const ref = `SM-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
