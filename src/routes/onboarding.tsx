@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2, Info, Plus, X } from "lucide-react";
+import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2, Info, Plus, X, BookUser, AlertTriangle } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 import Footer from "@/components/site/Footer";
 
@@ -29,6 +29,7 @@ function Onboarding() {
   const [step, setStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
   const [data, setData] = useState({
+    residency: "" as "" | "egyptian" | "foreign",
     productChoice: "",
     phone: "",
     email: "",
@@ -73,6 +74,14 @@ function Onboarding() {
     taxDeclaration: false,
   });
   const update = (k: keyof typeof data, v: any) => setData((d) => ({ ...d, [k]: v }));
+  const chooseResidency = (r: "egyptian" | "foreign") => {
+    setData((d) => ({
+      ...d,
+      residency: r,
+      docType: r === "foreign" ? "passport" : "nationalId",
+      nationality: r === "foreign" ? "" : "Egyptian",
+    }));
+  };
   const next = () =>
     setStep((s) => {
       const n = Math.min(steps.length, s + 1);
@@ -119,7 +128,11 @@ function Onboarding() {
     <div className="min-h-screen flex flex-col bg-[linear-gradient(180deg,#dff0ea_0%,#e6f3ee_50%,#edf6f2_100%)]">
       <TopBar refId="EGY140626-476" />
       <main className="flex-1">
-      {step >= steps.length ? (
+      {!data.residency ? (
+        <div className="mx-auto max-w-3xl px-6 py-14">
+          <ResidencyPreScreen onChoose={chooseResidency} />
+        </div>
+      ) : step >= steps.length ? (
         <div className="mx-auto max-w-3xl px-6 py-16">
           <SuccessStep />
         </div>
@@ -133,7 +146,7 @@ function Onboarding() {
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
               {step === 0 && <ChooseOptionStep data={data} update={update} />}
               {step === 1 && <ContactStep data={data} update={update} />}
-              {step === 2 && <CaptureIdStep data={data} update={update} />}
+              {step === 2 && <CaptureIdStep data={data} update={update} goToStep1={() => setStep(0)} />}
               {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(0)} />}
               {step === 4 && <TaxStep data={data} update={update} />}
               {step === 5 && <AddressStep data={data} update={update} />}
