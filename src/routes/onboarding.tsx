@@ -275,7 +275,7 @@ function Onboarding() {
   );
 }
 
-function TopBar({ refId }: { refId?: string }) {
+function TopBar({ refId, lang, onLang }: { refId?: string; lang: "en" | "ar"; onLang: (l: "en" | "ar") => void }) {
   return (
     <header className="bg-background/90 backdrop-blur border-b border-border/60">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-10 sm:py-5">
@@ -289,12 +289,143 @@ function TopBar({ refId }: { refId?: string }) {
               <p className="truncate text-xs font-mono font-bold text-primary sm:text-sm">{refId}</p>
             </div>
           )}
+          <LangToggle lang={lang} onChange={onLang} />
           <Link to="/" aria-label="Sign in" className="shrink-0 text-foreground/70 hover:text-primary">
             <LogIn className="h-4 w-4" />
           </Link>
         </div>
       </div>
     </header>
+  );
+}
+
+function LangToggle({ lang, onChange }: { lang: "en" | "ar"; onChange: (l: "en" | "ar") => void }) {
+  return (
+    <div
+      role="group"
+      aria-label="Language"
+      className="inline-flex shrink-0 items-center rounded-full border border-border bg-background p-0.5 text-[11px] font-semibold"
+    >
+      <Globe className="mx-1 h-3 w-3 text-muted-foreground" />
+      {(["en", "ar"] as const).map((l) => {
+        const active = lang === l;
+        return (
+          <button
+            key={l}
+            type="button"
+            onClick={() => onChange(l)}
+            className={`rounded-full px-2 py-0.5 uppercase tracking-wider transition-colors ${active ? "bg-secondary text-secondary-foreground" : "text-foreground/70 hover:text-foreground"}`}
+          >
+            {l}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function CardToolbar({ onSave }: { onSave: () => void }) {
+  return (
+    <div className="mb-4 flex justify-end">
+      <button
+        type="button"
+        onClick={onSave}
+        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
+      >
+        <BookmarkPlus className="h-3.5 w-3.5" />
+        Save and continue later
+      </button>
+    </div>
+  );
+}
+
+function SaveModal({ refId, onClose }: { refId: string; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-2xl bg-card p-6 shadow-elegant"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-secondary/30 text-secondary">
+            <BookmarkPlus className="h-5 w-5" />
+          </span>
+          <div>
+            <h3 className="text-lg font-bold text-primary">Save your progress</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Your application reference number can be used to resume where you left off.
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 rounded-xl border border-border bg-secondary/15 px-4 py-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Reference</p>
+          <p className="text-base font-mono font-bold text-primary">{refId}</p>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          We've also emailed this reference to you. You can resume from the SUMERGE landing page anytime.
+        </p>
+        <div className="mt-5 flex justify-end">
+          <Button onClick={onClose} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
+            Got it
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OtpField({ label, value, onChange, resendIn, onResend }: { label: string; value: string; onChange: (v: string) => void; resendIn: number; onResend: () => void }) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</label>
+      <input
+        inputMode="numeric"
+        maxLength={6}
+        placeholder="••••••"
+        value={value}
+        onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, 6))}
+        className="h-12 w-full rounded-md border border-border bg-background px-3 text-center text-lg font-mono tracking-[0.5em] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+      />
+      <div className="mt-1.5 text-xs">
+        {resendIn > 0 ? (
+          <span className="text-muted-foreground">Resend in 0:{String(resendIn).padStart(2, "0")}</span>
+        ) : (
+          <button type="button" onClick={onResend} className="font-semibold text-primary hover:underline">
+            Resend code
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function OtpPanel({ data, update }: any) {
+  const [resendIn, setResendIn] = useState(30);
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = setInterval(() => setResendIn((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [resendIn]);
+  const resend = () => setResendIn(30);
+  return (
+    <div>
+      <StepHeader title="Verify your contact details" subtitle="Enter the codes we sent to your mobile and email" />
+      <div className="rounded-xl border border-border bg-secondary/10 p-4 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
+          <span><Smartphone className="mr-1 inline h-3.5 w-3.5 text-primary" />+20 {data.phone || "your mobile"}</span>
+          <span><PhoneCall className="mr-1 inline h-3.5 w-3.5 text-primary" />{data.email || "your email"}</span>
+        </div>
+      </div>
+      <div className="mt-5 grid gap-5 md:grid-cols-2">
+        <OtpField label="Mobile code" value={data.mobileCode} onChange={(v) => update("mobileCode", v)} resendIn={resendIn} onResend={resend} />
+        <OtpField label="Email code" value={data.emailCode} onChange={(v) => update("emailCode", v)} resendIn={resendIn} onResend={resend} />
+      </div>
+      <p className="mt-4 text-xs text-muted-foreground">
+        For this demo, any 6-digit code is accepted.
+      </p>
+    </div>
   );
 }
 
