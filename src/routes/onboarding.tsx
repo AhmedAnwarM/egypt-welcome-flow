@@ -1073,15 +1073,34 @@ function TaxStep({ data, update }: any) {
   );
 }
 
-function SuccessStepInner() {
-  const router = useRouter();
-  void router;
-  const ref = `SM-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
-  const next = [
-    { icon: ClipboardCheck, t: "Review (1–2 business days)", d: "Our team will check your details and documents." },
-    { icon: PhoneCall, t: "Verification call or SMS", d: "We may contact you to confirm your details." },
-    { icon: Sparkles, t: "Account activation", d: "You'll receive a welcome email with your account details and card delivery info." },
+function SuccessStepInner({ accountStatus, taskStatus, productChoice }: SuccessProps) {
+  const [ref] = useState(() => `SM-2026-${String(Math.floor(100000 + Math.random() * 900000))}`);
+  const [acctNum] = useState(() => {
+    const last4 = String(Math.floor(1000 + Math.random() * 9000));
+    return `EG•• •••• •••• ${last4}`;
+  });
+
+  const productLabel: Record<string, string> = {
+    everyday: "Everyday Account",
+    salary: "Salary Account",
+    joint: "Joint Account",
+    savings: "Savings Account",
+  };
+  const accountType = productLabel[productChoice] || "SUMERGE Account";
+
+  const items: { key: "aml" | "verify" | "activate"; icon: typeof ClipboardCheck; t: string; d: string }[] = [
+    { key: "aml", icon: ClipboardCheck, t: "Review (AML & sanctions screening)", d: "Our team is checking your details and documents." },
+    { key: "verify", icon: PhoneCall, t: "Verification call or SMS", d: "We may contact you to confirm your details." },
+    { key: "activate", icon: Sparkles, t: "Account activation", d: "Finalising your account and welcome email." },
   ];
+
+  const note =
+    accountStatus === "active"
+      ? "All checks are complete. Your account is fully active."
+      : accountStatus === "pending_review"
+        ? "One of our checks needs a closer look. This won't affect your current access, but some features may be limited until it's resolved."
+        : "You can start using your account now. We're finishing a few checks in the background — this won't interrupt your access.";
+
   return (
     <div className="text-center">
       <div className="mx-auto inline-flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
@@ -1092,18 +1111,53 @@ function SuccessStepInner() {
         Your reference number is <span className="font-mono font-bold text-foreground">{ref}</span>. A copy has been emailed to you for your records.
       </p>
 
-      <div className="mx-auto mt-10 max-w-2xl rounded-2xl bg-card p-6 text-left shadow-elegant md:p-8">
+      {/* Provisional account card */}
+      <div className="mx-auto mt-8 max-w-2xl rounded-2xl bg-card p-6 text-left shadow-elegant md:p-8">
+        <h3 className="text-lg font-bold text-primary">Your account is ready to use</h3>
+        <div className="mt-4 flex items-center justify-between rounded-xl bg-[#F4F4F6] px-4 py-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">Account number</p>
+            <p className="mt-1 font-mono text-base font-bold text-foreground">{acctNum}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">Type</p>
+            <p className="mt-1 text-sm font-semibold text-foreground">{accountType}</p>
+          </div>
+        </div>
+        <p className="mt-4 text-sm text-muted-foreground">{note}</p>
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <Button size="lg" className="h-11 rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2">
+            Go to dashboard
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+          {accountStatus === "pending_review" && (
+            <button
+              type="button"
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-border bg-background px-5 text-sm font-semibold text-foreground/80 hover:bg-secondary/40"
+            >
+              <LifeBuoy className="h-4 w-4" />
+              Contact support
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="mx-auto mt-6 max-w-2xl rounded-2xl bg-card p-6 text-left shadow-elegant md:p-8">
         <h3 className="text-base font-bold text-foreground">What happens next</h3>
         <ul className="mt-5 space-y-5">
-          {next.map((row) => {
+          {items.map((row) => {
             const Icon = row.icon;
+            const state = taskStatus[row.key];
             return (
               <li key={row.t} className="flex items-start gap-4">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <Icon className="h-5 w-5" />
                 </span>
-                <div>
-                  <div className="text-sm font-bold text-foreground">{row.t}</div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-bold text-foreground">{row.t}</div>
+                    <StatusPill state={state} />
+                  </div>
                   <div className="mt-1 text-sm text-muted-foreground">{row.d}</div>
                 </div>
               </li>
@@ -1112,6 +1166,31 @@ function SuccessStepInner() {
         </ul>
       </div>
     </div>
+  );
+}
+
+function StatusPill({ state }: { state: TaskState }) {
+  if (state === "complete") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-[#22A06B]">
+        <Check className="h-3 w-3" strokeWidth={3} />
+        Complete
+      </span>
+    );
+  }
+  if (state === "review") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-semibold text-[#D85A30]">
+        <AlertTriangle className="h-3 w-3" />
+        Needs review
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-[#EF9F27]">
+      <Loader2 className="h-3 w-3 animate-spin" />
+      In progress
+    </span>
   );
 }
 
