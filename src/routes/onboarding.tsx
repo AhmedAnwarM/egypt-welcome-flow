@@ -942,6 +942,37 @@ const PRODUCT_LABELS: Record<string, string> = {
   "current-365": "Current Account 365 Days",
 };
 
+function VerifyingCard() {
+  const messages = [
+    "Checking document authenticity...",
+    "Verifying against national ID records...",
+    "Extracting your details...",
+  ];
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setIdx((i) => (i + 1) % messages.length), 1500);
+    return () => clearInterval(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <div className="mt-8 flex items-center gap-4 rounded-xl border border-secondary/40 bg-secondary/20 p-5">
+      <Loader2 className="h-6 w-6 shrink-0 animate-spin text-primary" />
+      <div>
+        <p className="text-sm font-bold text-primary">Verifying your document</p>
+        <p className="mt-0.5 text-sm text-foreground/80">{messages[idx]}</p>
+      </div>
+    </div>
+  );
+}
+
+function VerifiedBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
+      <ShieldCheck className="h-3.5 w-3.5" /> Verified
+    </span>
+  );
+}
+
 function SelectionRecap({ data, onChange }: any) {
   const label = PRODUCT_LABELS[data.productChoice] || "Account selected";
   return (
