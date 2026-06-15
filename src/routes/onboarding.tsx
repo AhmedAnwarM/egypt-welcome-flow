@@ -1342,6 +1342,33 @@ function TaxStep({ data, update }: any) {
       </div>
 
       {/* Section 4 — Declaration */}
+      {/* Section 3.5 — PEP */}
+      <div className="mt-6 rounded-xl border border-border bg-background p-5">
+        <h3 className="text-sm font-bold text-foreground">Politically exposed person (PEP) status</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          This is a standard regulatory question — not an accusation. Banks are required to identify customers who hold or have held prominent public positions, or who are close family members or associates of such people.
+        </p>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <p className="text-sm text-foreground/90">
+            Are you, or is an immediate family member or close associate, a current or former senior government official, judge, military officer, or executive of a state-owned enterprise?
+          </p>
+          <Segmented value={data.pepStatus} onChange={(v: "yes" | "no") => update("pepStatus", v)} />
+        </div>
+        {data.pepStatus === "yes" && (
+          <div className="mt-4">
+            <Field label="Please provide details (role, country, relationship, dates)">
+              <textarea
+                rows={3}
+                className={`${inputCls} h-auto py-2`}
+                value={data.pepDetails}
+                onChange={(e) => update("pepDetails", e.target.value)}
+              />
+            </Field>
+          </div>
+        )}
+      </div>
+
+      {/* Section 4 — Declaration */}
       <div className="mt-6">
         <Consent checked={data.taxDeclaration} onChange={(v: boolean) => update("taxDeclaration", v)}>
           I declare that the information provided in this section is true, accurate, and complete, and I will notify SUMERGE of any change in circumstances that affects my tax residency status.
