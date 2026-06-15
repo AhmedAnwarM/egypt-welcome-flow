@@ -607,8 +607,8 @@ function CaptureIdStep({ data, update, goToStep }: any) {
 
 function UploadRow({ label, fileName, done, onClick, onDelete, optional }: { label: string; fileName: string; done: boolean; onClick: () => void; onDelete: () => void; optional?: boolean }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 px-5 py-4">
-      <div className="flex items-center gap-3">
+    <div className="flex flex-col gap-3 px-4 py-4 sm:grid sm:grid-cols-[minmax(0,1fr)_120px_180px] sm:items-center sm:gap-4 sm:px-5">
+      <div className="flex min-w-0 items-center gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-secondary/60 text-primary">
           <FileText className="h-5 w-5" />
         </span>
@@ -623,11 +623,11 @@ function UploadRow({ label, fileName, done, onClick, onDelete, optional }: { lab
           )}
         </div>
       </div>
-      <div className={`text-center text-sm font-medium ${done ? "text-primary" : "text-muted-foreground"}`}>
+      <div className={`text-left text-sm font-medium sm:text-center ${done ? "text-primary" : "text-muted-foreground"}`}>
         {done ? "Uploaded" : "Pending"}
       </div>
       {done ? (
-        <div className="flex items-center justify-center gap-4 text-sm font-medium">
+        <div className="flex items-center justify-start gap-4 text-sm font-medium sm:justify-center">
           <button type="button" className="inline-flex items-center gap-1.5 text-primary hover:underline">
             <Eye className="h-4 w-4" /> Open
           </button>
@@ -636,15 +636,15 @@ function UploadRow({ label, fileName, done, onClick, onDelete, optional }: { lab
           </button>
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex flex-col items-stretch gap-1 sm:items-center">
           <button
             type="button"
             onClick={onClick}
-            className="inline-flex w-full max-w-[180px] items-center justify-center gap-2 rounded-full border-2 border-dashed border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/60 hover:text-primary"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-dashed border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/60 hover:text-primary sm:max-w-[180px]"
           >
             <Upload className="h-4 w-4" /> Upload
           </button>
-          <span className="text-[11px] text-muted-foreground">Accepts .jpg, .png</span>
+          <span className="text-[11px] text-muted-foreground sm:text-center">Accepts .jpg, .png</span>
         </div>
       )}
     </div>
