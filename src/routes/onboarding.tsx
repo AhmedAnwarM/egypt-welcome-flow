@@ -126,15 +126,14 @@ function Onboarding() {
 
   // Step 3 verification simulation: when ID doc uploaded, cycle through statuses
   useEffect(() => {
-    if (data.idDoc && verifyStage === "idle") {
-      setVerifyStage("checking");
-      const t = setTimeout(() => setVerifyStage("done"), 4500);
-      return () => clearTimeout(t);
-    }
-    if (!data.idDoc && verifyStage !== "idle") {
+    if (!data.idDoc) {
       setVerifyStage("idle");
+      return;
     }
-  }, [data.idDoc, verifyStage]);
+    setVerifyStage("checking");
+    const t = setTimeout(() => setVerifyStage("done"), 4500);
+    return () => clearTimeout(t);
+  }, [data.idDoc]);
 
   const handleLang = (l: "en" | "ar") => {
     setLang(l);
