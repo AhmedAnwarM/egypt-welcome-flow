@@ -29,6 +29,8 @@ function Onboarding() {
   const [step, setStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
   const [residencyType, setResidencyType] = useState<"" | "egyptian" | "foreign">("");
+  const [accountStatus, setAccountStatus] = useState<"" | "provisional" | "pending_review" | "active">("");
+  const [taskStatus, setTaskStatus] = useState<{ aml: "pending" | "complete" | "review"; verify: "pending" | "complete" | "review"; activate: "pending" | "complete" | "review" }>({ aml: "pending", verify: "pending", activate: "pending" });
   const [data, setData] = useState({
     productChoice: "",
     phone: "",
@@ -78,6 +80,23 @@ function Onboarding() {
     setStep((s) => {
       const n = Math.min(steps.length, s + 1);
       setMaxStep((m) => Math.max(m, n));
+      if (s === steps.length - 1 && n === steps.length) {
+        // Submission: enter provisional state and simulate background checks
+        setAccountStatus("provisional");
+        setTaskStatus({ aml: "pending", verify: "pending", activate: "pending" });
+        const mockFailure = false; // default mock outcome: all pass
+        setTimeout(() => setTaskStatus((t) => ({ ...t, aml: "complete" })), 3000);
+        setTimeout(() => setTaskStatus((t) => ({ ...t, verify: "complete" })), 6000);
+        setTimeout(() => {
+          if (mockFailure) {
+            setTaskStatus((t) => ({ ...t, activate: "review" }));
+            setAccountStatus("pending_review");
+          } else {
+            setTaskStatus((t) => ({ ...t, activate: "complete" }));
+            setAccountStatus("active");
+          }
+        }, 9000);
+      }
       return n;
     });
   const back = () => setStep((s) => Math.max(0, s - 1));
