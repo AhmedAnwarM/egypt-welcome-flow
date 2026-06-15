@@ -190,10 +190,26 @@ function Onboarding() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[linear-gradient(180deg,#dff0ea_0%,#e6f3ee_50%,#edf6f2_100%)]">
-      <TopBar refId="EGY140626-476" />
+      <TopBar refId="EGY140626-476" lang={lang} onLang={handleLang} />
       <main className="flex-1">
+      {resumed && (
+        <div className="mx-auto mt-4 max-w-3xl px-4 sm:px-6">
+          <div className="flex items-start gap-3 rounded-xl border border-secondary/40 bg-secondary/15 px-4 py-3 text-sm text-foreground">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
+            <p><span className="font-semibold">Welcome back</span> — resuming your application. Your reference is <span className="font-mono font-bold">{refId}</span>.</p>
+          </div>
+        </div>
+      )}
+      {showArNote && (
+        <div className="mx-auto mt-4 max-w-3xl px-4 sm:px-6">
+          <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary font-medium">
+            Arabic interface coming soon.
+          </div>
+        </div>
+      )}
       {!residencyType ? (
         <div className="mx-auto max-w-3xl px-6 py-14">
+          <CardToolbar onSave={() => setShowSaveModal(true)} />
           <ResidencyPrescreen onSelect={selectResidency} />
         </div>
       ) : step >= steps.length ? (
@@ -205,9 +221,13 @@ function Onboarding() {
           <HorizontalStepper current={step} maxReached={maxStep} onJump={(i) => setStep(i)} />
           <section className="mt-6 min-h-[560px]">
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
+              <CardToolbar onSave={() => setShowSaveModal(true)} />
               {step === 0 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
-              {step === 1 && <ContactStep data={data} update={update} />}
-              {step === 2 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} />}
+              {step === 1 && !otpStage && <ContactStep data={data} update={update} />}
+              {step === 1 && otpStage && (
+                <OtpPanel data={data} update={update} />
+              )}
+              {step === 2 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
               {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(0)} />}
               {step === 4 && <TaxStep data={data} update={update} />}
               {step === 5 && <AddressStep data={data} update={update} />}
@@ -217,20 +237,32 @@ function Onboarding() {
                 <button
                   type="button"
                   onClick={back}
-                  disabled={step === 0}
+                  disabled={step === 0 && !otpStage}
                   className="inline-flex h-11 items-center rounded-full border border-border bg-background px-6 text-sm font-semibold text-foreground/80 hover:bg-secondary/40 disabled:opacity-40"
                 >
                   Back
                 </button>
-                <Button
-                  size="lg"
-                  onClick={next}
-                  disabled={!canContinue}
-                  className="h-11 rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2"
-                >
-                  {step === steps.length - 1 ? "Submit application" : "Continue"}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+                {otpStage ? (
+                  <Button
+                    size="lg"
+                    onClick={verifyOtpAndContinue}
+                    disabled={!(data.mobileCode.length === 6 && data.emailCode.length === 6)}
+                    className="h-11 rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2"
+                  >
+                    Verify and continue
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    size="lg"
+                    onClick={next}
+                    disabled={!canContinue}
+                    className="h-11 rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2"
+                  >
+                    {step === steps.length - 1 ? "Submit application" : "Continue"}
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
           </section>
@@ -238,6 +270,7 @@ function Onboarding() {
       )}
       </main>
       <Footer />
+      {showSaveModal && <SaveModal refId={refId} onClose={() => setShowSaveModal(false)} />}
     </div>
   );
 }
