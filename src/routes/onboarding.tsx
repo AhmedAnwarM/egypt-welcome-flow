@@ -286,7 +286,7 @@ function StepHeader({ title, subtitle }: { title: string; subtitle?: string }) {
 function ResidencyPrescreen({ onSelect }: { onSelect: (r: "egyptian" | "foreign") => void }) {
   const opts: { id: "egyptian" | "foreign"; label: string; icon: any; desc: string }[] = [
     { id: "egyptian", label: "Egyptian national", icon: IdCard, desc: "I'll verify with my Egyptian National ID." },
-    { id: "foreign", label: "Foreign national", icon: BookUser, desc: "I'll verify with my passport." },
+    { id: "foreign", label: "Passport", icon: BookUser, desc: "I'll verify with my passport." },
   ];
   return (
     <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
