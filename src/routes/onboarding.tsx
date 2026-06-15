@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2, Info, Plus, X } from "lucide-react";
+import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2, Info, Plus, X, BookUser } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 import Footer from "@/components/site/Footer";
 
@@ -28,6 +28,7 @@ const steps = [
 function Onboarding() {
   const [step, setStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
+  const [residencyType, setResidencyType] = useState<"" | "egyptian" | "foreign">("");
   const [data, setData] = useState({
     productChoice: "",
     phone: "",
@@ -81,6 +82,16 @@ function Onboarding() {
     });
   const back = () => setStep((s) => Math.max(0, s - 1));
 
+  const selectResidency = (r: "egyptian" | "foreign") => {
+    setResidencyType(r);
+    const dt = r === "foreign" ? "passport" : "nationalId";
+    setData((d) => ({
+      ...d,
+      docType: dt,
+      nationality: dt === "nationalId" ? "Egyptian" : "",
+    }));
+  };
+
   const canContinue = (() => {
     switch (step) {
       case 0: return !!data.productChoice;
@@ -119,7 +130,11 @@ function Onboarding() {
     <div className="min-h-screen flex flex-col bg-[linear-gradient(180deg,#dff0ea_0%,#e6f3ee_50%,#edf6f2_100%)]">
       <TopBar refId="EGY140626-476" />
       <main className="flex-1">
-      {step >= steps.length ? (
+      {!residencyType ? (
+        <div className="mx-auto max-w-3xl px-6 py-14">
+          <ResidencyPrescreen onSelect={selectResidency} />
+        </div>
+      ) : step >= steps.length ? (
         <div className="mx-auto max-w-3xl px-6 py-16">
           <SuccessStep />
         </div>
@@ -131,9 +146,9 @@ function Onboarding() {
           </aside>
           <section className="min-h-[560px]">
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
-              {step === 0 && <ChooseOptionStep data={data} update={update} />}
+              {step === 0 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
               {step === 1 && <ContactStep data={data} update={update} />}
-              {step === 2 && <CaptureIdStep data={data} update={update} />}
+              {step === 2 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} />}
               {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(0)} />}
               {step === 4 && <TaxStep data={data} update={update} />}
               {step === 5 && <AddressStep data={data} update={update} />}
