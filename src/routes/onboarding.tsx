@@ -186,18 +186,18 @@ function Onboarding() {
 function TopBar({ refId }: { refId?: string }) {
   return (
     <header className="bg-background/90 backdrop-blur border-b border-border/60">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-10 py-5">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-10 sm:py-5">
         <Link to="/" aria-label="SUMERGE home" className="flex items-center">
-          <img src={sumergeLogo.url} alt="SUMERGE" className="h-8 w-auto" />
+          <img src={sumergeLogo.url} alt="SUMERGE" className="h-7 w-auto sm:h-8" />
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           {refId && (
-            <div className="text-right leading-tight">
-              <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">Reference Number</p>
-              <p className="text-sm font-mono font-bold text-primary">{refId}</p>
+            <div className="min-w-0 text-right leading-tight">
+              <p className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground font-semibold sm:text-[10px]">Reference</p>
+              <p className="truncate text-xs font-mono font-bold text-primary sm:text-sm">{refId}</p>
             </div>
           )}
-          <Link to="/" aria-label="Sign in" className="text-foreground/70 hover:text-primary">
+          <Link to="/" aria-label="Sign in" className="shrink-0 text-foreground/70 hover:text-primary">
             <LogIn className="h-4 w-4" />
           </Link>
         </div>
