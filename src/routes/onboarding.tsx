@@ -902,9 +902,15 @@ function Consent({ checked, onChange, children }: { checked: boolean; onChange: 
   );
 }
 
-function SuccessStep() {
-  // placeholder anchor
-  return <SuccessStepInner />;
+type TaskState = "pending" | "complete" | "review";
+type AccountStatus = "provisional" | "pending_review" | "active";
+type SuccessProps = {
+  accountStatus: AccountStatus;
+  taskStatus: { aml: TaskState; verify: TaskState; activate: TaskState };
+  productChoice: string;
+};
+function SuccessStep(props: SuccessProps) {
+  return <SuccessStepInner {...props} />;
 }
 
 const COUNTRIES = ["United Arab Emirates","Saudi Arabia","United Kingdom","United States","Canada","Germany","France","Italy","Spain","Netherlands","Switzerland","Sweden","Australia","Japan","China","India","Turkey","Lebanon","Jordan","Kuwait","Qatar","Bahrain","Oman","Morocco","Tunisia","Sudan","South Africa","Other"];
