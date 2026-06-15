@@ -725,7 +725,7 @@ function ContactStep({ data, update }: any) {
   );
 }
 
-function CaptureIdStep({ data, update, goToStep }: any) {
+function CaptureIdStep({ data, update, goToStep, verifyStage }: any) {
   const isPassport = data.docType === "passport";
   const impliedResidency = isPassport ? "foreign" : "egyptian";
   // Look up selected product's availability — kept in sync with ChooseOptionStep (placeholder all-allowed).
@@ -763,6 +763,8 @@ function CaptureIdStep({ data, update, goToStep }: any) {
     update("dob", "");
     update("expiry", "");
   };
+  const showOcr = data.idDoc && verifyStage === "done";
+  const showChecking = data.idDoc && verifyStage === "checking";
   return (
     <div>
       <StepHeader title="Verify your identity" subtitle="Choose the document you'd like to use to verify your identity." />
@@ -810,9 +812,16 @@ function CaptureIdStep({ data, update, goToStep }: any) {
         )}
       </div>
 
-      {data.idDoc && !isPassport && (
+      {showChecking && (
+        <VerifyingCard />
+      )}
+
+      {showOcr && !isPassport && (
         <div className="mt-8 rounded-xl border border-border bg-secondary/30 p-6">
-          <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
+          <div className="flex flex-wrap items-center gap-3">
+            <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
+            <VerifiedBadge />
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">Your personal info has been captured from your National ID</p>
           <div className="mt-5 rounded-lg border border-border bg-background p-5">
             <div className="flex items-center gap-3 border-b border-border pb-4">
@@ -839,9 +848,12 @@ function CaptureIdStep({ data, update, goToStep }: any) {
         </div>
       )}
 
-      {data.idDoc && isPassport && (
+      {showOcr && isPassport && (
         <div className="mt-8 rounded-xl border border-border bg-secondary/30 p-6">
-          <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
+          <div className="flex flex-wrap items-center gap-3">
+            <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
+            <VerifiedBadge />
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">Your personal info has been captured from your passport</p>
           <div className="mt-5 rounded-lg border border-border bg-background p-5">
             <div className="flex items-center gap-3 border-b border-border pb-4">
