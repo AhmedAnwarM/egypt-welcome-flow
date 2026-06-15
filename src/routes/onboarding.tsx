@@ -29,6 +29,14 @@ function Onboarding() {
   const [step, setStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
   const [residencyType, setResidencyType] = useState<"" | "egyptian" | "foreign">("");
+  const [lang, setLang] = useState<"en" | "ar">("en");
+  const [showArNote, setShowArNote] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [otpStage, setOtpStage] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [verifyStage, setVerifyStage] = useState<"idle" | "checking" | "done">("idle");
+  const [resumed, setResumed] = useState(false);
+  const refId = useMemo(() => `SM-2026-${String(Math.floor(100000 + Math.random() * 900000))}`, []);
   const [data, setData] = useState({
     productChoice: "",
     phone: "",
@@ -37,6 +45,8 @@ function Onboarding() {
     promo: "",
     otpSent: false,
     otp: "",
+    mobileCode: "",
+    emailCode: "",
     nationalId: "",
     fullName: "",
     firstName: "",
@@ -60,6 +70,9 @@ function Onboarding() {
     confirmPassword: "",
     agreeTerms: false,
     agreeCredit: false,
+    pepStatus: "" as "" | "yes" | "no",
+    pepDetails: "",
+    mfaMethod: "sms" as "sms" | "app",
     idDoc: false,
     // Document type for step 3
     docType: "nationalId" as "nationalId" | "passport",
@@ -74,13 +87,59 @@ function Onboarding() {
     taxDeclaration: false,
   });
   const update = (k: keyof typeof data, v: any) => setData((d) => ({ ...d, [k]: v }));
-  const next = () =>
+  const advance = () =>
     setStep((s) => {
       const n = Math.min(steps.length, s + 1);
       setMaxStep((m) => Math.max(m, n));
       return n;
     });
-  const back = () => setStep((s) => Math.max(0, s - 1));
+  const next = () => {
+    if (step === 1 && !otpVerified) {
+      setOtpStage(true);
+      return;
+    }
+    advance();
+  };
+  const back = () => {
+    if (step === 1 && otpStage) {
+      setOtpStage(false);
+      return;
+    }
+    setStep((s) => Math.max(0, s - 1));
+  };
+  const verifyOtpAndContinue = () => {
+    setOtpVerified(true);
+    setOtpStage(false);
+    advance();
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("resume") === "1") {
+      setResumed(true);
+      setResidencyType("egyptian");
+      setStep(0);
+      setMaxStep(0);
+    }
+  }, []);
+
+  // Step 3 verification simulation: when ID doc uploaded, cycle through statuses
+  useEffect(() => {
+    if (data.idDoc && verifyStage === "idle") {
+      setVerifyStage("checking");
+      const t = setTimeout(() => setVerifyStage("done"), 4500);
+      return () => clearTimeout(t);
+    }
+    if (!data.idDoc && verifyStage !== "idle") {
+      setVerifyStage("idle");
+    }
+  }, [data.idDoc, verifyStage]);
+
+  const handleLang = (l: "en" | "ar") => {
+    setLang(l);
+    setShowArNote(l === "ar");
+  };
 
   const selectResidency = (r: "egyptian" | "foreign") => {
     setResidencyType(r);
@@ -98,6 +157,7 @@ function Onboarding() {
       case 1: return data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail;
       case 2: {
         if (!data.idDoc || data.fullName.trim().length <= 3) return false;
+        if (verifyStage !== "done") return false;
         if (data.docType === "passport") {
           return !!data.passportNumber.trim() && !!data.nationality.trim() && !!data.dob && !!data.expiry;
         }
@@ -115,12 +175,14 @@ function Onboarding() {
           if (data.crsRows.length === 0) return false;
           if (!data.crsRows.some((r: any) => r.country && r.tin.trim())) return false;
         }
+        if (!data.pepStatus) return false;
+        if (data.pepStatus === "yes" && !data.pepDetails.trim()) return false;
         return true;
       }
       case 5: return !!data.governorate && !!data.city.trim() && !!data.street.trim();
       case 6: {
         const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
-        return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit;
+        return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit && !!data.mfaMethod;
       }
       default: return true;
     }
