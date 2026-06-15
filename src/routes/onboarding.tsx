@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2, Info, Plus, X, BookUser } from "lucide-react";
+import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2, Info, Plus, X, BookUser, ShieldCheck, Smartphone, KeyRound, Globe, Loader2, BookmarkPlus } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 import Footer from "@/components/site/Footer";
 
@@ -29,6 +29,14 @@ function Onboarding() {
   const [step, setStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
   const [residencyType, setResidencyType] = useState<"" | "egyptian" | "foreign">("");
+  const [lang, setLang] = useState<"en" | "ar">("en");
+  const [showArNote, setShowArNote] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [otpStage, setOtpStage] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [verifyStage, setVerifyStage] = useState<"idle" | "checking" | "done">("idle");
+  const [resumed, setResumed] = useState(false);
+  const refId = useMemo(() => `SM-2026-${String(Math.floor(100000 + Math.random() * 900000))}`, []);
   const [data, setData] = useState({
     productChoice: "",
     phone: "",
@@ -37,6 +45,8 @@ function Onboarding() {
     promo: "",
     otpSent: false,
     otp: "",
+    mobileCode: "",
+    emailCode: "",
     nationalId: "",
     fullName: "",
     firstName: "",
@@ -60,6 +70,9 @@ function Onboarding() {
     confirmPassword: "",
     agreeTerms: false,
     agreeCredit: false,
+    pepStatus: "" as "" | "yes" | "no",
+    pepDetails: "",
+    mfaMethod: "sms" as "sms" | "app",
     idDoc: false,
     // Document type for step 3
     docType: "nationalId" as "nationalId" | "passport",
@@ -74,13 +87,59 @@ function Onboarding() {
     taxDeclaration: false,
   });
   const update = (k: keyof typeof data, v: any) => setData((d) => ({ ...d, [k]: v }));
-  const next = () =>
+  const advance = () =>
     setStep((s) => {
       const n = Math.min(steps.length, s + 1);
       setMaxStep((m) => Math.max(m, n));
       return n;
     });
-  const back = () => setStep((s) => Math.max(0, s - 1));
+  const next = () => {
+    if (step === 1 && !otpVerified) {
+      setOtpStage(true);
+      return;
+    }
+    advance();
+  };
+  const back = () => {
+    if (step === 1 && otpStage) {
+      setOtpStage(false);
+      return;
+    }
+    setStep((s) => Math.max(0, s - 1));
+  };
+  const verifyOtpAndContinue = () => {
+    setOtpVerified(true);
+    setOtpStage(false);
+    advance();
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("resume") === "1") {
+      setResumed(true);
+      setResidencyType("egyptian");
+      setStep(0);
+      setMaxStep(0);
+    }
+  }, []);
+
+  // Step 3 verification simulation: when ID doc uploaded, cycle through statuses
+  useEffect(() => {
+    if (data.idDoc && verifyStage === "idle") {
+      setVerifyStage("checking");
+      const t = setTimeout(() => setVerifyStage("done"), 4500);
+      return () => clearTimeout(t);
+    }
+    if (!data.idDoc && verifyStage !== "idle") {
+      setVerifyStage("idle");
+    }
+  }, [data.idDoc, verifyStage]);
+
+  const handleLang = (l: "en" | "ar") => {
+    setLang(l);
+    setShowArNote(l === "ar");
+  };
 
   const selectResidency = (r: "egyptian" | "foreign") => {
     setResidencyType(r);
@@ -98,6 +157,7 @@ function Onboarding() {
       case 1: return data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail;
       case 2: {
         if (!data.idDoc || data.fullName.trim().length <= 3) return false;
+        if (verifyStage !== "done") return false;
         if (data.docType === "passport") {
           return !!data.passportNumber.trim() && !!data.nationality.trim() && !!data.dob && !!data.expiry;
         }
@@ -115,12 +175,14 @@ function Onboarding() {
           if (data.crsRows.length === 0) return false;
           if (!data.crsRows.some((r: any) => r.country && r.tin.trim())) return false;
         }
+        if (!data.pepStatus) return false;
+        if (data.pepStatus === "yes" && !data.pepDetails.trim()) return false;
         return true;
       }
       case 5: return !!data.governorate && !!data.city.trim() && !!data.street.trim();
       case 6: {
         const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
-        return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit;
+        return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit && !!data.mfaMethod;
       }
       default: return true;
     }
@@ -128,10 +190,26 @@ function Onboarding() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[linear-gradient(180deg,#dff0ea_0%,#e6f3ee_50%,#edf6f2_100%)]">
-      <TopBar refId="EGY140626-476" />
+      <TopBar refId="EGY140626-476" lang={lang} onLang={handleLang} />
       <main className="flex-1">
+      {resumed && (
+        <div className="mx-auto mt-4 max-w-3xl px-4 sm:px-6">
+          <div className="flex items-start gap-3 rounded-xl border border-secondary/40 bg-secondary/15 px-4 py-3 text-sm text-foreground">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
+            <p><span className="font-semibold">Welcome back</span> — resuming your application. Your reference is <span className="font-mono font-bold">{refId}</span>.</p>
+          </div>
+        </div>
+      )}
+      {showArNote && (
+        <div className="mx-auto mt-4 max-w-3xl px-4 sm:px-6">
+          <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary font-medium">
+            Arabic interface coming soon.
+          </div>
+        </div>
+      )}
       {!residencyType ? (
         <div className="mx-auto max-w-3xl px-6 py-14">
+          <CardToolbar onSave={() => setShowSaveModal(true)} />
           <ResidencyPrescreen onSelect={selectResidency} />
         </div>
       ) : step >= steps.length ? (
@@ -143,9 +221,13 @@ function Onboarding() {
           <HorizontalStepper current={step} maxReached={maxStep} onJump={(i) => setStep(i)} />
           <section className="mt-6 min-h-[560px]">
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
+              <CardToolbar onSave={() => setShowSaveModal(true)} />
               {step === 0 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
-              {step === 1 && <ContactStep data={data} update={update} />}
-              {step === 2 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} />}
+              {step === 1 && !otpStage && <ContactStep data={data} update={update} />}
+              {step === 1 && otpStage && (
+                <OtpPanel data={data} update={update} />
+              )}
+              {step === 2 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
               {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(0)} />}
               {step === 4 && <TaxStep data={data} update={update} />}
               {step === 5 && <AddressStep data={data} update={update} />}
@@ -155,20 +237,32 @@ function Onboarding() {
                 <button
                   type="button"
                   onClick={back}
-                  disabled={step === 0}
+                  disabled={step === 0 && !otpStage}
                   className="inline-flex h-11 items-center rounded-full border border-border bg-background px-6 text-sm font-semibold text-foreground/80 hover:bg-secondary/40 disabled:opacity-40"
                 >
                   Back
                 </button>
-                <Button
-                  size="lg"
-                  onClick={next}
-                  disabled={!canContinue}
-                  className="h-11 rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2"
-                >
-                  {step === steps.length - 1 ? "Submit application" : "Continue"}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+                {otpStage ? (
+                  <Button
+                    size="lg"
+                    onClick={verifyOtpAndContinue}
+                    disabled={!(data.mobileCode.length === 6 && data.emailCode.length === 6)}
+                    className="h-11 rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2"
+                  >
+                    Verify and continue
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    size="lg"
+                    onClick={next}
+                    disabled={!canContinue}
+                    className="h-11 rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2"
+                  >
+                    {step === steps.length - 1 ? "Submit application" : "Continue"}
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
           </section>
@@ -176,11 +270,12 @@ function Onboarding() {
       )}
       </main>
       <Footer />
+      {showSaveModal && <SaveModal refId={refId} onClose={() => setShowSaveModal(false)} />}
     </div>
   );
 }
 
-function TopBar({ refId }: { refId?: string }) {
+function TopBar({ refId, lang, onLang }: { refId?: string; lang: "en" | "ar"; onLang: (l: "en" | "ar") => void }) {
   return (
     <header className="bg-background/90 backdrop-blur border-b border-border/60">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-10 sm:py-5">
@@ -194,12 +289,143 @@ function TopBar({ refId }: { refId?: string }) {
               <p className="truncate text-xs font-mono font-bold text-primary sm:text-sm">{refId}</p>
             </div>
           )}
+          <LangToggle lang={lang} onChange={onLang} />
           <Link to="/" aria-label="Sign in" className="shrink-0 text-foreground/70 hover:text-primary">
             <LogIn className="h-4 w-4" />
           </Link>
         </div>
       </div>
     </header>
+  );
+}
+
+function LangToggle({ lang, onChange }: { lang: "en" | "ar"; onChange: (l: "en" | "ar") => void }) {
+  return (
+    <div
+      role="group"
+      aria-label="Language"
+      className="inline-flex shrink-0 items-center rounded-full border border-border bg-background p-0.5 text-[11px] font-semibold"
+    >
+      <Globe className="mx-1 h-3 w-3 text-muted-foreground" />
+      {(["en", "ar"] as const).map((l) => {
+        const active = lang === l;
+        return (
+          <button
+            key={l}
+            type="button"
+            onClick={() => onChange(l)}
+            className={`rounded-full px-2 py-0.5 uppercase tracking-wider transition-colors ${active ? "bg-secondary text-secondary-foreground" : "text-foreground/70 hover:text-foreground"}`}
+          >
+            {l}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function CardToolbar({ onSave }: { onSave: () => void }) {
+  return (
+    <div className="mb-4 flex justify-end">
+      <button
+        type="button"
+        onClick={onSave}
+        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
+      >
+        <BookmarkPlus className="h-3.5 w-3.5" />
+        Save and continue later
+      </button>
+    </div>
+  );
+}
+
+function SaveModal({ refId, onClose }: { refId: string; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-2xl bg-card p-6 shadow-elegant"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-secondary/30 text-secondary">
+            <BookmarkPlus className="h-5 w-5" />
+          </span>
+          <div>
+            <h3 className="text-lg font-bold text-primary">Save your progress</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Your application reference number can be used to resume where you left off.
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 rounded-xl border border-border bg-secondary/15 px-4 py-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Reference</p>
+          <p className="text-base font-mono font-bold text-primary">{refId}</p>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          We've also emailed this reference to you. You can resume from the SUMERGE landing page anytime.
+        </p>
+        <div className="mt-5 flex justify-end">
+          <Button onClick={onClose} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
+            Got it
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OtpField({ label, value, onChange, resendIn, onResend }: { label: string; value: string; onChange: (v: string) => void; resendIn: number; onResend: () => void }) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</label>
+      <input
+        inputMode="numeric"
+        maxLength={6}
+        placeholder="••••••"
+        value={value}
+        onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, 6))}
+        className="h-12 w-full rounded-md border border-border bg-background px-3 text-center text-lg font-mono tracking-[0.5em] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+      />
+      <div className="mt-1.5 text-xs">
+        {resendIn > 0 ? (
+          <span className="text-muted-foreground">Resend in 0:{String(resendIn).padStart(2, "0")}</span>
+        ) : (
+          <button type="button" onClick={onResend} className="font-semibold text-primary hover:underline">
+            Resend code
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function OtpPanel({ data, update }: any) {
+  const [resendIn, setResendIn] = useState(30);
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = setInterval(() => setResendIn((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [resendIn]);
+  const resend = () => setResendIn(30);
+  return (
+    <div>
+      <StepHeader title="Verify your contact details" subtitle="Enter the codes we sent to your mobile and email" />
+      <div className="rounded-xl border border-border bg-secondary/10 p-4 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
+          <span><Smartphone className="mr-1 inline h-3.5 w-3.5 text-primary" />+20 {data.phone || "your mobile"}</span>
+          <span><PhoneCall className="mr-1 inline h-3.5 w-3.5 text-primary" />{data.email || "your email"}</span>
+        </div>
+      </div>
+      <div className="mt-5 grid gap-5 md:grid-cols-2">
+        <OtpField label="Mobile code" value={data.mobileCode} onChange={(v) => update("mobileCode", v)} resendIn={resendIn} onResend={resend} />
+        <OtpField label="Email code" value={data.emailCode} onChange={(v) => update("emailCode", v)} resendIn={resendIn} onResend={resend} />
+      </div>
+      <p className="mt-4 text-xs text-muted-foreground">
+        For this demo, any 6-digit code is accepted.
+      </p>
+    </div>
   );
 }
 
@@ -499,7 +725,7 @@ function ContactStep({ data, update }: any) {
   );
 }
 
-function CaptureIdStep({ data, update, goToStep }: any) {
+function CaptureIdStep({ data, update, goToStep, verifyStage }: any) {
   const isPassport = data.docType === "passport";
   const impliedResidency = isPassport ? "foreign" : "egyptian";
   // Look up selected product's availability — kept in sync with ChooseOptionStep (placeholder all-allowed).
@@ -537,6 +763,8 @@ function CaptureIdStep({ data, update, goToStep }: any) {
     update("dob", "");
     update("expiry", "");
   };
+  const showOcr = data.idDoc && verifyStage === "done";
+  const showChecking = data.idDoc && verifyStage === "checking";
   return (
     <div>
       <StepHeader title="Verify your identity" subtitle="Choose the document you'd like to use to verify your identity." />
@@ -584,9 +812,16 @@ function CaptureIdStep({ data, update, goToStep }: any) {
         )}
       </div>
 
-      {data.idDoc && !isPassport && (
+      {showChecking && (
+        <VerifyingCard />
+      )}
+
+      {showOcr && !isPassport && (
         <div className="mt-8 rounded-xl border border-border bg-secondary/30 p-6">
-          <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
+          <div className="flex flex-wrap items-center gap-3">
+            <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
+            <VerifiedBadge />
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">Your personal info has been captured from your National ID</p>
           <div className="mt-5 rounded-lg border border-border bg-background p-5">
             <div className="flex items-center gap-3 border-b border-border pb-4">
@@ -613,9 +848,12 @@ function CaptureIdStep({ data, update, goToStep }: any) {
         </div>
       )}
 
-      {data.idDoc && isPassport && (
+      {showOcr && isPassport && (
         <div className="mt-8 rounded-xl border border-border bg-secondary/30 p-6">
-          <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
+          <div className="flex flex-wrap items-center gap-3">
+            <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
+            <VerifiedBadge />
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">Your personal info has been captured from your passport</p>
           <div className="mt-5 rounded-lg border border-border bg-background p-5">
             <div className="flex items-center gap-3 border-b border-border pb-4">
@@ -703,6 +941,37 @@ const PRODUCT_LABELS: Record<string, string> = {
   "prime-saving": "Prime Saving Account",
   "current-365": "Current Account 365 Days",
 };
+
+function VerifyingCard() {
+  const messages = [
+    "Checking document authenticity...",
+    "Verifying against national ID records...",
+    "Extracting your details...",
+  ];
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setIdx((i) => (i + 1) % messages.length), 1500);
+    return () => clearInterval(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <div className="mt-8 flex items-center gap-4 rounded-xl border border-secondary/40 bg-secondary/20 p-5">
+      <Loader2 className="h-6 w-6 shrink-0 animate-spin text-primary" />
+      <div>
+        <p className="text-sm font-bold text-primary">Verifying your document</p>
+        <p className="mt-0.5 text-sm text-foreground/80">{messages[idx]}</p>
+      </div>
+    </div>
+  );
+}
+
+function VerifiedBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
+      <ShieldCheck className="h-3.5 w-3.5" /> Verified
+    </span>
+  );
+}
 
 function SelectionRecap({ data, onChange }: any) {
   const label = PRODUCT_LABELS[data.productChoice] || "Account selected";
@@ -893,6 +1162,8 @@ function CredentialsStep({ data, update }: any) {
         </div>
       </div>
 
+      <MfaSection data={data} update={update} />
+
       <div className="mt-6 space-y-3">
         <Consent checked={data.agreeTerms} onChange={(v: boolean) => update("agreeTerms", v)}>
           I agree to the <Link to="/" className="font-semibold text-primary hover:underline">Terms &amp; Conditions</Link> and <Link to="/" className="font-semibold text-primary hover:underline">Privacy Policy</Link>.
@@ -900,6 +1171,44 @@ function CredentialsStep({ data, update }: any) {
         <Consent checked={data.agreeCredit} onChange={(v: boolean) => update("agreeCredit", v)}>
           I consent to a credit bureau check as part of this application.
         </Consent>
+      </div>
+    </div>
+  );
+}
+
+function MfaSection({ data, update }: any) {
+  const opts: { id: "sms" | "app"; icon: any; title: string; desc: string }[] = [
+    { id: "sms", icon: Smartphone, title: "SMS verification codes", desc: "Codes sent to your mobile number for each login." },
+    { id: "app", icon: KeyRound, title: "Authenticator app", desc: "Use an app like Google Authenticator for login codes." },
+  ];
+  return (
+    <div className="mt-8 border-t border-border/60 pt-6">
+      <h3 className="text-base font-bold text-primary">Set up extra security</h3>
+      <p className="mt-1 text-sm text-muted-foreground">Add an extra layer of protection to your account.</p>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {opts.map((o) => {
+          const Icon = o.icon;
+          const selected = data.mfaMethod === o.id;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => update("mfaMethod", o.id)}
+              className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${selected ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border bg-background hover:border-primary/40"}`}
+            >
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${selected ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}>
+                <Icon className="h-5 w-5" />
+              </span>
+              <div className="flex-1">
+                <div className="text-sm font-bold text-foreground">{o.title}</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">{o.desc}</div>
+              </div>
+              <span className={`mt-1 h-4 w-4 shrink-0 rounded-full border-2 ${selected ? "border-primary bg-primary" : "border-border"}`}>
+                {selected && <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -1068,6 +1377,33 @@ function TaxStep({ data, update }: any) {
             >
               <Plus className="h-4 w-4" /> Add another country
             </button>
+          </div>
+        )}
+      </div>
+
+      {/* Section 4 — Declaration */}
+      {/* Section 3.5 — PEP */}
+      <div className="mt-6 rounded-xl border border-border bg-background p-5">
+        <h3 className="text-sm font-bold text-foreground">Politically exposed person (PEP) status</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          This is a standard regulatory question — not an accusation. Banks are required to identify customers who hold or have held prominent public positions, or who are close family members or associates of such people.
+        </p>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <p className="text-sm text-foreground/90">
+            Are you, or is an immediate family member or close associate, a current or former senior government official, judge, military officer, or executive of a state-owned enterprise?
+          </p>
+          <Segmented value={data.pepStatus} onChange={(v: "yes" | "no") => update("pepStatus", v)} />
+        </div>
+        {data.pepStatus === "yes" && (
+          <div className="mt-4">
+            <Field label="Please provide details (role, country, relationship, dates)">
+              <textarea
+                rows={3}
+                className={`${inputCls} h-auto py-2`}
+                value={data.pepDetails}
+                onChange={(e) => update("pepDetails", e.target.value)}
+              />
+            </Field>
           </div>
         )}
       </div>
