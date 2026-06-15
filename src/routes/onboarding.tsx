@@ -453,8 +453,18 @@ function ContactStep({ data, update }: any) {
   );
 }
 
-function CaptureIdStep({ data, update }: any) {
+function CaptureIdStep({ data, update, goToStep }: any) {
   const isPassport = data.docType === "passport";
+  const impliedResidency = isPassport ? "foreign" : "egyptian";
+  // Look up selected product's availability — kept in sync with ChooseOptionStep (placeholder all-allowed).
+  const PRODUCT_AVAILABILITY: Record<string, string[]> = {
+    "saving": ["egyptian", "foreign"],
+    "current": ["egyptian", "foreign"],
+    "prime-saving": ["egyptian", "foreign"],
+    "current-365": ["egyptian", "foreign"],
+  };
+  const productAvail = PRODUCT_AVAILABILITY[data.productChoice] || ["egyptian", "foreign"];
+  const mismatch = data.productChoice && !productAvail.includes(impliedResidency);
   const handleUploadNid = () => {
     update("idDoc", true);
     update("fullName", "Mohamed Ahmed Hassan");
@@ -496,6 +506,20 @@ function CaptureIdStep({ data, update }: any) {
           </select>
         </Field>
       </div>
+      {mismatch && (
+        <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4">
+          <p className="text-sm font-semibold text-amber-900">
+            {PRODUCT_LABELS[data.productChoice]} isn't available with this document type. Please go back and choose a different account.
+          </p>
+          <button
+            type="button"
+            onClick={() => goToStep(0)}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-amber-400 bg-background px-4 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+          >
+            Back to step 1
+          </button>
+        </div>
+      )}
       <h3 className="mb-4 text-lg font-bold text-primary">
         {isPassport
           ? "Please capture/upload your passport"
