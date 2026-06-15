@@ -1162,6 +1162,8 @@ function CredentialsStep({ data, update }: any) {
         </div>
       </div>
 
+      <MfaSection data={data} update={update} />
+
       <div className="mt-6 space-y-3">
         <Consent checked={data.agreeTerms} onChange={(v: boolean) => update("agreeTerms", v)}>
           I agree to the <Link to="/" className="font-semibold text-primary hover:underline">Terms &amp; Conditions</Link> and <Link to="/" className="font-semibold text-primary hover:underline">Privacy Policy</Link>.
@@ -1169,6 +1171,44 @@ function CredentialsStep({ data, update }: any) {
         <Consent checked={data.agreeCredit} onChange={(v: boolean) => update("agreeCredit", v)}>
           I consent to a credit bureau check as part of this application.
         </Consent>
+      </div>
+    </div>
+  );
+}
+
+function MfaSection({ data, update }: any) {
+  const opts: { id: "sms" | "app"; icon: any; title: string; desc: string }[] = [
+    { id: "sms", icon: Smartphone, title: "SMS verification codes", desc: "Codes sent to your mobile number for each login." },
+    { id: "app", icon: KeyRound, title: "Authenticator app", desc: "Use an app like Google Authenticator for login codes." },
+  ];
+  return (
+    <div className="mt-8 border-t border-border/60 pt-6">
+      <h3 className="text-base font-bold text-primary">Set up extra security</h3>
+      <p className="mt-1 text-sm text-muted-foreground">Add an extra layer of protection to your account.</p>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {opts.map((o) => {
+          const Icon = o.icon;
+          const selected = data.mfaMethod === o.id;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => update("mfaMethod", o.id)}
+              className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${selected ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border bg-background hover:border-primary/40"}`}
+            >
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${selected ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}>
+                <Icon className="h-5 w-5" />
+              </span>
+              <div className="flex-1">
+                <div className="text-sm font-bold text-foreground">{o.title}</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">{o.desc}</div>
+              </div>
+              <span className={`mt-1 h-4 w-4 shrink-0 rounded-full border-2 ${selected ? "border-primary bg-primary" : "border-border"}`}>
+                {selected && <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
