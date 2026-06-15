@@ -140,13 +140,23 @@ function Landing() {
         <section className="bg-muted/40 border-b border-border">
           <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">Already started?</span> Resume your application or track its progress at any time.
+              <span className="font-semibold text-foreground">Already started?</span> Enter your reference number to resume your application.
             </p>
-            <Link to="/status">
-              <Button size="sm" variant="outline" className="rounded-full border-primary/30 text-primary hover:bg-primary/5 hover:text-primary gap-1.5">
-                Continue or track <ArrowRight className="w-3.5 h-3.5" />
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                window.location.href = "/onboarding?resume=1";
+              }}
+              className="flex w-full max-w-sm items-center gap-2 sm:w-auto"
+            >
+              <input
+                placeholder="SM-2026-XXXXXX"
+                className="h-9 flex-1 rounded-full border border-border bg-background px-4 text-xs font-mono outline-none focus:border-primary/60 sm:w-52"
+              />
+              <Button type="submit" size="sm" variant="outline" className="rounded-full border-primary/30 text-primary hover:bg-primary/5 hover:text-primary gap-1.5">
+                Resume <ArrowRight className="w-3.5 h-3.5" />
               </Button>
-            </Link>
+            </form>
           </div>
         </section>
 
