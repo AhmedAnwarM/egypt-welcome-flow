@@ -139,12 +139,9 @@ function Onboarding() {
           <SuccessStep />
         </div>
       ) : (
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-10 md:grid-cols-[260px_1fr] md:py-14">
-          <aside className="space-y-5 md:sticky md:top-10 md:self-start">
-            <ProgressCard current={step} total={steps.length} />
-            <SideStepper current={step} maxReached={maxStep} onJump={(i) => setStep(i)} />
-          </aside>
-          <section className="min-h-[560px]">
+        <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 md:py-10">
+          <HorizontalStepper current={step} maxReached={maxStep} onJump={(i) => setStep(i)} />
+          <section className="mt-6 min-h-[560px]">
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
               {step === 0 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
               {step === 1 && <ContactStep data={data} update={update} />}
