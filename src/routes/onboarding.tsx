@@ -155,7 +155,7 @@ function Onboarding() {
         </div>
       ) : step >= steps.length ? (
         <div className="mx-auto max-w-3xl px-6 py-16">
-          <SuccessStep />
+          <SuccessStep accountStatus={accountStatus || "provisional"} taskStatus={taskStatus} productChoice={data.productChoice} />
         </div>
       ) : (
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-10 md:grid-cols-[260px_1fr] md:py-14">
