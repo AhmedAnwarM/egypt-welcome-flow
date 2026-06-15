@@ -494,18 +494,6 @@ function CaptureIdStep({ data, update, goToStep }: any) {
   return (
     <div>
       <StepHeader title="Verify your identity" subtitle="Choose the document you'd like to use to verify your identity." />
-      <div className="mb-6">
-        <Field label="Which document would you like to upload?">
-          <select
-            className={inputCls}
-            value={data.docType}
-            onChange={(e) => onDocTypeChange(e.target.value)}
-          >
-            <option value="nationalId">Egyptian National ID</option>
-            <option value="passport">Passport (foreign nationals)</option>
-          </select>
-        </Field>
-      </div>
       {mismatch && (
         <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4">
           <p className="text-sm font-semibold text-amber-900">
