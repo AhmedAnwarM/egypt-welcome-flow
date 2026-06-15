@@ -260,6 +260,55 @@ function SideStepper({ current, maxReached, onJump }: { current: number; maxReac
   );
 }
 
+function HorizontalStepper({ current, maxReached, onJump }: { current: number; maxReached: number; onJump: (i: number) => void }) {
+  const total = steps.length;
+  const safeCurrent = Math.min(current, total - 1);
+  const pct = Math.round(((safeCurrent + 1) / total) * 100);
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-primary sm:text-[11px]">Application Progress</p>
+          <p className="mt-0.5 truncate text-sm font-bold text-foreground">
+            Step {safeCurrent + 1} of {total} — {steps[safeCurrent]}
+          </p>
+        </div>
+        <span className="shrink-0 text-sm font-bold text-muted-foreground">{pct}%</span>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary/30">
+        <div className="h-full rounded-full bg-secondary transition-all" style={{ width: `${pct}%` }} />
+      </div>
+      <ol className="mt-4 flex items-center justify-between gap-1">
+        {steps.map((label, i) => {
+          const done = i < current;
+          const active = i === current;
+          const clickable = i <= maxReached;
+          return (
+            <li key={label} className="flex flex-1 justify-center">
+              <button
+                type="button"
+                disabled={!clickable}
+                onClick={() => clickable && onJump(i)}
+                title={label}
+                aria-label={label}
+                className={`flex h-7 w-7 items-center justify-center rounded-full border-2 text-[11px] font-semibold ${
+                  done
+                    ? "border-secondary bg-secondary text-secondary-foreground"
+                    : active
+                      ? "border-secondary bg-card text-primary"
+                      : "border-border bg-card text-muted-foreground"
+                } ${clickable ? "cursor-pointer hover:opacity-80" : "cursor-not-allowed"}`}
+              >
+                {done ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : i + 1}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
