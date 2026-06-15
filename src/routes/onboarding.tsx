@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2, Info, Plus, X } from "lucide-react";
+import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2, Info, Plus, X, BookUser } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 import Footer from "@/components/site/Footer";
 
@@ -28,6 +28,7 @@ const steps = [
 function Onboarding() {
   const [step, setStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
+  const [residencyType, setResidencyType] = useState<"" | "egyptian" | "foreign">("");
   const [data, setData] = useState({
     productChoice: "",
     phone: "",
@@ -81,6 +82,16 @@ function Onboarding() {
     });
   const back = () => setStep((s) => Math.max(0, s - 1));
 
+  const selectResidency = (r: "egyptian" | "foreign") => {
+    setResidencyType(r);
+    const dt = r === "foreign" ? "passport" : "nationalId";
+    setData((d) => ({
+      ...d,
+      docType: dt,
+      nationality: dt === "nationalId" ? "Egyptian" : "",
+    }));
+  };
+
   const canContinue = (() => {
     switch (step) {
       case 0: return !!data.productChoice;
@@ -119,7 +130,11 @@ function Onboarding() {
     <div className="min-h-screen flex flex-col bg-[linear-gradient(180deg,#dff0ea_0%,#e6f3ee_50%,#edf6f2_100%)]">
       <TopBar refId="EGY140626-476" />
       <main className="flex-1">
-      {step >= steps.length ? (
+      {!residencyType ? (
+        <div className="mx-auto max-w-3xl px-6 py-14">
+          <ResidencyPrescreen onSelect={selectResidency} />
+        </div>
+      ) : step >= steps.length ? (
         <div className="mx-auto max-w-3xl px-6 py-16">
           <SuccessStep />
         </div>
@@ -131,9 +146,9 @@ function Onboarding() {
           </aside>
           <section className="min-h-[560px]">
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
-              {step === 0 && <ChooseOptionStep data={data} update={update} />}
+              {step === 0 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
               {step === 1 && <ContactStep data={data} update={update} />}
-              {step === 2 && <CaptureIdStep data={data} update={update} />}
+              {step === 2 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} />}
               {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(0)} />}
               {step === 4 && <TaxStep data={data} update={update} />}
               {step === 5 && <AddressStep data={data} update={update} />}
@@ -268,7 +283,40 @@ function StepHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   );
 }
 
-function ChooseOptionStep({ data, update }: any) {
+function ResidencyPrescreen({ onSelect }: { onSelect: (r: "egyptian" | "foreign") => void }) {
+  const opts: { id: "egyptian" | "foreign"; label: string; icon: any; desc: string }[] = [
+    { id: "egyptian", label: "Egyptian national", icon: IdCard, desc: "I'll verify with my Egyptian National ID." },
+    { id: "foreign", label: "Foreign national", icon: BookUser, desc: "I'll verify with my passport." },
+  ];
+  return (
+    <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
+      <StepHeader title="Let's find the right account for you" subtitle="Are you opening this account as..." />
+      <div className="grid gap-4 md:grid-cols-2">
+        {opts.map((o) => {
+          const Icon = o.icon;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => onSelect(o.id)}
+              className="flex flex-col items-center gap-4 rounded-xl border border-border bg-background p-8 text-center transition-all hover:border-primary/60 hover:bg-primary/5"
+            >
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Icon className="h-8 w-8" />
+              </span>
+              <div>
+                <div className="text-base font-bold text-foreground">{o.label}</div>
+                <div className="mt-1 text-sm text-muted-foreground">{o.desc}</div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ChooseOptionStep({ data, update, residencyType }: any) {
   const options = [
     {
       id: "saving",
@@ -282,6 +330,7 @@ function ChooseOptionStep({ data, update }: any) {
         "Deposit or withdraw funds at any time",
         "Available in EGP and major foreign currencies",
       ],
+      availableTo: ["egyptian", "foreign"],
     },
     {
       id: "current",
@@ -295,6 +344,7 @@ function ChooseOptionStep({ data, update }: any) {
         "Available for individuals and companies",
         "No minimum monthly balance fees",
       ],
+      availableTo: ["egyptian", "foreign"],
     },
     {
       id: "prime-saving",
@@ -308,6 +358,7 @@ function ChooseOptionStep({ data, update }: any) {
         "Minimum balance to open: EGP 5,000",
         "Minimum amount to earn interest: EGP 5,000",
       ],
+      availableTo: ["egyptian", "foreign"],
     },
     {
       id: "current-365",
@@ -321,6 +372,7 @@ function ChooseOptionStep({ data, update }: any) {
         "Minimum to open the account: EGP 5,000",
         "Interest accrues from EGP 50,000 (individuals) / EGP 1,000,000 (companies)",
       ],
+      availableTo: ["egyptian", "foreign"],
     },
   ];
   return (
@@ -330,18 +382,25 @@ function ChooseOptionStep({ data, update }: any) {
         {options.map((o) => {
           const Icon = o.icon;
           const selected = data.productChoice === o.id;
+          const disabled = residencyType && !o.availableTo.includes(residencyType);
           return (
             <button
               key={o.id}
               type="button"
-              onClick={() => update("productChoice", o.id)}
-              className={`flex w-full items-start gap-4 rounded-xl border p-5 text-left transition-all ${selected ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border bg-background hover:border-primary/40"}`}
+              onClick={() => !disabled && update("productChoice", o.id)}
+              disabled={!!disabled}
+              className={`flex w-full items-start gap-4 rounded-xl border p-5 text-left transition-all ${disabled ? "border-border bg-muted/40 opacity-60 cursor-not-allowed" : selected ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border bg-background hover:border-primary/40"}`}
             >
               <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-bold ${selected ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}>
                 {o.badge ? <span className="text-xs">{o.badge}</span> : <Icon className="h-5 w-5" />}
               </span>
               <div className="flex-1">
-                <div className="font-bold text-foreground">{o.t}</div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-bold text-foreground">{o.t}</span>
+                  {disabled && (
+                    <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Not available for foreign nationals</span>
+                  )}
+                </div>
                 <div className="mt-1 text-sm text-muted-foreground">{o.d}</div>
                 <ul className="mt-3 space-y-1.5">
                   {o.bullets.map((b) => (
@@ -394,8 +453,18 @@ function ContactStep({ data, update }: any) {
   );
 }
 
-function CaptureIdStep({ data, update }: any) {
+function CaptureIdStep({ data, update, goToStep }: any) {
   const isPassport = data.docType === "passport";
+  const impliedResidency = isPassport ? "foreign" : "egyptian";
+  // Look up selected product's availability — kept in sync with ChooseOptionStep (placeholder all-allowed).
+  const PRODUCT_AVAILABILITY: Record<string, string[]> = {
+    "saving": ["egyptian", "foreign"],
+    "current": ["egyptian", "foreign"],
+    "prime-saving": ["egyptian", "foreign"],
+    "current-365": ["egyptian", "foreign"],
+  };
+  const productAvail = PRODUCT_AVAILABILITY[data.productChoice] || ["egyptian", "foreign"];
+  const mismatch = data.productChoice && !productAvail.includes(impliedResidency);
   const handleUploadNid = () => {
     update("idDoc", true);
     update("fullName", "Mohamed Ahmed Hassan");
@@ -437,6 +506,20 @@ function CaptureIdStep({ data, update }: any) {
           </select>
         </Field>
       </div>
+      {mismatch && (
+        <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4">
+          <p className="text-sm font-semibold text-amber-900">
+            {PRODUCT_LABELS[data.productChoice]} isn't available with this document type. Please go back and choose a different account.
+          </p>
+          <button
+            type="button"
+            onClick={() => goToStep(0)}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-amber-400 bg-background px-4 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+          >
+            Back to step 1
+          </button>
+        </div>
+      )}
       <h3 className="mb-4 text-lg font-bold text-primary">
         {isPassport
           ? "Please capture/upload your passport"
