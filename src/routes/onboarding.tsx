@@ -139,12 +139,9 @@ function Onboarding() {
           <SuccessStep />
         </div>
       ) : (
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-10 md:grid-cols-[260px_1fr] md:py-14">
-          <aside className="space-y-5 md:sticky md:top-10 md:self-start">
-            <ProgressCard current={step} total={steps.length} />
-            <SideStepper current={step} maxReached={maxStep} onJump={(i) => setStep(i)} />
-          </aside>
-          <section className="min-h-[560px]">
+        <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 md:py-10">
+          <HorizontalStepper current={step} maxReached={maxStep} onJump={(i) => setStep(i)} />
+          <section className="mt-6 min-h-[560px]">
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
               {step === 0 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
               {step === 1 && <ContactStep data={data} update={update} />}
@@ -254,6 +251,55 @@ function SideStepper({ current, maxReached, onJump }: { current: number; maxReac
                 ) : null}
               </span>
               <span className={`text-sm leading-tight ${active ? "font-semibold text-primary" : done ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+function HorizontalStepper({ current, maxReached, onJump }: { current: number; maxReached: number; onJump: (i: number) => void }) {
+  const total = steps.length;
+  const safeCurrent = Math.min(current, total - 1);
+  const pct = Math.round(((safeCurrent + 1) / total) * 100);
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-primary sm:text-[11px]">Application Progress</p>
+          <p className="mt-0.5 truncate text-sm font-bold text-foreground">
+            Step {safeCurrent + 1} of {total} — {steps[safeCurrent]}
+          </p>
+        </div>
+        <span className="shrink-0 text-sm font-bold text-muted-foreground">{pct}%</span>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary/30">
+        <div className="h-full rounded-full bg-secondary transition-all" style={{ width: `${pct}%` }} />
+      </div>
+      <ol className="mt-4 flex items-center justify-between gap-1">
+        {steps.map((label, i) => {
+          const done = i < current;
+          const active = i === current;
+          const clickable = i <= maxReached;
+          return (
+            <li key={label} className="flex flex-1 justify-center">
+              <button
+                type="button"
+                disabled={!clickable}
+                onClick={() => clickable && onJump(i)}
+                title={label}
+                aria-label={label}
+                className={`flex h-7 w-7 items-center justify-center rounded-full border-2 text-[11px] font-semibold ${
+                  done
+                    ? "border-secondary bg-secondary text-secondary-foreground"
+                    : active
+                      ? "border-secondary bg-card text-primary"
+                      : "border-border bg-card text-muted-foreground"
+                } ${clickable ? "cursor-pointer hover:opacity-80" : "cursor-not-allowed"}`}
+              >
+                {done ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : i + 1}
               </button>
             </li>
           );
