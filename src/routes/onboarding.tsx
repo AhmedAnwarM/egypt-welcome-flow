@@ -283,7 +283,40 @@ function StepHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   );
 }
 
-function ChooseOptionStep({ data, update }: any) {
+function ResidencyPrescreen({ onSelect }: { onSelect: (r: "egyptian" | "foreign") => void }) {
+  const opts: { id: "egyptian" | "foreign"; label: string; icon: any; desc: string }[] = [
+    { id: "egyptian", label: "Egyptian national", icon: IdCard, desc: "I'll verify with my Egyptian National ID." },
+    { id: "foreign", label: "Foreign national", icon: BookUser, desc: "I'll verify with my passport." },
+  ];
+  return (
+    <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
+      <StepHeader title="Let's find the right account for you" subtitle="Are you opening this account as..." />
+      <div className="grid gap-4 md:grid-cols-2">
+        {opts.map((o) => {
+          const Icon = o.icon;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => onSelect(o.id)}
+              className="flex flex-col items-center gap-4 rounded-xl border border-border bg-background p-8 text-center transition-all hover:border-primary/60 hover:bg-primary/5"
+            >
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Icon className="h-8 w-8" />
+              </span>
+              <div>
+                <div className="text-base font-bold text-foreground">{o.label}</div>
+                <div className="mt-1 text-sm text-muted-foreground">{o.desc}</div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ChooseOptionStep({ data, update, residencyType }: any) {
   const options = [
     {
       id: "saving",
@@ -297,6 +330,7 @@ function ChooseOptionStep({ data, update }: any) {
         "Deposit or withdraw funds at any time",
         "Available in EGP and major foreign currencies",
       ],
+      availableTo: ["egyptian", "foreign"],
     },
     {
       id: "current",
@@ -310,6 +344,7 @@ function ChooseOptionStep({ data, update }: any) {
         "Available for individuals and companies",
         "No minimum monthly balance fees",
       ],
+      availableTo: ["egyptian", "foreign"],
     },
     {
       id: "prime-saving",
@@ -323,6 +358,7 @@ function ChooseOptionStep({ data, update }: any) {
         "Minimum balance to open: EGP 5,000",
         "Minimum amount to earn interest: EGP 5,000",
       ],
+      availableTo: ["egyptian", "foreign"],
     },
     {
       id: "current-365",
@@ -336,6 +372,7 @@ function ChooseOptionStep({ data, update }: any) {
         "Minimum to open the account: EGP 5,000",
         "Interest accrues from EGP 50,000 (individuals) / EGP 1,000,000 (companies)",
       ],
+      availableTo: ["egyptian", "foreign"],
     },
   ];
   return (
@@ -345,18 +382,25 @@ function ChooseOptionStep({ data, update }: any) {
         {options.map((o) => {
           const Icon = o.icon;
           const selected = data.productChoice === o.id;
+          const disabled = residencyType && !o.availableTo.includes(residencyType);
           return (
             <button
               key={o.id}
               type="button"
-              onClick={() => update("productChoice", o.id)}
-              className={`flex w-full items-start gap-4 rounded-xl border p-5 text-left transition-all ${selected ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border bg-background hover:border-primary/40"}`}
+              onClick={() => !disabled && update("productChoice", o.id)}
+              disabled={!!disabled}
+              className={`flex w-full items-start gap-4 rounded-xl border p-5 text-left transition-all ${disabled ? "border-border bg-muted/40 opacity-60 cursor-not-allowed" : selected ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border bg-background hover:border-primary/40"}`}
             >
               <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-bold ${selected ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}>
                 {o.badge ? <span className="text-xs">{o.badge}</span> : <Icon className="h-5 w-5" />}
               </span>
               <div className="flex-1">
-                <div className="font-bold text-foreground">{o.t}</div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-bold text-foreground">{o.t}</span>
+                  {disabled && (
+                    <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Not available for foreign nationals</span>
+                  )}
+                </div>
                 <div className="mt-1 text-sm text-muted-foreground">{o.d}</div>
                 <ul className="mt-3 space-y-1.5">
                   {o.bullets.map((b) => (
