@@ -514,7 +514,7 @@ function CaptureIdStep({ data, update, goToStep }: any) {
           : "Please capture/upload your National ID"}
       </h3>
       <div className="overflow-hidden rounded-xl border border-border bg-background">
-        <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className="hidden sm:grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <div>Documents</div>
           <div className="text-center">Status</div>
           <div className="text-center">Actions</div>
@@ -779,7 +779,7 @@ function AddressStep({ data, update }: any) {
           <h3 className="mb-3 text-sm font-bold text-foreground">Proof of residence in Egypt <span className="font-normal text-muted-foreground">(optional)</span></h3>
           <p className="mb-3 text-xs text-muted-foreground">Upload a recent utility bill or rental contract that confirms your address in Egypt.</p>
           <div className="overflow-hidden rounded-xl border border-border bg-background">
-            <div className="grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="hidden sm:grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               <div>Document</div>
               <div className="text-center">Status</div>
               <div className="text-center">Actions</div>
