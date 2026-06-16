@@ -1,23 +1,22 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LogIn, Globe } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
-
-const NAV = [
-  { to: "/#products", label: "Products" },
-  { to: "/#about", label: "About Us" },
-  { to: "/#how", label: "How It Works" },
-  { to: "/#faq", label: "FAQ" },
-  { to: "/#contact", label: "Contact Us" },
-  { to: "/status", label: "Track Application" },
-];
+import { useLang, useT } from "@/lib/i18n";
 
 export default function Header({ refId }: { refId?: string }) {
   const location = useLocation();
   const isOnboarding = location.pathname === "/onboarding";
-  const [lang, setLang] = useState<"en" | "ar">("en");
-  const [showArNote, setShowArNote] = useState(false);
+  const { lang, setLang } = useLang();
+  const t = useT();
+  const NAV = [
+    { to: "/#products", label: t("nav.products") },
+    { to: "/#about", label: t("nav.about") },
+    { to: "/#how", label: t("nav.how") },
+    { to: "/#faq", label: t("nav.faq") },
+    { to: "/#contact", label: t("nav.contact") },
+    { to: "/tracking", label: t("nav.track") },
+  ];
   return (
     <header className="border-b border-border/60 sticky top-0 z-40 backdrop-blur-xl bg-background/90">
       <div className="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between gap-6">
@@ -50,10 +49,7 @@ export default function Header({ refId }: { refId?: string }) {
                 <button
                   key={l}
                   type="button"
-                  onClick={() => {
-                    setLang(l);
-                    setShowArNote(l === "ar");
-                  }}
+                  onClick={() => setLang(l)}
                   className={`rounded-full px-2 py-0.5 uppercase tracking-wider transition-colors ${active ? "bg-secondary text-secondary-foreground" : "text-foreground/70 hover:text-foreground"}`}
                 >
                   {l}
@@ -61,7 +57,7 @@ export default function Header({ refId }: { refId?: string }) {
               );
             })}
           </div>
-          <Link to="/status" aria-label="Sign in" className="inline-flex">
+          <Link to="/tracking" aria-label={t("nav.signIn")} className="inline-flex">
             <Button size="icon" variant="ghost" className="rounded-full text-foreground/80 hover:text-primary">
               <LogIn className="w-4 h-4" />
             </Button>
@@ -69,17 +65,12 @@ export default function Header({ refId }: { refId?: string }) {
           {!isOnboarding && (
             <Link to="/onboarding">
               <Button size="sm" className="rounded-full px-5 h-10 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
-                Get Started
+                {t("nav.getStarted")}
               </Button>
             </Link>
           )}
         </div>
       </div>
-      {showArNote && (
-        <div className="max-w-7xl mx-auto px-6 pb-2 text-xs font-medium text-primary">
-          Arabic interface coming soon.
-        </div>
-      )}
     </header>
   );
 }

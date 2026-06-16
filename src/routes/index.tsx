@@ -9,6 +9,7 @@ import {
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import NeedAssistance from "@/components/site/NeedAssistance";
+import SplashOverlay from "@/components/SplashOverlay";
 import {
   ArrowRight,
   ShieldCheck,
@@ -68,6 +69,7 @@ const FAQS = [
 function Landing() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SplashOverlay />
       <Header />
 
       <main className="flex-1">
