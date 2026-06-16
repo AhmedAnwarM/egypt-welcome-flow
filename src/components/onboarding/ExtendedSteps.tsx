@@ -171,6 +171,8 @@ export function isConsentsValid(data: any) {
 
 /* -------- Document upload -------- */
 const DOC_TYPES = [
+  { id: "national_id_front", name: "National ID — front", required: true, accept: "image/*,application/pdf" },
+  { id: "national_id_back", name: "National ID — back", required: true, accept: "image/*,application/pdf" },
   { id: "address", name: "Proof of address", required: true, accept: "image/*,application/pdf" },
   { id: "utility", name: "Utility bill (≤ 3 months)", required: true, accept: "image/*,application/pdf" },
   { id: "salary", name: "Salary certificate / income proof", required: false, accept: "image/*,application/pdf" },
