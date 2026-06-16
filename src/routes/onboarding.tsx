@@ -7,7 +7,7 @@ import Footer from "@/components/site/Footer";
 import { useLang } from "@/lib/i18n";
 import SessionTimeout from "@/components/SessionTimeout";
 import { auditLog } from "@/lib/audit";
-import { SelfieStep, ConfirmProductsStep, ConsentsStep, DocumentsStep, SignatureStep, ReviewStep, isConsentsValid, isDocumentsValid } from "@/components/onboarding/ExtendedSteps";
+import { SelfieStep, ConfirmProductsStep, DocumentsStep, SignatureStep, ReviewStep, isDocumentsValid } from "@/components/onboarding/ExtendedSteps";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -20,17 +20,16 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 const steps = [
-  "Verify your identity",
+  "Verify identity & contact",
+  "Selfie & liveness",
+  "Additional declarations",
   "Choose your option",
-  "Contact information",
   "Work and product details",
   "Tax details",
   "Account setup",
   "Address details",
   "Create login credentials",
-  "Selfie & liveness",
   "Confirm products",
-  "Review consents",
   "Upload documents",
   "Digital signature",
   "Review & submit",
@@ -148,14 +147,14 @@ function Onboarding() {
       return n;
     });
   const next = () => {
-    if (step === 2 && !otpVerified) {
+    if (step === 0 && !otpVerified) {
       setOtpStage(true);
       return;
     }
     advance();
   };
   const back = () => {
-    if (step === 2 && otpStage) {
+    if (step === 0 && otpStage) {
       setOtpStage(false);
       return;
     }
@@ -217,11 +216,19 @@ function Onboarding() {
         if (!data.residenceClassification) return false;
         if (!data.specialNeeds) return false;
         if (data.specialNeeds === "yes" && !data.specialNeedsType) return false;
+        // Merged contact info
+        if (!(data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail)) return false;
+        if (!data.statementFrequency || !data.statementDelivery || !data.correspondenceLanguage) return false;
         return true;
       }
-      case 1: return !!data.productChoice;
-      case 2: return data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail && !!data.statementFrequency && !!data.statementDelivery && !!data.correspondenceLanguage;
-      case 3: {
+      case 1: return !!(data as any).selfieDone;
+      case 2: {
+        if (data.realBeneficiary !== "yes") return false;
+        if (!data.hasPoA || !data.hasOtherBankAccounts || !data.dealsInSecurities || !data.smsConsent) return false;
+        return true;
+      }
+      case 3: return !!data.productChoice;
+      case 4: {
         const baseOk = !!data.employment && !!data.income && !!data.employer.trim() && !!data.jobTitle.trim() && !!data.sourceOfFunds;
         const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
         if (!baseOk) return false;
@@ -231,7 +238,7 @@ function Onboarding() {
         if (data.employment === "Retired" && !data.previousOccupation.trim()) return false;
         return true;
       }
-      case 4: {
+      case 5: {
         if (!data.fatcaUs || !data.crsOther || !data.taxDeclaration) return false;
         if (data.fatcaUs === "yes" && !data.usTin.trim()) return false;
         if (data.crsOther === "yes") {
@@ -240,30 +247,26 @@ function Onboarding() {
         }
         if (!data.pepStatus) return false;
         if (data.pepStatus === "yes" && (!data.pepRole.trim() || !data.pepCountry.trim() || !data.pepRelationship.trim() || !data.pepDates.trim())) return false;
-        if (data.realBeneficiary !== "yes") return false;
-        if (!data.hasPoA || !data.hasOtherBankAccounts || !data.dealsInSecurities || !data.smsConsent) return false;
         return true;
       }
-      case 5: {
+      case 6: {
         if (!data.accountPurpose || !data.accountCurrency || !data.linkDebitCard) return false;
         if (data.linkDebitCard === "yes" && (!data.cardType || !data.nameOnCard.trim())) return false;
         return true;
       }
-      case 6: {
+      case 7: {
         if (!data.residenceType) return false;
         if (data.residenceType === "Other" && !data.residenceTypeOther.trim()) return false;
         return !!data.governorate && !!data.city.trim() && !!data.street.trim();
       }
-      case 7: {
+      case 8: {
         const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
-        return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit && !!data.mfaMethod;
+        return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit;
       }
-      case 8: return !!(data as any).selfieDone;
       case 9: return ((data as any).confirmedProducts || []).length > 0;
-      case 10: return isConsentsValid(data);
-      case 11: return isDocumentsValid(data);
-      case 12: return !!(data as any).signedAt;
-      case 13: return true;
+      case 10: return isDocumentsValid(data);
+      case 11: return !!(data as any).signedAt;
+      case 12: return true;
       default: return true;
     }
   })();
@@ -300,23 +303,25 @@ function Onboarding() {
           <section className="mt-6 min-h-[560px]">
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
               <CardToolbar onSave={() => setShowSaveModal(true)} />
-              {step === 0 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
-              {step === 1 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
-              {step === 2 && !otpStage && <ContactStep data={data} update={update} />}
-              {step === 2 && otpStage && (
-                <OtpPanel data={data} update={update} />
+              {step === 0 && !otpStage && (
+                <>
+                  <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />
+                  {verifyStage === "done" && <ContactStep data={data} update={update} />}
+                </>
               )}
-              {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(1)} />}
-              {step === 4 && <TaxStep data={data} update={update} />}
-              {step === 5 && <AccountSetupStep data={data} update={update} />}
-              {step === 6 && <AddressStep data={data} update={update} />}
-              {step === 7 && <CredentialsStep data={data} update={update} />}
-              {step === 8 && <SelfieStep data={data} update={update} />}
+              {step === 0 && otpStage && <OtpPanel data={data} update={update} />}
+              {step === 1 && <SelfieStep data={data} update={update} />}
+              {step === 2 && <AdditionalDeclarationsStep data={data} update={update} />}
+              {step === 3 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
+              {step === 4 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(3)} />}
+              {step === 5 && <TaxStep data={data} update={update} />}
+              {step === 6 && <AccountSetupStep data={data} update={update} />}
+              {step === 7 && <AddressStep data={data} update={update} />}
+              {step === 8 && <CredentialsStep data={data} update={update} />}
               {step === 9 && <ConfirmProductsStep data={data} update={update} />}
-              {step === 10 && <ConsentsStep data={data} update={update} />}
-              {step === 11 && <DocumentsStep data={data} update={update} />}
-              {step === 12 && <SignatureStep data={data} update={update} />}
-              {step === 13 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
+              {step === 10 && <DocumentsStep data={data} update={update} />}
+              {step === 11 && <SignatureStep data={data} update={update} />}
+              {step === 12 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
 
               <div className="mt-10 flex items-center justify-between border-t border-border/60 pt-6">
                 <button
@@ -1355,8 +1360,6 @@ function CredentialsStep({ data, update }: any) {
         </div>
       </div>
 
-      <MfaSection data={data} update={update} />
-
       <div className="mt-6 space-y-3">
         <Consent checked={data.agreeTerms} onChange={(v: boolean) => update("agreeTerms", v)}>
           I agree to the <Link to="/" className="font-semibold text-primary hover:underline">Terms &amp; Conditions</Link> and <Link to="/" className="font-semibold text-primary hover:underline">Privacy Policy</Link>.
@@ -1655,6 +1658,14 @@ function TaxStep({ data, update }: any) {
           I declare that the information provided in this section is true, accurate, and complete, and I will notify SUMERGE of any change in circumstances that affects my tax residency status.
         </Consent>
       </div>
+    </div>
+  );
+}
+
+function AdditionalDeclarationsStep({ data, update }: any) {
+  return (
+    <div>
+      <StepHeader title="Additional declarations" subtitle="Required by CBE regulations. Please answer each question." />
       <AdditionalDeclarations data={data} update={update} />
     </div>
   );

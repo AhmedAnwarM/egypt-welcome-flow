@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Camera, Check, FileText, Pen, ShieldCheck, Sparkles, Wallet, PiggyBank, Users, Banknote, IdCard, Smartphone, Upload, X, Loader2 } from "lucide-react";
+import { Camera, Check, FileText, Pen, ShieldCheck, Sparkles, Wallet, PiggyBank, Users, Banknote, IdCard, Smartphone, Upload, X, Loader2, Eye, Trash2 } from "lucide-react";
 import { biometrics } from "@/lib/integrations";
 import { auditLog } from "@/lib/audit";
 
@@ -187,34 +187,56 @@ export function DocumentsStep({ data, update }: any) {
   };
   return (
     <div>
-      <h2 className="text-xl font-bold text-primary">Upload supporting documents</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Photo or PDF. Each file up to 10 MB.</p>
-      <div className="mt-5 space-y-3">
+      <header className="mb-8">
+        <h2 className="text-2xl font-bold text-primary md:text-[28px]">Upload supporting documents</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Photo or PDF. Each file up to 10 MB.</p>
+      </header>
+      <div className="overflow-hidden rounded-xl border border-border bg-background">
+        <div className="hidden sm:grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <div>Documents</div>
+          <div className="text-center">Status</div>
+          <div className="text-center">Actions</div>
+        </div>
         {DOC_TYPES.map((d) => {
           const uploaded = docs[d.id];
+          const done = !!uploaded;
           return (
-            <div key={d.id} className="rounded-xl border border-border bg-card p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">
-                    {d.name}
-                    {d.required && <span className="ms-2 text-xs text-primary">Required</span>}
-                  </p>
-                  {uploaded ? (
-                    <p className="mt-1 text-xs text-emerald-600 inline-flex items-center gap-1"><Check className="h-3 w-3" /> {uploaded.name} · {(uploaded.size / 1024).toFixed(0)} KB</p>
-                  ) : (
-                    <p className="mt-1 text-xs text-muted-foreground">No file selected</p>
+            <div key={d.id} className="flex flex-col gap-3 border-t border-border px-4 py-4 first:border-t-0 sm:grid sm:grid-cols-[minmax(0,1fr)_120px_180px] sm:items-center sm:gap-4 sm:px-5">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-secondary/60 text-primary">
+                  <FileText className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-bold text-foreground">{d.name}</span>
+                    <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${d.required ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>{d.required ? "Required" : "Optional"}</span>
+                  </div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">Max 10MB · {d.accept.includes("pdf") ? ".jpg, .png, .pdf" : ".jpg, .png"}</div>
+                  {done && (
+                    <button type="button" className="mt-1 truncate text-xs font-medium text-primary hover:underline">{uploaded!.name} · {(uploaded!.size / 1024).toFixed(0)} KB</button>
                   )}
                 </div>
-                {uploaded ? (
-                  <button onClick={() => set(d.id, null)} className="text-xs font-semibold text-destructive inline-flex items-center gap-1"><X className="h-3 w-3" />Remove</button>
-                ) : (
-                  <label className="inline-flex cursor-pointer items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90">
-                    <Upload className="h-3 w-3" /> Upload
+              </div>
+              <div className={`text-left text-sm font-medium sm:text-center ${done ? "text-primary" : "text-muted-foreground"}`}>
+                {done ? "Uploaded" : "Pending"}
+              </div>
+              {done ? (
+                <div className="flex items-center justify-start gap-4 text-sm font-medium sm:justify-center">
+                  <button type="button" className="inline-flex items-center gap-1.5 text-primary hover:underline">
+                    <Eye className="h-4 w-4" /> Open
+                  </button>
+                  <button type="button" onClick={() => set(d.id, null)} className="inline-flex items-center gap-1.5 text-destructive hover:underline">
+                    <Trash2 className="h-4 w-4" /> Delete
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-stretch gap-1 sm:items-center">
+                  <label className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border-2 border-dashed border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/60 hover:text-primary sm:max-w-[180px]">
+                    <Upload className="h-4 w-4" /> Upload
                     <input type="file" accept={d.accept} className="hidden" onChange={(e) => set(d.id, e.target.files?.[0] || null)} />
                   </label>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -308,28 +330,28 @@ export function ReviewStep({ data, goToStep }: any) {
       <p className="mt-1 text-sm text-muted-foreground">Confirm everything looks right before final submission.</p>
 
       <Section title="Contact" icon={Smartphone}>
-        <Row label="Mobile" value={`+20 ${data.phone}`} step={1} />
-        <Row label="Email" value={data.email} step={1} />
+        <Row label="Mobile" value={`+20 ${data.phone}`} step={0} />
+        <Row label="Email" value={data.email} step={0} />
       </Section>
       <Section title="Identity" icon={IdCard}>
-        <Row label="Full name" value={data.fullName} step={2} />
-        <Row label={data.docType === "passport" ? "Passport" : "National ID"} value={data.docType === "passport" ? data.passportNumber : data.nationalId} step={2} />
-        <Row label="Nationality" value={data.nationality} step={2} />
+        <Row label="Full name" value={data.fullName} step={0} />
+        <Row label={data.docType === "passport" ? "Passport" : "National ID"} value={data.docType === "passport" ? data.passportNumber : data.nationalId} step={0} />
+        <Row label="Nationality" value={data.nationality} step={0} />
       </Section>
       <Section title="Work & income" icon={Wallet}>
-        <Row label="Employment" value={data.employment} step={3} />
-        <Row label="Employer" value={data.employer} step={3} />
-        <Row label="Monthly income" value={data.income} step={3} />
+        <Row label="Employment" value={data.employment} step={4} />
+        <Row label="Employer" value={data.employer} step={4} />
+        <Row label="Monthly income" value={data.income} step={4} />
       </Section>
       <Section title="Address" icon={FileText}>
-        <Row label="Address" value={[data.street, data.city, data.governorate].filter(Boolean).join(", ")} step={5} />
+        <Row label="Address" value={[data.street, data.city, data.governorate].filter(Boolean).join(", ")} step={7} />
       </Section>
       <Section title="Products" icon={Sparkles}>
-        <Row label="Confirmed" value={(data.confirmedProducts || []).join(", ")} step={8} />
+        <Row label="Confirmed" value={(data.confirmedProducts || []).join(", ")} step={9} />
       </Section>
       <Section title="Compliance" icon={ShieldCheck}>
-        <Row label="PEP status" value={data.pepStatus} step={4} />
-        <Row label="US person" value={data.fatcaUs} step={4} />
+        <Row label="PEP status" value={data.pepStatus} step={5} />
+        <Row label="US person" value={data.fatcaUs} step={5} />
         <Row label="Documents uploaded" value={Object.keys(data.documents || {}).length} step={10} />
         <Row label="Signed at" value={data.signedAt ? new Date(data.signedAt).toLocaleString() : "—"} step={11} />
       </Section>
