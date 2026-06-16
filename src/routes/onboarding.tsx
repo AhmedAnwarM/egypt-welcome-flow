@@ -643,7 +643,7 @@ function StepHeader({ title, subtitle }: { title: string; subtitle?: string }) {
 
 function ResidencyPrescreen({ onSelect }: { onSelect: (r: "egyptian" | "foreign") => void }) {
   const opts: { id: "egyptian" | "foreign"; label: string; icon: any; desc: string }[] = [
-    { id: "egyptian", label: "Egyptian national", icon: IdCard, desc: "I'll verify with my Egyptian National ID." },
+    { id: "egyptian", label: "National ID", icon: IdCard, desc: "I'll verify with my Egyptian National ID." },
     { id: "foreign", label: "Passport", icon: BookUser, desc: "I'll verify with my passport." },
   ];
   return (
