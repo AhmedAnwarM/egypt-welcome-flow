@@ -22,6 +22,7 @@ export const Route = createFileRoute("/onboarding")({
 const steps = [
   "Verify your identity",
   "Let's get to know you better!",
+  "Verify contact details",
   "Work and product details",
   "Tax details",
   "Account setup",
@@ -206,9 +207,8 @@ function Onboarding() {
         if (!data.residenceClassification) return false;
         if (!data.specialNeeds) return false;
         if (data.specialNeeds === "yes" && !data.specialNeedsType) return false;
-        // Contact info — phone + email must be verified
+        // Contact info — phone + email entered (verification happens on next step)
         if (!(data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail)) return false;
-        if (!data.phoneVerified || !data.emailVerified) return false;
         if (!data.statementFrequency || !data.statementDelivery || !data.correspondenceLanguage) return false;
         // Additional declarations
         if (data.realBeneficiary !== "yes") return false;
@@ -216,6 +216,10 @@ function Onboarding() {
         return true;
       }
       case 2: {
+        // Verify phone & email
+        return !!data.phoneVerified && !!data.emailVerified;
+      }
+      case 3: {
         const baseOk = !!data.employment && !!data.income && !!data.employer.trim() && !!data.jobTitle.trim() && !!data.sourceOfFunds;
         const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
         if (!baseOk) return false;
@@ -225,7 +229,7 @@ function Onboarding() {
         if (data.employment === "Retired" && !data.previousOccupation.trim()) return false;
         return true;
       }
-      case 3: {
+      case 4: {
         if (!data.fatcaUs || !data.crsOther || !data.taxDeclaration) return false;
         if (data.fatcaUs === "yes" && !data.usTin.trim()) return false;
         if (data.crsOther === "yes") {
@@ -236,21 +240,21 @@ function Onboarding() {
         if (data.pepStatus === "yes" && (!data.pepRole.trim() || !data.pepCountry.trim() || !data.pepRelationship.trim() || !data.pepDates.trim())) return false;
         return true;
       }
-      case 4: {
+      case 5: {
         if (!data.accountPurpose || !data.accountCurrency || !data.linkDebitCard) return false;
         if (data.linkDebitCard === "yes" && (!data.cardType || !data.nameOnCard.trim())) return false;
         return true;
       }
-      case 5: {
+      case 6: {
         if (!data.residenceType) return false;
         if (data.residenceType === "Other" && !data.residenceTypeOther.trim()) return false;
         return !!data.governorate && !!data.city.trim() && !!data.street.trim();
       }
-      case 6: return ((data as any).confirmedProducts || []).length > 0;
-      case 7: return isDocumentsValid(data);
-      case 8: return !!(data as any).signedAt;
-      case 9: return true;
-      case 10: {
+      case 7: return ((data as any).confirmedProducts || []).length > 0;
+      case 8: return isDocumentsValid(data);
+      case 9: return !!(data as any).signedAt;
+      case 10: return true;
+      case 11: {
         const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
         return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit;
       }
@@ -292,15 +296,16 @@ function Onboarding() {
               <CardToolbar onSave={() => setShowSaveModal(true)} />
               {step === 0 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
               {step === 1 && <KnowYouBetterStep data={data} update={update} />}
-              {step === 2 && <WorkProductStep data={data} update={update} />}
-              {step === 3 && <TaxStep data={data} update={update} />}
-              {step === 4 && <AccountSetupStep data={data} update={update} />}
-              {step === 5 && <AddressStep data={data} update={update} />}
-              {step === 6 && <ConfirmProductsStep data={data} update={update} />}
-              {step === 7 && <DocumentsStep data={data} update={update} />}
-              {step === 8 && <SignatureStep data={data} update={update} />}
-              {step === 9 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
-              {step === 10 && <CredentialsStep data={data} update={update} />}
+              {step === 2 && <ContactVerificationStep data={data} update={update} />}
+              {step === 3 && <WorkProductStep data={data} update={update} />}
+              {step === 4 && <TaxStep data={data} update={update} />}
+              {step === 5 && <AccountSetupStep data={data} update={update} />}
+              {step === 6 && <AddressStep data={data} update={update} />}
+              {step === 7 && <ConfirmProductsStep data={data} update={update} />}
+              {step === 8 && <DocumentsStep data={data} update={update} />}
+              {step === 9 && <SignatureStep data={data} update={update} />}
+              {step === 10 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
+              {step === 11 && <CredentialsStep data={data} update={update} />}
 
               <div className="mt-10 flex items-center justify-between border-t border-border/60 pt-6">
                 <button
@@ -758,16 +763,20 @@ function KnowYouBetterStep({ data, update }: any) {
       <AdditionalPersonalDetails data={data} update={update} />
       <div className="mt-6 rounded-xl border border-border bg-secondary/30 p-6">
         <h3 className="text-lg font-bold text-primary">Contact details</h3>
-        <p className="mt-1 text-sm text-muted-foreground">We'll verify your mobile number and email separately.</p>
+        <p className="mt-1 text-sm text-muted-foreground">We'll verify your mobile number and email in the next step.</p>
         <div className="mt-5 space-y-5">
-          <VerifiableContactField
-            label="Mobile Number"
-            kind="phone"
-            value={data.phone}
-            verified={!!data.phoneVerified}
-            onChange={(v) => { update("phone", v); if (data.phoneVerified) update("phoneVerified", false); }}
-            onVerified={() => update("phoneVerified", true)}
-          />
+          <Field label="Mobile Number">
+            <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
+              <span className="text-sm font-semibold text-foreground">+20</span>
+              <input
+                className="ml-2 h-full flex-1 bg-transparent text-sm outline-none"
+                placeholder="1XX XXX XXXX"
+                value={data.phone}
+                onChange={(e) => { update("phone", e.target.value.replace(/\D/g, "")); if (data.phoneVerified) update("phoneVerified", false); }}
+                maxLength={11}
+              />
+            </div>
+          </Field>
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Mobile No. 2 (optional)">
             <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
@@ -794,14 +803,14 @@ function KnowYouBetterStep({ data, update }: any) {
             </div>
           </Field>
         </div>
-          <VerifiableContactField
-            label="Email"
-            kind="email"
-            value={data.email}
-            verified={!!data.emailVerified}
-            onChange={(v) => { update("email", v); if (data.emailVerified) update("emailVerified", false); }}
-            onVerified={() => update("emailVerified", true)}
-          />
+          <Field label="Email">
+            <input
+              type="email"
+              className={inputCls}
+              value={data.email}
+              onChange={(e) => { update("email", e.target.value); if (data.emailVerified) update("emailVerified", false); }}
+            />
+          </Field>
           <Field label="Confirm Email">
             <input type="email" className={inputCls} value={data.confirmEmail} onChange={(e) => update("confirmEmail", e.target.value)} />
           </Field>
@@ -833,6 +842,32 @@ function KnowYouBetterStep({ data, update }: any) {
         </div>
       </div>
       <AdditionalDeclarations data={data} update={update} />
+    </div>
+  );
+}
+
+function ContactVerificationStep({ data, update }: any) {
+  return (
+    <div>
+      <StepHeader title="Verify your contact details" subtitle="We'll send a one-time code to your mobile and email." />
+      <div className="space-y-5 rounded-xl border border-border bg-secondary/30 p-6">
+        <VerifiableContactField
+          label="Mobile Number"
+          kind="phone"
+          value={data.phone}
+          verified={!!data.phoneVerified}
+          onChange={(v) => { update("phone", v); if (data.phoneVerified) update("phoneVerified", false); }}
+          onVerified={() => update("phoneVerified", true)}
+        />
+        <VerifiableContactField
+          label="Email"
+          kind="email"
+          value={data.email}
+          verified={!!data.emailVerified}
+          onChange={(v) => { update("email", v); if (data.emailVerified) update("emailVerified", false); }}
+          onVerified={() => update("emailVerified", true)}
+        />
+      </div>
     </div>
   );
 }

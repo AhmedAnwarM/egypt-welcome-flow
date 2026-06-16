@@ -330,8 +330,8 @@ export function ReviewStep({ data, goToStep }: any) {
       <p className="mt-1 text-sm text-muted-foreground">Confirm everything looks right before final submission.</p>
 
       <Section title="Contact" icon={Smartphone}>
-        <Row label="Mobile" value={`+20 ${data.phone}`} step={1} />
-        <Row label="Email" value={data.email} step={1} />
+        <Row label="Mobile" value={`+20 ${data.phone}`} step={2} />
+        <Row label="Email" value={data.email} step={2} />
       </Section>
       <Section title="Identity" icon={IdCard}>
         <Row label="Full name" value={data.fullName} step={0} />
@@ -339,21 +339,21 @@ export function ReviewStep({ data, goToStep }: any) {
         <Row label="Nationality" value={data.nationality} step={0} />
       </Section>
       <Section title="Work & income" icon={Wallet}>
-        <Row label="Employment" value={data.employment} step={2} />
-        <Row label="Employer" value={data.employer} step={2} />
-        <Row label="Monthly income" value={data.income} step={2} />
+        <Row label="Employment" value={data.employment} step={3} />
+        <Row label="Employer" value={data.employer} step={3} />
+        <Row label="Monthly income" value={data.income} step={3} />
       </Section>
       <Section title="Address" icon={FileText}>
-        <Row label="Address" value={[data.street, data.city, data.governorate].filter(Boolean).join(", ")} step={5} />
+        <Row label="Address" value={[data.street, data.city, data.governorate].filter(Boolean).join(", ")} step={6} />
       </Section>
       <Section title="Products" icon={Sparkles}>
-        <Row label="Confirmed" value={(data.confirmedProducts || []).join(", ")} step={6} />
+        <Row label="Confirmed" value={(data.confirmedProducts || []).join(", ")} step={7} />
       </Section>
       <Section title="Compliance" icon={ShieldCheck}>
-        <Row label="PEP status" value={data.pepStatus} step={3} />
-        <Row label="US person" value={data.fatcaUs} step={3} />
-        <Row label="Documents uploaded" value={Object.keys(data.documents || {}).length} step={7} />
-        <Row label="Signed at" value={data.signedAt ? new Date(data.signedAt).toLocaleString() : "—"} step={8} />
+        <Row label="PEP status" value={data.pepStatus} step={4} />
+        <Row label="US person" value={data.fatcaUs} step={4} />
+        <Row label="Documents uploaded" value={Object.keys(data.documents || {}).length} step={8} />
+        <Row label="Signed at" value={data.signedAt ? new Date(data.signedAt).toLocaleString() : "—"} step={9} />
       </Section>
     </div>
   );
