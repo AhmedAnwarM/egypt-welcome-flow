@@ -198,8 +198,7 @@ function Onboarding() {
         }
         return true;
       }
-      case 1: return !!(data as any).selfieDone;
-      case 2: {
+      case 1: {
         // Additional personal details
         if (!data.gender || !data.placeOfBirth.trim() || !data.countryOfBirth || !data.maritalStatus || !data.education) return false;
         if (!data.hasOtherNationalities) return false;
@@ -216,8 +215,8 @@ function Onboarding() {
         if (!data.hasPoA || !data.hasOtherBankAccounts || !data.dealsInSecurities || !data.smsConsent) return false;
         return true;
       }
-      case 3: return !!data.productChoice;
-      case 4: {
+      case 2: return !!data.productChoice;
+      case 3: {
         const baseOk = !!data.employment && !!data.income && !!data.employer.trim() && !!data.jobTitle.trim() && !!data.sourceOfFunds;
         const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
         if (!baseOk) return false;
@@ -227,7 +226,7 @@ function Onboarding() {
         if (data.employment === "Retired" && !data.previousOccupation.trim()) return false;
         return true;
       }
-      case 5: {
+      case 4: {
         if (!data.fatcaUs || !data.crsOther || !data.taxDeclaration) return false;
         if (data.fatcaUs === "yes" && !data.usTin.trim()) return false;
         if (data.crsOther === "yes") {
@@ -238,21 +237,21 @@ function Onboarding() {
         if (data.pepStatus === "yes" && (!data.pepRole.trim() || !data.pepCountry.trim() || !data.pepRelationship.trim() || !data.pepDates.trim())) return false;
         return true;
       }
-      case 6: {
+      case 5: {
         if (!data.accountPurpose || !data.accountCurrency || !data.linkDebitCard) return false;
         if (data.linkDebitCard === "yes" && (!data.cardType || !data.nameOnCard.trim())) return false;
         return true;
       }
-      case 7: {
+      case 6: {
         if (!data.residenceType) return false;
         if (data.residenceType === "Other" && !data.residenceTypeOther.trim()) return false;
         return !!data.governorate && !!data.city.trim() && !!data.street.trim();
       }
-      case 8: return ((data as any).confirmedProducts || []).length > 0;
-      case 9: return isDocumentsValid(data);
-      case 10: return !!(data as any).signedAt;
-      case 11: return true;
-      case 12: {
+      case 7: return ((data as any).confirmedProducts || []).length > 0;
+      case 8: return isDocumentsValid(data);
+      case 9: return !!(data as any).signedAt;
+      case 10: return true;
+      case 11: {
         const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
         return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit;
       }
