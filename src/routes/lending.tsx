@@ -413,7 +413,7 @@ function LendingPage() {
                       <p className="font-semibold text-sm">
                         {customerType === "etb" ? "Fetch your profile from Core Banking" : "Verify your identity via Haweya"}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">Simulated — no real data leaves this device.</p>
+                      <p className="text-xs text-muted-foreground mt-1">No real data leaves this device.</p>
                       <Button
                         size="sm"
                         className="mt-3"
@@ -492,7 +492,7 @@ function LendingPage() {
             {/* STEP 3 — documents */}
             {step === 3 && (
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">Upload the required documents. Simulated — files stay on this device.</p>
+                <p className="text-sm text-muted-foreground">Upload the required documents. Files stay on this device.</p>
                 {(Object.keys(DOC_LABELS) as DocKey[])
                   .filter((k) => k !== "collateral" || product === "auto_loan" || product === "mortgage")
                   .map((k) => (
@@ -584,7 +584,7 @@ function LendingPage() {
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     <PenLine className="h-4 w-4 text-primary" /> Digital acceptance
                   </div>
-                  <Field label="6-digit OTP (simulated)">
+                  <Field label="6-digit OTP">
                     <Input value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" maxLength={6} placeholder="••••••" />
                   </Field>
                   <Field label="Type your full name to sign">
