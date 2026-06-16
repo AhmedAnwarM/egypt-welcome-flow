@@ -99,6 +99,46 @@ function Onboarding() {
     crsOther: "" as "" | "yes" | "no",
     crsRows: [] as { country: string; tin: string }[],
     taxDeclaration: false,
+    // Contact extras
+    phone2: "",
+    homePhone: "",
+    statementFrequency: "Monthly" as "Monthly" | "Quarterly",
+    statementDelivery: "Email",
+    correspondenceLanguage: "English" as "Arabic" | "English",
+    // Additional personal details
+    gender: "" as "" | "Male" | "Female",
+    placeOfBirth: "",
+    countryOfBirth: "",
+    maritalStatus: "",
+    education: "",
+    hasOtherNationalities: "" as "" | "yes" | "no",
+    otherNationalities: "",
+    residenceClassification: "" as "" | "resEgy" | "nonResEgy" | "resFor" | "nonResFor",
+    specialNeeds: "" as "" | "yes" | "no",
+    specialNeedsType: "",
+    // Work extras
+    employmentStartDate: "",
+    workPhone: "",
+    previousOccupation: "",
+    expectedTxVolume: "",
+    // Address extras
+    residenceType: "" as "" | "Owned" | "Rented" | "Other",
+    residenceTypeOther: "",
+    // Additional declarations (step 5)
+    realBeneficiary: "" as "" | "yes" | "no",
+    hasPoA: "" as "" | "yes" | "no",
+    hasOtherBankAccounts: "" as "" | "yes" | "no",
+    dealsInSecurities: "" as "" | "yes" | "no",
+    smsConsent: "yes" as "" | "yes" | "no",
+    // Account setup (new step 6)
+    accountPurpose: "",
+    accountCurrency: "",
+    linkDebitCard: "yes" as "" | "yes" | "no",
+    cardType: "Standard" as "Standard" | "Premium",
+    nameOnCard: "",
+    nameOnCardAr: "",
+    authorizedPersons: [] as { cif: string; name: string; authType: string; docType: string }[],
+    phoneBanking: "yes" as "" | "yes" | "no",
   });
   const update = (k: keyof typeof data, v: any) => setData((d) => ({ ...d, [k]: v }));
   const advance = () =>
