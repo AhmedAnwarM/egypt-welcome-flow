@@ -300,13 +300,13 @@ function Onboarding() {
           <section className="mt-6 min-h-[560px]">
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
               <CardToolbar onSave={() => setShowSaveModal(true)} />
-              {step === 0 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
-              {step === 1 && !otpStage && <ContactStep data={data} update={update} />}
-              {step === 1 && otpStage && (
+              {step === 0 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
+              {step === 1 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
+              {step === 2 && !otpStage && <ContactStep data={data} update={update} />}
+              {step === 2 && otpStage && (
                 <OtpPanel data={data} update={update} />
               )}
-              {step === 2 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
-              {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(0)} />}
+              {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(1)} />}
               {step === 4 && <TaxStep data={data} update={update} />}
               {step === 5 && <AccountSetupStep data={data} update={update} />}
               {step === 6 && <AddressStep data={data} update={update} />}
