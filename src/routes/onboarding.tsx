@@ -22,7 +22,6 @@ export const Route = createFileRoute("/onboarding")({
 const steps = [
   "Verify your identity",
   "Let's get to know you better!",
-  "Choose your option",
   "Work and product details",
   "Tax details",
   "Account setup",
@@ -183,6 +182,7 @@ function Onboarding() {
       ...d,
       docType: dt,
       nationality: dt === "nationalId" ? "Egyptian" : "",
+      productChoice: "saving",
     }));
   };
 
@@ -831,7 +831,7 @@ function KnowYouBetterStep({ data, update }: any) {
             onChange={(v) => update("correspondenceLanguage", v)}
           />
         </Field>
-        <p className="text-sm text-muted-foreground">If we sense an issue during your application, we may reach out via email, mobile, or WhatsApp to help you complete the process.</p>
+        
         </div>
       </div>
       <AdditionalDeclarations data={data} update={update} />
