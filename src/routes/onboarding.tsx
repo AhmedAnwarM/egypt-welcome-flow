@@ -203,9 +203,7 @@ function Onboarding() {
 
   const canContinue = (() => {
     switch (step) {
-      case 0: return !!data.productChoice;
-      case 1: return data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail && !!data.statementFrequency && !!data.statementDelivery && !!data.correspondenceLanguage;
-      case 2: {
+      case 0: {
         if (!data.idDoc || data.fullName.trim().length <= 3) return false;
         if (verifyStage !== "done") return false;
         if (data.docType === "passport") {
@@ -221,6 +219,8 @@ function Onboarding() {
         if (data.specialNeeds === "yes" && !data.specialNeedsType) return false;
         return true;
       }
+      case 1: return !!data.productChoice;
+      case 2: return data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail && !!data.statementFrequency && !!data.statementDelivery && !!data.correspondenceLanguage;
       case 3: {
         const baseOk = !!data.employment && !!data.income && !!data.employer.trim() && !!data.jobTitle.trim() && !!data.sourceOfFunds;
         const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
