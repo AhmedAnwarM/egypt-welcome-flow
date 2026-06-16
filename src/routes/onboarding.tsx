@@ -709,7 +709,6 @@ function ChooseOptionStep({ data, update, residencyType }: any) {
   ];
   return (
     <div>
-      <StepHeader title="How can SUMERGE work for you?" subtitle="Explore and select an account that works for you:" />
       <div className="space-y-3">
         {options.map((o) => {
           const Icon = o.icon;
