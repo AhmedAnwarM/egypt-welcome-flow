@@ -42,8 +42,6 @@ function Onboarding() {
   const { lang, setLang } = useLang();
   const router = useRouter();
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [otpStage, setOtpStage] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
   const [verifyStage, setVerifyStage] = useState<"idle" | "checking" | "done">("idle");
   const [resumed, setResumed] = useState(false);
   const refId = useMemo(() => `SM-2026-${String(Math.floor(100000 + Math.random() * 900000))}`, []);
@@ -149,23 +147,10 @@ function Onboarding() {
       return n;
     });
   const next = () => {
-    if (step === 0 && !otpVerified) {
-      setOtpStage(true);
-      return;
-    }
     advance();
   };
   const back = () => {
-    if (step === 0 && otpStage) {
-      setOtpStage(false);
-      return;
-    }
     setStep((s) => Math.max(0, s - 1));
-  };
-  const verifyOtpAndContinue = () => {
-    setOtpVerified(true);
-    setOtpStage(false);
-    advance();
   };
 
   useEffect(() => {
