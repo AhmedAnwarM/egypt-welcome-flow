@@ -171,22 +171,24 @@ function Onboarding() {
   const selectResidency = (r: "egyptian" | "foreign") => {
     setResidencyType(r);
     const dt = r === "foreign" ? "passport" : "nationalId";
-    if (r === "foreign") {
-      setNidGateDone(true);
-      setData((d) => ({
-        ...d,
-        docType: dt,
-        nationality: "United Kingdom",
-        productChoice: "saving",
-        fullName: "John Michael Smith",
-        passportNumber: "P12345678",
-        dob: "1990-04-22",
-        expiry: "2031-09-15",
-        gender: "Male",
-        placeOfBirth: "London",
-        countryOfBirth: "United Kingdom",
-      }));
-    } else {
+      if (r === "foreign") {
+        setNidGateDone(true);
+        setData((d) => ({
+          ...d,
+          docType: dt,
+          nationality: "United Kingdom",
+          productChoice: "saving",
+          fullName: "John Michael Smith",
+          firstName: "John",
+          lastName: "Michael Smith",
+          passportNumber: "P12345678",
+          dob: "1990-04-22",
+          expiry: "2031-09-15",
+          gender: "Male",
+          placeOfBirth: "London",
+          countryOfBirth: "United Kingdom",
+        }));
+      } else {
       setNidGateDone(false);
       setData((d) => ({
         ...d,
@@ -306,7 +308,10 @@ function Onboarding() {
                 phone: mobile,
                 phoneVerified: true,
                 fullName: d.docType === "nationalId" ? "Mohamed Ahmed Hassan" : d.fullName,
+                firstName: d.docType === "nationalId" ? "Mohamed" : d.firstName,
+                lastName: d.docType === "nationalId" ? "Ahmed Hassan" : d.lastName,
                 nationality: d.docType === "nationalId" ? "Egyptian" : d.nationality,
+                dob: d.docType === "nationalId" ? "1985-03-15" : d.dob,
                 expiry: d.docType === "nationalId" ? "2030-05-12" : d.expiry,
                 gender: d.docType === "nationalId" ? "Male" : d.gender,
                 placeOfBirth: d.docType === "nationalId" ? "Cairo" : d.placeOfBirth,
@@ -329,7 +334,7 @@ function Onboarding() {
               <CardToolbar onSave={() => setShowSaveModal(true)} />
               {step === 0 && (
                 <div className="space-y-10">
-                  <KnowYouBetterStep data={data} update={update} />
+                  <KnowYouBetterStep data={data} update={update} nidGateDone={nidGateDone} />
                   <div className="border-t border-border/60 pt-8">
                     <ContactVerificationStep data={data} update={update} />
                   </div>
@@ -1015,11 +1020,11 @@ function ChooseOptionStepImpl({ data, update, residencyType }: any) {
   );
 }
 
-function KnowYouBetterStep({ data, update }: any) {
+function KnowYouBetterStep({ data, update, nidGateDone }: any) {
   return (
     <div>
       <StepHeader title="Let's get to know you better!" subtitle="Tell us about yourself and how we can reach you." />
-      <AdditionalPersonalDetails data={data} update={update} />
+      <AdditionalPersonalDetails data={data} update={update} verified={nidGateDone} />
       <div className="mt-6 rounded-xl border border-border bg-card p-6">
         <h3 className="text-lg font-bold text-primary">Contact details</h3>
         <p className="mt-1 text-sm text-muted-foreground">We'll verify your mobile number and email in the next step.</p>
@@ -1865,7 +1870,7 @@ void ArrowRight;
 
 const COUNTRIES_FULL = ["Egypt", ...COUNTRIES];
 
-function AdditionalPersonalDetails({ data, update }: any) {
+function AdditionalPersonalDetails({ data, update, verified }: any) {
   const residenceOpts: { v: "resEgy" | "nonResEgy" | "resFor" | "nonResFor"; label: string }[] = [
     { v: "resEgy", label: "Resident Egyptian" },
     { v: "nonResEgy", label: "Non-resident Egyptian" },
@@ -1877,18 +1882,54 @@ function AdditionalPersonalDetails({ data, update }: any) {
       <h3 className="text-lg font-bold text-primary">Personal Details</h3>
       <p className="mt-1 text-sm text-muted-foreground">Required for account opening per CBE guidelines.</p>
       <div className="mt-5 space-y-5">
+        {verified && (
+          <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <ShieldCheck className="h-5 w-5 shrink-0 text-emerald-600" />
+            <p>Your identity has been verified via <span className="font-semibold">Haweya</span>. Pre-filled fields are locked.</p>
+          </div>
+        )}
         <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Full name">
-            <input className={inputCls} value={data.fullName} onChange={(e) => update("fullName", e.target.value)} placeholder="As shown on National ID" />
-          </Field>
+          {verified ? (
+            <>
+              <Field label="First Name">
+                <div className="space-y-1">
+                  <input className={`${inputCls} bg-muted`} value={data.firstName} disabled readOnly />
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 uppercase tracking-wide">
+                    <ShieldCheck className="h-3 w-3" /> Haweya
+                  </span>
+                </div>
+              </Field>
+              <Field label="Last Name">
+                <div className="space-y-1">
+                  <input className={`${inputCls} bg-muted`} value={data.lastName} disabled readOnly />
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 uppercase tracking-wide">
+                    <ShieldCheck className="h-3 w-3" /> Haweya
+                  </span>
+                </div>
+              </Field>
+            </>
+          ) : (
+            <Field label="Full name">
+              <input className={inputCls} value={data.fullName} onChange={(e) => update("fullName", e.target.value)} placeholder="As shown on National ID" />
+            </Field>
+          )}
           <Field label="Date of birth">
-            <input
-              type="date"
-              className={inputCls}
-              value={data.dob}
-              onChange={(e) => update("dob", e.target.value)}
-              max={new Date().toISOString().slice(0, 10)}
-            />
+            <div className="space-y-1">
+              <input
+                type="date"
+                className={`${inputCls} ${verified ? "bg-muted" : ""}`}
+                value={data.dob}
+                onChange={(e) => update("dob", e.target.value)}
+                disabled={verified}
+                readOnly={verified}
+                max={new Date().toISOString().slice(0, 10)}
+              />
+              {verified && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 uppercase tracking-wide">
+                  <ShieldCheck className="h-3 w-3" /> Haweya
+                </span>
+              )}
+            </div>
           </Field>
           <Field label="Gender">
             <PillToggle
@@ -1898,7 +1939,14 @@ function AdditionalPersonalDetails({ data, update }: any) {
             />
           </Field>
           <Field label="Place of birth">
-            <input className={inputCls} value={data.placeOfBirth} onChange={(e) => update("placeOfBirth", e.target.value)} />
+            <div className="space-y-1">
+              <input className={`${inputCls} ${verified ? "bg-muted" : ""}`} value={data.placeOfBirth} onChange={(e) => update("placeOfBirth", e.target.value)} disabled={verified} readOnly={verified} />
+              {verified && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 uppercase tracking-wide">
+                  <ShieldCheck className="h-3 w-3" /> Haweya
+                </span>
+              )}
+            </div>
           </Field>
           <Field label="Age">
             <input
@@ -1935,6 +1983,22 @@ function AdditionalPersonalDetails({ data, update }: any) {
               {["Illiterate","Primary","Secondary","Post-secondary non-tertiary","Tertiary (undergraduate)","Postgraduate","PhD"].map((m) => <option key={m}>{m}</option>)}
             </select>
           </Field>
+          {verified && (
+            <Field label="Expiration Date">
+              <div className="space-y-1">
+                <input
+                  type="date"
+                  className={`${inputCls} bg-muted`}
+                  value={data.expiry}
+                  disabled
+                  readOnly
+                />
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 uppercase tracking-wide">
+                  <ShieldCheck className="h-3 w-3" /> Haweya
+                </span>
+              </div>
+            </Field>
+          )}
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-semibold text-foreground">Do you have other nationalities?</p>
