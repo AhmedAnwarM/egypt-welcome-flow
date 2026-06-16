@@ -8,7 +8,7 @@ export default function Footer() {
     <footer className="bg-card border-t border-border">
       <div className="max-w-6xl mx-auto px-6 py-14">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-          <div>
+          <div className="md:col-span-2">
             <p className="text-lg font-bold text-primary tracking-tight">SUMERGE</p>
             <p className="text-sm text-muted-foreground mt-2">{t("brand.tagline")}</p>
           </div>
@@ -26,14 +26,6 @@ export default function Footer() {
               <li><a href="#" className="text-muted-foreground hover:text-secondary transition-colors">{t("footer.privacy")}</a></li>
               <li><a href="#" className="text-muted-foreground hover:text-secondary transition-colors">{t("footer.terms")}</a></li>
               <li><a href="/#contact" className="text-muted-foreground hover:text-secondary transition-colors">{t("footer.contact")}</a></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-xs uppercase tracking-[0.14em] font-semibold text-foreground mb-4">{t("footer.contact")}</h4>
-            <ul className="space-y-2.5 text-sm text-muted-foreground">
-              <li>19 SUMERGE (786 374)</li>
-              <li><a href="mailto:support@sumerge.eg" className="hover:text-secondary transition-colors">support@sumerge.eg</a></li>
-              <li>{t("footer.hours")}</li>
             </ul>
           </div>
         </div>
