@@ -879,6 +879,9 @@ function CaptureIdStep({ data, update, goToStep, verifyStage }: any) {
     update("nationalId", "29001011234567");
     update("nationality", "Egyptian");
     update("expiry", "2030-05-12");
+    update("gender", "Male");
+    update("placeOfBirth", "Cairo");
+    update("countryOfBirth", "Egypt");
   };
   const handleUploadPassport = () => {
     update("idDoc", true);
@@ -887,6 +890,9 @@ function CaptureIdStep({ data, update, goToStep, verifyStage }: any) {
     update("nationality", "United Kingdom");
     update("dob", "1990-04-22");
     update("expiry", "2031-09-15");
+    update("gender", "Male");
+    update("placeOfBirth", "London");
+    update("countryOfBirth", "United Kingdom");
   };
   const onDocTypeChange = (v: string) => {
     update("docType", v);
