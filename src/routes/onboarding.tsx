@@ -20,19 +20,19 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 const steps = [
-  "Verify identity & contact",
+  "Verify your identity",
   "Selfie & liveness",
-  "Additional declarations",
+  "Let's get to know you better!",
   "Choose your option",
   "Work and product details",
   "Tax details",
   "Account setup",
   "Address details",
-  "Create login credentials",
   "Confirm products",
   "Upload documents",
   "Digital signature",
   "Review & submit",
+  "Secure your account",
 ] as const;
 
 function Onboarding() {
@@ -42,8 +42,6 @@ function Onboarding() {
   const { lang, setLang } = useLang();
   const router = useRouter();
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [otpStage, setOtpStage] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
   const [verifyStage, setVerifyStage] = useState<"idle" | "checking" | "done">("idle");
   const [resumed, setResumed] = useState(false);
   const refId = useMemo(() => `SM-2026-${String(Math.floor(100000 + Math.random() * 900000))}`, []);
@@ -57,6 +55,8 @@ function Onboarding() {
     otp: "",
     mobileCode: "",
     emailCode: "",
+    phoneVerified: false,
+    emailVerified: false,
     nationalId: "",
     fullName: "",
     firstName: "",
@@ -147,23 +147,10 @@ function Onboarding() {
       return n;
     });
   const next = () => {
-    if (step === 0 && !otpVerified) {
-      setOtpStage(true);
-      return;
-    }
     advance();
   };
   const back = () => {
-    if (step === 0 && otpStage) {
-      setOtpStage(false);
-      return;
-    }
     setStep((s) => Math.max(0, s - 1));
-  };
-  const verifyOtpAndContinue = () => {
-    setOtpVerified(true);
-    setOtpStage(false);
-    advance();
   };
 
   useEffect(() => {
@@ -210,19 +197,22 @@ function Onboarding() {
         } else {
           if (data.nationalId.length !== 14) return false;
         }
+        return true;
+      }
+      case 1: return !!(data as any).selfieDone;
+      case 2: {
+        // Additional personal details
         if (!data.gender || !data.placeOfBirth.trim() || !data.countryOfBirth || !data.maritalStatus || !data.education) return false;
         if (!data.hasOtherNationalities) return false;
         if (data.hasOtherNationalities === "yes" && !data.otherNationalities.trim()) return false;
         if (!data.residenceClassification) return false;
         if (!data.specialNeeds) return false;
         if (data.specialNeeds === "yes" && !data.specialNeedsType) return false;
-        // Merged contact info
+        // Contact info — phone + email must be verified
         if (!(data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail)) return false;
+        if (!data.phoneVerified || !data.emailVerified) return false;
         if (!data.statementFrequency || !data.statementDelivery || !data.correspondenceLanguage) return false;
-        return true;
-      }
-      case 1: return !!(data as any).selfieDone;
-      case 2: {
+        // Additional declarations
         if (data.realBeneficiary !== "yes") return false;
         if (!data.hasPoA || !data.hasOtherBankAccounts || !data.dealsInSecurities || !data.smsConsent) return false;
         return true;
@@ -259,14 +249,14 @@ function Onboarding() {
         if (data.residenceType === "Other" && !data.residenceTypeOther.trim()) return false;
         return !!data.governorate && !!data.city.trim() && !!data.street.trim();
       }
-      case 8: {
+      case 8: return ((data as any).confirmedProducts || []).length > 0;
+      case 9: return isDocumentsValid(data);
+      case 10: return !!(data as any).signedAt;
+      case 11: return true;
+      case 12: {
         const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
         return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit;
       }
-      case 9: return ((data as any).confirmedProducts || []).length > 0;
-      case 10: return isDocumentsValid(data);
-      case 11: return !!(data as any).signedAt;
-      case 12: return true;
       default: return true;
     }
   })();
@@ -303,47 +293,30 @@ function Onboarding() {
           <section className="mt-6 min-h-[560px]">
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
               <CardToolbar onSave={() => setShowSaveModal(true)} />
-              {step === 0 && !otpStage && (
-                <>
-                  <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />
-                  {verifyStage === "done" && <ContactStep data={data} update={update} />}
-                </>
-              )}
-              {step === 0 && otpStage && <OtpPanel data={data} update={update} />}
+              {step === 0 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
               {step === 1 && <SelfieStep data={data} update={update} />}
-              {step === 2 && <AdditionalDeclarationsStep data={data} update={update} />}
+              {step === 2 && <KnowYouBetterStep data={data} update={update} />}
               {step === 3 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
               {step === 4 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(3)} />}
               {step === 5 && <TaxStep data={data} update={update} />}
               {step === 6 && <AccountSetupStep data={data} update={update} />}
               {step === 7 && <AddressStep data={data} update={update} />}
-              {step === 8 && <CredentialsStep data={data} update={update} />}
-              {step === 9 && <ConfirmProductsStep data={data} update={update} />}
-              {step === 10 && <DocumentsStep data={data} update={update} />}
-              {step === 11 && <SignatureStep data={data} update={update} />}
-              {step === 12 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
+              {step === 8 && <ConfirmProductsStep data={data} update={update} />}
+              {step === 9 && <DocumentsStep data={data} update={update} />}
+              {step === 10 && <SignatureStep data={data} update={update} />}
+              {step === 11 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
+              {step === 12 && <CredentialsStep data={data} update={update} />}
 
               <div className="mt-10 flex items-center justify-between border-t border-border/60 pt-6">
                 <button
                   type="button"
                   onClick={back}
-                  disabled={step === 0 && !otpStage}
+                  disabled={step === 0}
                   className="inline-flex h-11 items-center rounded-full border border-border bg-background px-6 text-sm font-semibold text-foreground/80 hover:bg-secondary/40 disabled:opacity-40"
                 >
                   Back
                 </button>
-                {otpStage ? (
-                  <Button
-                    size="lg"
-                    onClick={verifyOtpAndContinue}
-                    disabled={!(data.mobileCode.length === 6 && data.emailCode.length === 6)}
-                    className="h-11 rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2"
-                  >
-                    Verify and continue
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button
+                <Button
                     size="lg"
                     onClick={step === steps.length - 1 ? onFinalSubmit : next}
                     disabled={!canContinue}
@@ -351,8 +324,7 @@ function Onboarding() {
                   >
                     {step === steps.length - 1 ? "Submit application" : "Continue"}
                     <ArrowRight className="h-4 w-4" />
-                  </Button>
-                )}
+                </Button>
               </div>
             </div>
           </section>
@@ -785,23 +757,23 @@ function ChooseOptionStep({ data, update, residencyType }: any) {
   );
 }
 
-function ContactStep({ data, update }: any) {
+function KnowYouBetterStep({ data, update }: any) {
   return (
     <div>
-      <StepHeader title="Let's get to know you better!" />
-      <div className="space-y-5">
-        <Field label="Mobile Number">
-          <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
-            <span className="text-sm font-semibold text-foreground">+20</span>
-            <input
-              className="ml-2 h-full flex-1 bg-transparent text-sm outline-none"
-              placeholder="1XX XXX XXXX"
-              value={data.phone}
-              onChange={(e) => update("phone", e.target.value.replace(/\D/g, ""))}
-              maxLength={11}
-            />
-          </div>
-        </Field>
+      <StepHeader title="Let's get to know you better!" subtitle="Tell us about yourself and how we can reach you." />
+      <AdditionalPersonalDetails data={data} update={update} />
+      <div className="mt-6 rounded-xl border border-border bg-secondary/30 p-6">
+        <h3 className="text-lg font-bold text-primary">Contact details</h3>
+        <p className="mt-1 text-sm text-muted-foreground">We'll verify your mobile number and email separately.</p>
+        <div className="mt-5 space-y-5">
+          <VerifiableContactField
+            label="Mobile Number"
+            kind="phone"
+            value={data.phone}
+            verified={!!data.phoneVerified}
+            onChange={(v) => { update("phone", v); if (data.phoneVerified) update("phoneVerified", false); }}
+            onVerified={() => update("phoneVerified", true)}
+          />
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Mobile No. 2 (optional)">
             <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
@@ -828,10 +800,17 @@ function ContactStep({ data, update }: any) {
             </div>
           </Field>
         </div>
-        <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Email"><input type="email" className={inputCls} value={data.email} onChange={(e) => update("email", e.target.value)} /></Field>
-          <Field label="Confirm Email"><input type="email" className={inputCls} value={data.confirmEmail} onChange={(e) => update("confirmEmail", e.target.value)} /></Field>
-        </div>
+          <VerifiableContactField
+            label="Email"
+            kind="email"
+            value={data.email}
+            verified={!!data.emailVerified}
+            onChange={(v) => { update("email", v); if (data.emailVerified) update("emailVerified", false); }}
+            onVerified={() => update("emailVerified", true)}
+          />
+          <Field label="Confirm Email">
+            <input type="email" className={inputCls} value={data.confirmEmail} onChange={(e) => update("confirmEmail", e.target.value)} />
+          </Field>
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Statement frequency">
             <PillToggle
@@ -861,7 +840,95 @@ function ContactStep({ data, update }: any) {
           <input className={inputCls} placeholder="Promo code" value={data.promo} onChange={(e) => update("promo", e.target.value)} />
         </div>
         <p className="text-sm text-muted-foreground">If we sense an issue during your application, we may reach out via email, mobile, or WhatsApp to help you complete the process.</p>
+        </div>
       </div>
+      <AdditionalDeclarations data={data} update={update} />
+    </div>
+  );
+}
+
+function VerifiableContactField({
+  label, kind, value, verified, onChange, onVerified,
+}: {
+  label: string;
+  kind: "phone" | "email";
+  value: string;
+  verified: boolean;
+  onChange: (v: string) => void;
+  onVerified: () => void;
+}) {
+  const [sent, setSent] = useState(false);
+  const [code, setCode] = useState("");
+  const [err, setErr] = useState("");
+  const valid = kind === "phone" ? value.length >= 10 : /\S+@\S+\.\S+/.test(value);
+  const handleSend = () => { setSent(true); setErr(""); setCode(""); };
+  const handleVerify = () => {
+    if (code.length === 6) { onVerified(); setSent(false); setErr(""); }
+    else setErr("Enter the 6-digit code");
+  };
+  return (
+    <div>
+      <Field label={label}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          {kind === "phone" ? (
+            <div className="flex h-12 flex-1 items-center rounded-md border border-border bg-background px-3">
+              <span className="text-sm font-semibold text-foreground">+20</span>
+              <input
+                className="ml-2 h-full flex-1 bg-transparent text-sm outline-none disabled:opacity-70"
+                placeholder="1XX XXX XXXX"
+                value={value}
+                disabled={verified}
+                onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))}
+                maxLength={11}
+              />
+            </div>
+          ) : (
+            <input
+              type="email"
+              className={`${inputCls} flex-1 ${verified ? "opacity-70" : ""}`}
+              value={value}
+              disabled={verified}
+              onChange={(e) => onChange(e.target.value)}
+            />
+          )}
+          {verified ? (
+            <span className="inline-flex h-12 items-center gap-1.5 rounded-full bg-emerald-100 px-4 text-sm font-bold text-emerald-700">
+              <ShieldCheck className="h-4 w-4" /> Verified
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={!valid}
+              className="inline-flex h-12 shrink-0 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {sent ? "Resend code" : `Send ${kind === "phone" ? "SMS" : "email"} code`}
+            </button>
+          )}
+        </div>
+      </Field>
+      {sent && !verified && (
+        <div className="mt-2 flex flex-col gap-2 rounded-lg border border-border bg-background p-3 sm:flex-row sm:items-center">
+          <input
+            inputMode="numeric"
+            maxLength={6}
+            placeholder="Enter 6-digit code"
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+            className={`${inputCls} sm:max-w-[200px]`}
+          />
+          <button
+            type="button"
+            onClick={handleVerify}
+            disabled={code.length !== 6}
+            className="inline-flex h-11 shrink-0 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            Verify
+          </button>
+          <span className="text-xs text-muted-foreground">Demo: any 6 digits work.</span>
+        </div>
+      )}
+      {err && <p className="mt-1 text-xs font-semibold text-destructive">{err}</p>}
     </div>
   );
 }
@@ -1031,10 +1098,6 @@ function CaptureIdStep({ data, update, goToStep, verifyStage }: any) {
             </div>
           </div>
         </div>
-      )}
-
-      {showOcr && (
-        <AdditionalPersonalDetails data={data} update={update} />
       )}
     </div>
   );
