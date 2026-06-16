@@ -171,22 +171,24 @@ function Onboarding() {
   const selectResidency = (r: "egyptian" | "foreign") => {
     setResidencyType(r);
     const dt = r === "foreign" ? "passport" : "nationalId";
-    if (r === "foreign") {
-      setNidGateDone(true);
-      setData((d) => ({
-        ...d,
-        docType: dt,
-        nationality: "United Kingdom",
-        productChoice: "saving",
-        fullName: "John Michael Smith",
-        passportNumber: "P12345678",
-        dob: "1990-04-22",
-        expiry: "2031-09-15",
-        gender: "Male",
-        placeOfBirth: "London",
-        countryOfBirth: "United Kingdom",
-      }));
-    } else {
+      if (r === "foreign") {
+        setNidGateDone(true);
+        setData((d) => ({
+          ...d,
+          docType: dt,
+          nationality: "United Kingdom",
+          productChoice: "saving",
+          fullName: "John Michael Smith",
+          firstName: "John",
+          lastName: "Michael Smith",
+          passportNumber: "P12345678",
+          dob: "1990-04-22",
+          expiry: "2031-09-15",
+          gender: "Male",
+          placeOfBirth: "London",
+          countryOfBirth: "United Kingdom",
+        }));
+      } else {
       setNidGateDone(false);
       setData((d) => ({
         ...d,
