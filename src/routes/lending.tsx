@@ -452,8 +452,12 @@ function LendingPage() {
             </div>
           )}
           {savedFlash && (
-            <div className="mb-4 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary flex items-center gap-2">
-              <Save className="h-4 w-4" /> {t("lending.saved")}
+            <div className="mb-4 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary flex items-start gap-2">
+              <Save className="h-4 w-4 mt-0.5 shrink-0" />
+              <div className="space-y-1">
+                <p>{interpolate(t("lending.savedRef"), { ref: lendingRef, path: resumePath })}</p>
+                <p className="text-xs opacity-80">{t("lending.savedLocalOnly")}</p>
+              </div>
             </div>
           )}
 
