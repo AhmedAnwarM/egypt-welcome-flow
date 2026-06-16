@@ -197,19 +197,22 @@ function Onboarding() {
         } else {
           if (data.nationalId.length !== 14) return false;
         }
+        return true;
+      }
+      case 1: return !!(data as any).selfieDone;
+      case 2: {
+        // Additional personal details
         if (!data.gender || !data.placeOfBirth.trim() || !data.countryOfBirth || !data.maritalStatus || !data.education) return false;
         if (!data.hasOtherNationalities) return false;
         if (data.hasOtherNationalities === "yes" && !data.otherNationalities.trim()) return false;
         if (!data.residenceClassification) return false;
         if (!data.specialNeeds) return false;
         if (data.specialNeeds === "yes" && !data.specialNeedsType) return false;
-        // Merged contact info
+        // Contact info — phone + email must be verified
         if (!(data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail)) return false;
+        if (!data.phoneVerified || !data.emailVerified) return false;
         if (!data.statementFrequency || !data.statementDelivery || !data.correspondenceLanguage) return false;
-        return true;
-      }
-      case 1: return !!(data as any).selfieDone;
-      case 2: {
+        // Additional declarations
         if (data.realBeneficiary !== "yes") return false;
         if (!data.hasPoA || !data.hasOtherBankAccounts || !data.dealsInSecurities || !data.smsConsent) return false;
         return true;
@@ -246,14 +249,14 @@ function Onboarding() {
         if (data.residenceType === "Other" && !data.residenceTypeOther.trim()) return false;
         return !!data.governorate && !!data.city.trim() && !!data.street.trim();
       }
-      case 8: {
+      case 8: return ((data as any).confirmedProducts || []).length > 0;
+      case 9: return isDocumentsValid(data);
+      case 10: return !!(data as any).signedAt;
+      case 11: return true;
+      case 12: {
         const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
         return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit;
       }
-      case 9: return ((data as any).confirmedProducts || []).length > 0;
-      case 10: return isDocumentsValid(data);
-      case 11: return !!(data as any).signedAt;
-      case 12: return true;
       default: return true;
     }
   })();
