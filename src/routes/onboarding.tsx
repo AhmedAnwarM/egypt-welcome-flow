@@ -217,13 +217,6 @@ function Onboarding() {
           </div>
         </div>
       )}
-      {showArNote && (
-        <div className="mx-auto mt-4 max-w-3xl px-4 sm:px-6">
-          <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary font-medium">
-            Arabic interface coming soon.
-          </div>
-        </div>
-      )}
       {!residencyType ? (
         <div className="mx-auto max-w-3xl px-6 py-14">
           <CardToolbar onSave={() => setShowSaveModal(true)} />
@@ -294,6 +287,7 @@ function Onboarding() {
       </main>
       <Footer />
       {showSaveModal && <SaveModal refId={refId} onClose={() => setShowSaveModal(false)} />}
+      <SessionTimeout onSignOut={() => router.navigate({ to: "/" })} />
     </div>
   );
 }
