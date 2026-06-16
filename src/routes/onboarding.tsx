@@ -32,6 +32,7 @@ const steps = [
 function Onboarding() {
   const [step, setStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
+  const [step1SubStep, setStep1SubStep] = useState(0);
   const [residencyType, setResidencyType] = useState<"" | "egyptian" | "foreign">("");
   const { lang, setLang } = useLang();
   const router = useRouter();
@@ -141,9 +142,17 @@ function Onboarding() {
       return n;
     });
   const next = () => {
+    if (step === 1 && step1SubStep === 0) {
+      setStep1SubStep(1);
+      return;
+    }
     advance();
   };
   const back = () => {
+    if (step === 1 && step1SubStep === 1) {
+      setStep1SubStep(0);
+      return;
+    }
     setStep((s) => Math.max(0, s - 1));
   };
 
@@ -155,8 +164,13 @@ function Onboarding() {
       setResidencyType("egyptian");
       setStep(0);
       setMaxStep(0);
+      setStep1SubStep(0);
     }
   }, []);
+
+  useEffect(() => {
+    if (step !== 1) setStep1SubStep(0);
+  }, [step]);
 
   // Step 3 verification simulation: when ID doc uploaded, cycle through statuses
   useEffect(() => {
@@ -194,17 +208,20 @@ function Onboarding() {
         }
         return true;
     };
-    const v1 = () => {
+    const v1a = () => {
         if (!data.gender || !data.placeOfBirth.trim() || !data.countryOfBirth || !data.maritalStatus || !data.education) return false;
         if (!data.hasOtherNationalities) return false;
         if (data.hasOtherNationalities === "yes" && !data.otherNationalities.trim()) return false;
         if (!data.residenceClassification) return false;
         if (!data.specialNeeds) return false;
         if (data.specialNeeds === "yes" && !data.specialNeedsType) return false;
-        if (!(data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail)) return false;
-        if (!data.statementFrequency || !data.statementDelivery || !data.correspondenceLanguage) return false;
         if (data.realBeneficiary !== "yes") return false;
         if (!data.hasPoA || !data.smsConsent) return false;
+        return true;
+    };
+    const v1b = () => {
+        if (!(data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail)) return false;
+        if (!data.statementFrequency || !data.statementDelivery || !data.correspondenceLanguage) return false;
         return true;
     };
     const v2 = () => !!data.phoneVerified && !!data.emailVerified;
@@ -249,7 +266,7 @@ function Onboarding() {
     };
     switch (step) {
       case 0: return v0();
-      case 1: return v1() && v2();
+      case 1: return step1SubStep === 0 ? v1a() : v1b() && v2();
       case 2: return v3() && v4();
       case 3: return v5() && v6();
       case 4: return v7() && v8();
@@ -295,12 +312,11 @@ function Onboarding() {
                 <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />
               )}
               {step === 1 && (
-                <div className="space-y-10">
+                step1SubStep === 0 ? (
                   <KnowYouBetterStep data={data} update={update} />
-                  <div className="border-t border-border/60 pt-8">
-                    <ContactVerificationStep data={data} update={update} />
-                  </div>
-                </div>
+                ) : (
+                  <ContactVerificationStep data={data} update={update} />
+                )
               )}
               {step === 2 && (
                 <div className="space-y-10">
@@ -788,12 +804,19 @@ function ChooseOptionStep({ data, update, residencyType }: any) {
 function KnowYouBetterStep({ data, update }: any) {
   return (
     <div>
-      <StepHeader title="Let's get to know you better!" subtitle="Tell us about yourself and how we can reach you." />
+      <StepHeader title="Let's get to know you better!" subtitle="Tell us about yourself." />
       <AdditionalPersonalDetails data={data} update={update} />
-      <div className="mt-6 rounded-xl border border-border bg-card p-6">
-        <h3 className="text-lg font-bold text-primary">Contact details</h3>
-        <p className="mt-1 text-sm text-muted-foreground">We'll verify your mobile number and email in the next step.</p>
-        <div className="mt-5 space-y-5">
+      <AdditionalDeclarations data={data} update={update} />
+    </div>
+  );
+}
+
+function ContactVerificationStep({ data, update }: any) {
+  return (
+    <div>
+      <StepHeader title="Verify your contact details" subtitle="We'll send a one-time code to your mobile and email." />
+      <div className="space-y-5 rounded-xl border border-border bg-card p-6">
+        <div className="space-y-5">
           <Field label="Mobile Number">
             <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
               <span className="text-sm font-semibold text-foreground">+20</span>
@@ -806,32 +829,32 @@ function KnowYouBetterStep({ data, update }: any) {
               />
             </div>
           </Field>
-        <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Mobile No. 2 (optional)">
-            <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
-              <span className="text-sm font-semibold text-foreground">+20</span>
-              <input
-                className="ml-2 h-full flex-1 bg-transparent text-sm outline-none"
-                placeholder="1XX XXX XXXX"
-                value={data.phone2}
-                onChange={(e) => update("phone2", e.target.value.replace(/\D/g, ""))}
-                maxLength={11}
-              />
-            </div>
-          </Field>
-          <Field label="Home phone (optional)">
-            <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
-              <span className="text-sm font-semibold text-foreground">+20</span>
-              <input
-                className="ml-2 h-full flex-1 bg-transparent text-sm outline-none"
-                placeholder="2 XXXX XXXX"
-                value={data.homePhone}
-                onChange={(e) => update("homePhone", e.target.value.replace(/\D/g, ""))}
-                maxLength={11}
-              />
-            </div>
-          </Field>
-        </div>
+          <div className="grid gap-5 md:grid-cols-2">
+            <Field label="Mobile No. 2 (optional)">
+              <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
+                <span className="text-sm font-semibold text-foreground">+20</span>
+                <input
+                  className="ml-2 h-full flex-1 bg-transparent text-sm outline-none"
+                  placeholder="1XX XXX XXXX"
+                  value={data.phone2}
+                  onChange={(e) => update("phone2", e.target.value.replace(/\D/g, ""))}
+                  maxLength={11}
+                />
+              </div>
+            </Field>
+            <Field label="Home phone (optional)">
+              <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
+                <span className="text-sm font-semibold text-foreground">+20</span>
+                <input
+                  className="ml-2 h-full flex-1 bg-transparent text-sm outline-none"
+                  placeholder="2 XXXX XXXX"
+                  value={data.homePhone}
+                  onChange={(e) => update("homePhone", e.target.value.replace(/\D/g, ""))}
+                  maxLength={11}
+                />
+              </div>
+            </Field>
+          </div>
           <Field label="Email">
             <input
               type="email"
@@ -843,59 +866,49 @@ function KnowYouBetterStep({ data, update }: any) {
           <Field label="Confirm Email">
             <input type="email" className={inputCls} value={data.confirmEmail} onChange={(e) => update("confirmEmail", e.target.value)} />
           </Field>
-        <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Statement frequency">
+          <div className="grid gap-5 md:grid-cols-2">
+            <Field label="Statement frequency">
+              <PillToggle
+                options={[{ v: "Monthly", label: "Monthly" }, { v: "Quarterly", label: "Quarterly" }]}
+                value={data.statementFrequency}
+                onChange={(v) => update("statementFrequency", v)}
+              />
+            </Field>
+            <Field label="Statement delivery method">
+              <select className={inputCls} value={data.statementDelivery} onChange={(e) => update("statementDelivery", e.target.value)}>
+                <option value="">Select method</option>
+                <option>Email</option>
+                <option>Mobile app</option>
+                <option>Post (mailing address)</option>
+              </select>
+            </Field>
+          </div>
+          <Field label="Correspondence language">
             <PillToggle
-              options={[{ v: "Monthly", label: "Monthly" }, { v: "Quarterly", label: "Quarterly" }]}
-              value={data.statementFrequency}
-              onChange={(v) => update("statementFrequency", v)}
+              options={[{ v: "Arabic", label: "Arabic" }, { v: "English", label: "English" }]}
+              value={data.correspondenceLanguage}
+              onChange={(v) => update("correspondenceLanguage", v)}
             />
           </Field>
-          <Field label="Statement delivery method">
-            <select className={inputCls} value={data.statementDelivery} onChange={(e) => update("statementDelivery", e.target.value)}>
-              <option value="">Select method</option>
-              <option>Email</option>
-              <option>Mobile app</option>
-              <option>Post (mailing address)</option>
-            </select>
-          </Field>
         </div>
-        <Field label="Correspondence language">
-          <PillToggle
-            options={[{ v: "Arabic", label: "Arabic" }, { v: "English", label: "English" }]}
-            value={data.correspondenceLanguage}
-            onChange={(v) => update("correspondenceLanguage", v)}
+        <div className="border-t border-border/60 pt-5">
+          <VerifiableContactField
+            label="Mobile Number"
+            kind="phone"
+            value={data.phone}
+            verified={!!data.phoneVerified}
+            onChange={(v) => { update("phone", v); if (data.phoneVerified) update("phoneVerified", false); }}
+            onVerified={() => update("phoneVerified", true)}
           />
-        </Field>
-        
+          <VerifiableContactField
+            label="Email"
+            kind="email"
+            value={data.email}
+            verified={!!data.emailVerified}
+            onChange={(v) => { update("email", v); if (data.emailVerified) update("emailVerified", false); }}
+            onVerified={() => update("emailVerified", true)}
+          />
         </div>
-      </div>
-      <AdditionalDeclarations data={data} update={update} />
-    </div>
-  );
-}
-
-function ContactVerificationStep({ data, update }: any) {
-  return (
-    <div>
-      <StepHeader title="Verify your contact details" subtitle="We'll send a one-time code to your mobile and email." />
-      <div className="space-y-5 rounded-xl border border-border bg-card p-6">
-        <VerifiableContactField
-          label="Mobile Number"
-          kind="phone"
-          value={data.phone}
-          verified={!!data.phoneVerified}
-          onChange={(v) => { update("phone", v); if (data.phoneVerified) update("phoneVerified", false); }}
-          onVerified={() => update("phoneVerified", true)}
-        />
-        <VerifiableContactField
-          label="Email"
-          kind="email"
-          value={data.email}
-          verified={!!data.emailVerified}
-          onChange={(v) => { update("email", v); if (data.emailVerified) update("emailVerified", false); }}
-          onVerified={() => update("emailVerified", true)}
-        />
       </div>
     </div>
   );
