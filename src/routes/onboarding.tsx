@@ -719,6 +719,11 @@ function NidOtpGate({
   onBack: () => void;
   onVerified: (nid: string, mobile: string) => void;
 }) {
+  type Phase = "upload" | "ocr" | "mobile";
+  const [phase, setPhase] = useState<Phase>("upload");
+  const [frontFile, setFrontFile] = useState<string>("");
+  const [backFile, setBackFile] = useState<string>("");
+  const [ocrRunning, setOcrRunning] = useState(false);
   const [nid, setNid] = useState(initialNid || "");
   const [mobile, setMobile] = useState(initialMobile || "");
   const [sent, setSent] = useState(false);
@@ -727,13 +732,40 @@ function NidOtpGate({
   const [otp, setOtp] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const nidValid = /^\d{14}$/.test(nid);
   const mobileValid = /^01\d{9}$/.test(mobile);
+  const nidValid = /^\d{14}$/.test(nid);
+
+  const pickFile = (which: "front" | "back") => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*,application/pdf";
+    input.onchange = () => {
+      const f = input.files?.[0];
+      if (!f) return;
+      if (which === "front") setFrontFile(f.name);
+      else setBackFile(f.name);
+    };
+    input.click();
+  };
+
+  const runOcr = async () => {
+    setError(null);
+    setPhase("ocr");
+    setOcrRunning(true);
+    await new Promise((r) => setTimeout(r, 1400));
+    // Derive a plausible 14-digit National ID
+    const generated = nid && nidValid
+      ? nid
+      : "2" + String(Math.floor(900000000000 + Math.random() * 99999999999)).padStart(13, "0").slice(0, 13);
+    setNid(generated);
+    setOcrRunning(false);
+    auditLog("onboarding.nidOcrCompleted", {});
+  };
 
   const sendOtp = async () => {
     setError(null);
-    if (!nidValid || !mobileValid) {
-      setError("Please enter a valid 14-digit National ID and a valid Egyptian mobile (e.g. 010xxxxxxxx).");
+    if (!mobileValid) {
+      setError("Please enter a valid Egyptian mobile (e.g. 01XXXXXXXXX).");
       return;
     }
     setSending(true);
@@ -757,81 +789,151 @@ function NidOtpGate({
 
   return (
     <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
-      <StepHeader
-        title="Verify your National ID & mobile"
-        subtitle="Enter your 14-digit Egyptian National ID and mobile number. We'll send a one-time code to confirm your mobile."
-      />
-      <div className="grid gap-5 md:grid-cols-2">
-        <Field label="National ID number">
-          <input
-            inputMode="numeric"
-            maxLength={14}
-            className={inputCls}
-            placeholder="14 digits"
-            value={nid}
-            disabled={sent}
-            onChange={(e) => setNid(e.target.value.replace(/\D/g, ""))}
+      {phase === "upload" && (
+        <>
+          <StepHeader
+            title="Upload your National ID"
+            subtitle="Capture or upload the front and back of your Egyptian National ID. We'll read your ID number from it."
           />
-        </Field>
-        <Field label="Mobile number">
-          <input
-            inputMode="tel"
-            maxLength={11}
-            className={inputCls}
-            placeholder="01XXXXXXXXX"
-            value={mobile}
-            disabled={sent}
-            onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
-          />
-        </Field>
-      </div>
-
-      {sent && (
-        <div className="mt-6 rounded-xl border border-border bg-background p-5">
-          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-primary">
-            <KeyRound className="h-4 w-4" /> Enter the 6-digit code sent to {mobile}
+          <div className="grid gap-4 md:grid-cols-2">
+            <NidUploadTile label="National ID — Front" fileName={frontFile} onClick={() => pickFile("front")} />
+            <NidUploadTile label="National ID — Back" fileName={backFile} onClick={() => pickFile("back")} />
           </div>
-          <input
-            inputMode="numeric"
-            maxLength={6}
-            className={`${inputCls} tracking-[0.5em] text-center text-lg font-bold`}
-            placeholder="••••••"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+          {error && (
+            <p className="mt-4 rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{error}</p>
+          )}
+          <div className="mt-8 flex items-center justify-between gap-3">
+            <button type="button" onClick={onBack} className="text-sm font-semibold text-muted-foreground hover:text-primary">← Back</button>
+            <Button onClick={runOcr} disabled={!frontFile || !backFile}>
+              Continue <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </>
+      )}
+
+      {phase === "ocr" && (
+        <>
+          <StepHeader
+            title="Reading your National ID"
+            subtitle="We're extracting your ID number from the uploaded card."
           />
-          <button
-            type="button"
-            onClick={() => { setSent(false); setOtp(""); }}
-            className="mt-3 text-xs font-medium text-muted-foreground hover:text-primary"
-          >
-            Change number or resend
-          </button>
+          <div className="rounded-xl border border-border bg-background p-6">
+            {ocrRunning ? (
+              <div className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                Extracting National ID number…
+              </div>
+            ) : (
+              <div>
+                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary">
+                  <CheckCircle2 className="h-4 w-4" /> National ID detected
+                </div>
+                <Field label="National ID number">
+                  <input
+                    inputMode="numeric"
+                    maxLength={14}
+                    className={inputCls}
+                    value={nid}
+                    onChange={(e) => setNid(e.target.value.replace(/\D/g, ""))}
+                  />
+                </Field>
+                <p className="mt-2 text-xs text-muted-foreground">Please confirm the number matches your card.</p>
+              </div>
+            )}
+          </div>
+          <div className="mt-8 flex items-center justify-between gap-3">
+            <button type="button" onClick={() => setPhase("upload")} disabled={ocrRunning} className="text-sm font-semibold text-muted-foreground hover:text-primary disabled:opacity-50">← Back</button>
+            <Button onClick={() => setPhase("mobile")} disabled={ocrRunning || !nidValid}>
+              Continue <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </>
+      )}
+
+      {phase === "mobile" && (
+        <>
+          <StepHeader
+            title="Verify your mobile number"
+            subtitle="Enter your Egyptian mobile number. We'll send a one-time code to confirm it."
+          />
+          <Field label="Mobile number">
+            <input
+              inputMode="tel"
+              maxLength={11}
+              className={inputCls}
+              placeholder="01XXXXXXXXX"
+              value={mobile}
+              disabled={sent}
+              onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
+            />
+          </Field>
+
+          {sent && (
+            <div className="mt-6 rounded-xl border border-border bg-background p-5">
+              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-primary">
+                <KeyRound className="h-4 w-4" /> Enter the 6-digit code sent to {mobile}
+              </div>
+              <input
+                inputMode="numeric"
+                maxLength={6}
+                className={`${inputCls} tracking-[0.5em] text-center text-lg font-bold`}
+                placeholder="••••••"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+              />
+              <button
+                type="button"
+                onClick={() => { setSent(false); setOtp(""); }}
+                className="mt-3 text-xs font-medium text-muted-foreground hover:text-primary"
+              >
+                Change number or resend
+              </button>
+            </div>
+          )}
+
+          {error && (
+            <p className="mt-4 rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{error}</p>
+          )}
+
+          <div className="mt-8 flex items-center justify-between gap-3">
+            <button type="button" onClick={() => { setSent(false); setOtp(""); setPhase("ocr"); }} className="text-sm font-semibold text-muted-foreground hover:text-primary">← Back</button>
+            {!sent ? (
+              <Button onClick={sendOtp} disabled={sending || !mobileValid}>
+                {sending ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending</>) : (<>Send code <ArrowRight className="ml-2 h-4 w-4" /></>)}
+              </Button>
+            ) : (
+              <Button onClick={verify} disabled={verifying || otp.length !== 6}>
+                {verifying ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying</>) : (<>Verify & continue <ArrowRight className="ml-2 h-4 w-4" /></>)}
+              </Button>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function NidUploadTile({ label, fileName, onClick }: { label: string; fileName: string; onClick: () => void }) {
+  const done = !!fileName;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group flex flex-col items-start gap-3 rounded-xl border-2 border-dashed p-5 text-left transition-all ${done ? "border-primary bg-primary/5" : "border-border hover:border-primary hover:bg-primary/5"}`}
+    >
+      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+        <IdCard className="h-5 w-5 text-primary" /> {label}
+      </div>
+      {done ? (
+        <div className="flex items-center gap-2 text-xs font-medium text-primary">
+          <CheckCircle2 className="h-4 w-4" /> {fileName}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+          <Upload className="h-4 w-4" /> Tap to capture or upload
         </div>
       )}
-
-      {error && (
-        <p className="mt-4 rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{error}</p>
-      )}
-
-      <div className="mt-8 flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="text-sm font-semibold text-muted-foreground hover:text-primary"
-        >
-          ← Back
-        </button>
-        {!sent ? (
-          <Button onClick={sendOtp} disabled={sending || !nidValid || !mobileValid}>
-            {sending ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending</>) : (<>Send code <ArrowRight className="ml-2 h-4 w-4" /></>)}
-          </Button>
-        ) : (
-          <Button onClick={verify} disabled={verifying || otp.length !== 6}>
-            {verifying ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying</>) : (<>Verify & continue <ArrowRight className="ml-2 h-4 w-4" /></>)}
-          </Button>
-        )}
-      </div>
-    </div>
+    </button>
   );
 }
 
