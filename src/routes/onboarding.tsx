@@ -20,9 +20,9 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 const steps = [
+  "Verify your identity",
   "Choose your option",
   "Contact information",
-  "Capture National ID",
   "Work and product details",
   "Tax details",
   "Account setup",
@@ -148,14 +148,14 @@ function Onboarding() {
       return n;
     });
   const next = () => {
-    if (step === 1 && !otpVerified) {
+    if (step === 2 && !otpVerified) {
       setOtpStage(true);
       return;
     }
     advance();
   };
   const back = () => {
-    if (step === 1 && otpStage) {
+    if (step === 2 && otpStage) {
       setOtpStage(false);
       return;
     }
@@ -203,9 +203,7 @@ function Onboarding() {
 
   const canContinue = (() => {
     switch (step) {
-      case 0: return !!data.productChoice;
-      case 1: return data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail && !!data.statementFrequency && !!data.statementDelivery && !!data.correspondenceLanguage;
-      case 2: {
+      case 0: {
         if (!data.idDoc || data.fullName.trim().length <= 3) return false;
         if (verifyStage !== "done") return false;
         if (data.docType === "passport") {
@@ -221,6 +219,8 @@ function Onboarding() {
         if (data.specialNeeds === "yes" && !data.specialNeedsType) return false;
         return true;
       }
+      case 1: return !!data.productChoice;
+      case 2: return data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail && !!data.statementFrequency && !!data.statementDelivery && !!data.correspondenceLanguage;
       case 3: {
         const baseOk = !!data.employment && !!data.income && !!data.employer.trim() && !!data.jobTitle.trim() && !!data.sourceOfFunds;
         const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
@@ -300,13 +300,13 @@ function Onboarding() {
           <section className="mt-6 min-h-[560px]">
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
               <CardToolbar onSave={() => setShowSaveModal(true)} />
-              {step === 0 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
-              {step === 1 && !otpStage && <ContactStep data={data} update={update} />}
-              {step === 1 && otpStage && (
+              {step === 0 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
+              {step === 1 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
+              {step === 2 && !otpStage && <ContactStep data={data} update={update} />}
+              {step === 2 && otpStage && (
                 <OtpPanel data={data} update={update} />
               )}
-              {step === 2 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
-              {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(0)} />}
+              {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(1)} />}
               {step === 4 && <TaxStep data={data} update={update} />}
               {step === 5 && <AccountSetupStep data={data} update={update} />}
               {step === 6 && <AddressStep data={data} update={update} />}
