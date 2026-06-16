@@ -831,10 +831,6 @@ function KnowYouBetterStep({ data, update }: any) {
             onChange={(v) => update("correspondenceLanguage", v)}
           />
         </Field>
-        <div>
-          <p className="mb-1.5 text-sm font-semibold text-foreground">Have a promo code? (Optional)</p>
-          <input className={inputCls} placeholder="Promo code" value={data.promo} onChange={(e) => update("promo", e.target.value)} />
-        </div>
         <p className="text-sm text-muted-foreground">If we sense an issue during your application, we may reach out via email, mobile, or WhatsApp to help you complete the process.</p>
         </div>
       </div>
