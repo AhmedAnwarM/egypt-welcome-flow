@@ -7,7 +7,7 @@ import Footer from "@/components/site/Footer";
 import { useLang } from "@/lib/i18n";
 import SessionTimeout from "@/components/SessionTimeout";
 import { auditLog } from "@/lib/audit";
-import { SelfieStep, ConfirmProductsStep, ConsentsStep, DocumentsStep, SignatureStep, ReviewStep, isConsentsValid, isDocumentsValid } from "@/components/onboarding/ExtendedSteps";
+import { SelfieStep, ConfirmProductsStep, DocumentsStep, SignatureStep, ReviewStep, isDocumentsValid } from "@/components/onboarding/ExtendedSteps";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -20,17 +20,16 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 const steps = [
-  "Verify your identity",
+  "Verify identity & contact",
+  "Selfie & liveness",
+  "Additional declarations",
   "Choose your option",
-  "Contact information",
   "Work and product details",
   "Tax details",
   "Account setup",
   "Address details",
   "Create login credentials",
-  "Selfie & liveness",
   "Confirm products",
-  "Review consents",
   "Upload documents",
   "Digital signature",
   "Review & submit",
