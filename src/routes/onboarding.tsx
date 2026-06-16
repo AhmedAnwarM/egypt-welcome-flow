@@ -7,7 +7,7 @@ import Footer from "@/components/site/Footer";
 import { useLang } from "@/lib/i18n";
 import SessionTimeout from "@/components/SessionTimeout";
 import { auditLog } from "@/lib/audit";
-import { SelfieStep, ConfirmProductsStep, DocumentsStep, SignatureStep, ReviewStep, isDocumentsValid } from "@/components/onboarding/ExtendedSteps";
+import { ConfirmProductsStep, DocumentsStep, SignatureStep, ReviewStep, isDocumentsValid } from "@/components/onboarding/ExtendedSteps";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -21,7 +21,6 @@ export const Route = createFileRoute("/onboarding")({
 
 const steps = [
   "Verify your identity",
-  "Selfie & liveness",
   "Let's get to know you better!",
   "Choose your option",
   "Work and product details",
