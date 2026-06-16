@@ -330,8 +330,8 @@ export function ReviewStep({ data, goToStep }: any) {
       <p className="mt-1 text-sm text-muted-foreground">Confirm everything looks right before final submission.</p>
 
       <Section title="Contact" icon={Smartphone}>
-        <Row label="Mobile" value={`+20 ${data.phone}`} step={0} />
-        <Row label="Email" value={data.email} step={0} />
+        <Row label="Mobile" value={`+20 ${data.phone}`} step={2} />
+        <Row label="Email" value={data.email} step={2} />
       </Section>
       <Section title="Identity" icon={IdCard}>
         <Row label="Full name" value={data.fullName} step={0} />
@@ -347,13 +347,13 @@ export function ReviewStep({ data, goToStep }: any) {
         <Row label="Address" value={[data.street, data.city, data.governorate].filter(Boolean).join(", ")} step={7} />
       </Section>
       <Section title="Products" icon={Sparkles}>
-        <Row label="Confirmed" value={(data.confirmedProducts || []).join(", ")} step={9} />
+        <Row label="Confirmed" value={(data.confirmedProducts || []).join(", ")} step={8} />
       </Section>
       <Section title="Compliance" icon={ShieldCheck}>
         <Row label="PEP status" value={data.pepStatus} step={5} />
         <Row label="US person" value={data.fatcaUs} step={5} />
-        <Row label="Documents uploaded" value={Object.keys(data.documents || {}).length} step={10} />
-        <Row label="Signed at" value={data.signedAt ? new Date(data.signedAt).toLocaleString() : "—"} step={11} />
+        <Row label="Documents uploaded" value={Object.keys(data.documents || {}).length} step={9} />
+        <Row label="Signed at" value={data.signedAt ? new Date(data.signedAt).toLocaleString() : "—"} step={10} />
       </Section>
     </div>
   );
