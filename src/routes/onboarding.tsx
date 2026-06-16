@@ -290,47 +290,30 @@ function Onboarding() {
           <section className="mt-6 min-h-[560px]">
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
               <CardToolbar onSave={() => setShowSaveModal(true)} />
-              {step === 0 && !otpStage && (
-                <>
-                  <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />
-                  {verifyStage === "done" && <ContactStep data={data} update={update} />}
-                </>
-              )}
-              {step === 0 && otpStage && <OtpPanel data={data} update={update} />}
+              {step === 0 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
               {step === 1 && <SelfieStep data={data} update={update} />}
-              {step === 2 && <AdditionalDeclarationsStep data={data} update={update} />}
+              {step === 2 && <KnowYouBetterStep data={data} update={update} />}
               {step === 3 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
               {step === 4 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(3)} />}
               {step === 5 && <TaxStep data={data} update={update} />}
               {step === 6 && <AccountSetupStep data={data} update={update} />}
               {step === 7 && <AddressStep data={data} update={update} />}
-              {step === 8 && <CredentialsStep data={data} update={update} />}
-              {step === 9 && <ConfirmProductsStep data={data} update={update} />}
-              {step === 10 && <DocumentsStep data={data} update={update} />}
-              {step === 11 && <SignatureStep data={data} update={update} />}
-              {step === 12 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
+              {step === 8 && <ConfirmProductsStep data={data} update={update} />}
+              {step === 9 && <DocumentsStep data={data} update={update} />}
+              {step === 10 && <SignatureStep data={data} update={update} />}
+              {step === 11 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
+              {step === 12 && <CredentialsStep data={data} update={update} />}
 
               <div className="mt-10 flex items-center justify-between border-t border-border/60 pt-6">
                 <button
                   type="button"
                   onClick={back}
-                  disabled={step === 0 && !otpStage}
+                  disabled={step === 0}
                   className="inline-flex h-11 items-center rounded-full border border-border bg-background px-6 text-sm font-semibold text-foreground/80 hover:bg-secondary/40 disabled:opacity-40"
                 >
                   Back
                 </button>
-                {otpStage ? (
-                  <Button
-                    size="lg"
-                    onClick={verifyOtpAndContinue}
-                    disabled={!(data.mobileCode.length === 6 && data.emailCode.length === 6)}
-                    className="h-11 rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2"
-                  >
-                    Verify and continue
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button
+                <Button
                     size="lg"
                     onClick={step === steps.length - 1 ? onFinalSubmit : next}
                     disabled={!canContinue}
@@ -338,8 +321,7 @@ function Onboarding() {
                   >
                     {step === steps.length - 1 ? "Submit application" : "Continue"}
                     <ArrowRight className="h-4 w-4" />
-                  </Button>
-                )}
+                </Button>
               </div>
             </div>
           </section>
