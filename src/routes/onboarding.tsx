@@ -208,17 +208,20 @@ function Onboarding() {
         }
         return true;
     };
-    const v1 = () => {
+    const v1a = () => {
         if (!data.gender || !data.placeOfBirth.trim() || !data.countryOfBirth || !data.maritalStatus || !data.education) return false;
         if (!data.hasOtherNationalities) return false;
         if (data.hasOtherNationalities === "yes" && !data.otherNationalities.trim()) return false;
         if (!data.residenceClassification) return false;
         if (!data.specialNeeds) return false;
         if (data.specialNeeds === "yes" && !data.specialNeedsType) return false;
-        if (!(data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail)) return false;
-        if (!data.statementFrequency || !data.statementDelivery || !data.correspondenceLanguage) return false;
         if (data.realBeneficiary !== "yes") return false;
         if (!data.hasPoA || !data.smsConsent) return false;
+        return true;
+    };
+    const v1b = () => {
+        if (!(data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail)) return false;
+        if (!data.statementFrequency || !data.statementDelivery || !data.correspondenceLanguage) return false;
         return true;
     };
     const v2 = () => !!data.phoneVerified && !!data.emailVerified;
