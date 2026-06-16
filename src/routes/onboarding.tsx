@@ -33,6 +33,7 @@ function Onboarding() {
   const [step, setStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
   const [residencyType, setResidencyType] = useState<"" | "egyptian" | "foreign">("");
+  const [nidGateDone, setNidGateDone] = useState(false);
   const { lang, setLang } = useLang();
   const router = useRouter();
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -174,6 +175,8 @@ function Onboarding() {
   const selectResidency = (r: "egyptian" | "foreign") => {
     setResidencyType(r);
     const dt = r === "foreign" ? "passport" : "nationalId";
+    if (r === "foreign") setNidGateDone(true);
+    else setNidGateDone(false);
     setData((d) => ({
       ...d,
       docType: dt,
@@ -280,6 +283,20 @@ function Onboarding() {
         <div className="mx-auto max-w-3xl px-6 py-14">
           <CardToolbar onSave={() => setShowSaveModal(true)} />
           <ResidencyPrescreen onSelect={selectResidency} />
+        </div>
+      ) : residencyType === "egyptian" && !nidGateDone ? (
+        <div className="mx-auto max-w-3xl px-6 py-14">
+          <CardToolbar onSave={() => setShowSaveModal(true)} />
+          <NidOtpGate
+            initialNid={data.nationalId}
+            initialMobile={data.phone}
+            onBack={() => setResidencyType("")}
+            onVerified={(nid, mobile) => {
+              setData((d) => ({ ...d, nationalId: nid, phone: mobile, phoneVerified: true }));
+              setNidGateDone(true);
+              auditLog("onboarding.nidOtpVerified", { mobile });
+            }}
+          />
         </div>
       ) : step >= steps.length ? (
         <div className="mx-auto max-w-3xl px-6 py-16">
@@ -681,6 +698,137 @@ function ResidencyPrescreen({ onSelect }: { onSelect: (r: "egyptian" | "foreign"
 }
 
 function ChooseOptionStep({ data, update, residencyType }: any) {
+  return ChooseOptionStepImpl({ data, update, residencyType });
+}
+
+function NidOtpGate({
+  initialNid,
+  initialMobile,
+  onBack,
+  onVerified,
+}: {
+  initialNid: string;
+  initialMobile: string;
+  onBack: () => void;
+  onVerified: (nid: string, mobile: string) => void;
+}) {
+  const [nid, setNid] = useState(initialNid || "");
+  const [mobile, setMobile] = useState(initialMobile || "");
+  const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const nidValid = /^\d{14}$/.test(nid);
+  const mobileValid = /^01\d{9}$/.test(mobile);
+
+  const sendOtp = async () => {
+    setError(null);
+    if (!nidValid || !mobileValid) {
+      setError("Please enter a valid 14-digit National ID and a valid Egyptian mobile (e.g. 010xxxxxxxx).");
+      return;
+    }
+    setSending(true);
+    await new Promise((r) => setTimeout(r, 900));
+    setSent(true);
+    setSending(false);
+    auditLog("onboarding.nidOtpSent", { mobile });
+  };
+
+  const verify = async () => {
+    setError(null);
+    if (otp.length !== 6) {
+      setError("Enter the 6-digit code sent to your mobile.");
+      return;
+    }
+    setVerifying(true);
+    await new Promise((r) => setTimeout(r, 900));
+    setVerifying(false);
+    onVerified(nid, mobile);
+  };
+
+  return (
+    <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
+      <StepHeader
+        title="Verify your National ID & mobile"
+        subtitle="Enter your 14-digit Egyptian National ID and mobile number. We'll send a one-time code to confirm your mobile."
+      />
+      <div className="grid gap-5 md:grid-cols-2">
+        <Field label="National ID number">
+          <input
+            inputMode="numeric"
+            maxLength={14}
+            className={inputCls}
+            placeholder="14 digits"
+            value={nid}
+            disabled={sent}
+            onChange={(e) => setNid(e.target.value.replace(/\D/g, ""))}
+          />
+        </Field>
+        <Field label="Mobile number">
+          <input
+            inputMode="tel"
+            maxLength={11}
+            className={inputCls}
+            placeholder="01XXXXXXXXX"
+            value={mobile}
+            disabled={sent}
+            onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
+          />
+        </Field>
+      </div>
+
+      {sent && (
+        <div className="mt-6 rounded-xl border border-border bg-background p-5">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-primary">
+            <KeyRound className="h-4 w-4" /> Enter the 6-digit code sent to {mobile}
+          </div>
+          <input
+            inputMode="numeric"
+            maxLength={6}
+            className={`${inputCls} tracking-[0.5em] text-center text-lg font-bold`}
+            placeholder="••••••"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+          />
+          <button
+            type="button"
+            onClick={() => { setSent(false); setOtp(""); }}
+            className="mt-3 text-xs font-medium text-muted-foreground hover:text-primary"
+          >
+            Change number or resend
+          </button>
+        </div>
+      )}
+
+      {error && (
+        <p className="mt-4 rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{error}</p>
+      )}
+
+      <div className="mt-8 flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-sm font-semibold text-muted-foreground hover:text-primary"
+        >
+          ← Back
+        </button>
+        {!sent ? (
+          <Button onClick={sendOtp} disabled={sending || !nidValid || !mobileValid}>
+            {sending ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending</>) : (<>Send code <ArrowRight className="ml-2 h-4 w-4" /></>)}
+          </Button>
+        ) : (
+          <Button onClick={verify} disabled={verifying || otp.length !== 6}>
+            {verifying ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying</>) : (<>Verify & continue <ArrowRight className="ml-2 h-4 w-4" /></>)}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ChooseOptionStepImpl({ data, update, residencyType }: any) {
   const options = [
     {
       id: "saving",
