@@ -1393,6 +1393,26 @@ function Segmented({ value, onChange }: { value: "" | "yes" | "no"; onChange: (v
   );
 }
 
+function PillToggle<T extends string>({ options, value, onChange }: { options: { v: T; label: string }[]; value: T | ""; onChange: (v: T) => void }) {
+  return (
+    <div className="inline-flex rounded-full border border-border bg-background p-1">
+      {options.map((o) => {
+        const active = value === o.v;
+        return (
+          <button
+            key={o.v}
+            type="button"
+            onClick={() => onChange(o.v)}
+            className={`min-w-[100px] rounded-full px-5 py-1.5 text-sm font-semibold transition-colors ${active ? "bg-secondary text-secondary-foreground" : "text-foreground/70 hover:text-foreground"}`}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function InfoHint({ text }: { text: string }) {
   return (
     <span className="group relative inline-flex">
