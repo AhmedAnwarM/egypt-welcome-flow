@@ -10,12 +10,10 @@ export default function Header({ refId }: { refId?: string }) {
   const { lang, setLang } = useLang();
   const t = useT();
   const NAV = [
-    { to: "/#products", label: t("nav.products") },
-    { to: "/#about", label: t("nav.about") },
     { to: "/#how", label: t("nav.how") },
+    { to: "/#products", label: t("nav.accounts") || "Accounts" },
     { to: "/#faq", label: t("nav.faq") },
     { to: "/#contact", label: t("nav.contact") },
-    { to: "/tracking", label: t("nav.track") },
   ];
   return (
     <header className="border-b border-border/60 sticky top-0 z-40 backdrop-blur-xl bg-background/90">
@@ -40,6 +38,11 @@ export default function Header({ refId }: { refId?: string }) {
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Reference number</p>
               <p className="text-sm font-mono font-bold text-primary">{refId}</p>
             </div>
+          )}
+          {!isOnboarding && (
+            <Link to="/tracking" className="hidden md:inline-block text-sm font-medium text-foreground/80 hover:text-primary transition-colors">
+              {t("nav.track") || "Track / Resume"}
+            </Link>
           )}
           <div className="inline-flex shrink-0 items-center rounded-full border border-border bg-background p-0.5 text-[11px] font-semibold">
             <Globe className="mx-1 h-3 w-3 text-muted-foreground" />
