@@ -212,7 +212,7 @@ function Onboarding() {
         if (!data.statementFrequency || !data.statementDelivery || !data.correspondenceLanguage) return false;
         // Additional declarations
         if (data.realBeneficiary !== "yes") return false;
-        if (!data.hasPoA || !data.hasOtherBankAccounts || !data.dealsInSecurities || !data.smsConsent) return false;
+        if (!data.hasPoA || !data.smsConsent) return false;
         return true;
       }
       case 2: return !!data.productChoice;
@@ -831,10 +831,6 @@ function KnowYouBetterStep({ data, update }: any) {
             onChange={(v) => update("correspondenceLanguage", v)}
           />
         </Field>
-        <div>
-          <p className="mb-1.5 text-sm font-semibold text-foreground">Have a promo code? (Optional)</p>
-          <input className={inputCls} placeholder="Promo code" value={data.promo} onChange={(e) => update("promo", e.target.value)} />
-        </div>
         <p className="text-sm text-muted-foreground">If we sense an issue during your application, we may reach out via email, mobile, or WhatsApp to help you complete the process.</p>
         </div>
       </div>
@@ -1906,18 +1902,6 @@ function AdditionalDeclarations({ data, update }: any) {
             <p className="mt-3 text-xs text-muted-foreground">You will be able to add authorized persons in the next step.</p>
           )}
         </Row>
-        <Row
-          title="I hold accounts or credit cards with other banks"
-          desc="For our records only."
-          value={data.hasOtherBankAccounts}
-          onChange={(v: "yes" | "no") => update("hasOtherBankAccounts", v)}
-        />
-        <Row
-          title="I deal in securities or investments"
-          desc="May affect your risk classification."
-          value={data.dealsInSecurities}
-          onChange={(v: "yes" | "no") => update("dealsInSecurities", v)}
-        />
         <Row
           title="I consent to receive SMS transaction notifications on my registered mobile number"
           desc="Recommended — receive instant alerts for activity on your account."
