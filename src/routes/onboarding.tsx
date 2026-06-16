@@ -21,16 +21,11 @@ export const Route = createFileRoute("/onboarding")({
 
 const steps = [
   "Verify your identity",
-  "Let's get to know you better!",
-  "Verify contact details",
-  "Work and product details",
-  "Tax details",
-  "Account setup",
-  "Address details",
-  "Confirm products",
-  "Upload documents",
-  "Digital signature",
-  "Review & submit",
+  "About you & contact",
+  "Work & tax details",
+  "Account & address",
+  "Products & documents",
+  "Sign & review",
   "Secure your account",
 ] as const;
 
