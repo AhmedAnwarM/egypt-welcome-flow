@@ -291,18 +291,50 @@ function Onboarding() {
           <section className="mt-6 min-h-[560px]">
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
               <CardToolbar onSave={() => setShowSaveModal(true)} />
-              {step === 0 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
-              {step === 1 && <KnowYouBetterStep data={data} update={update} />}
-              {step === 2 && <ContactVerificationStep data={data} update={update} />}
-              {step === 3 && <WorkProductStep data={data} update={update} />}
-              {step === 4 && <TaxStep data={data} update={update} />}
-              {step === 5 && <AccountSetupStep data={data} update={update} />}
-              {step === 6 && <AddressStep data={data} update={update} />}
-              {step === 7 && <ConfirmProductsStep data={data} update={update} />}
-              {step === 8 && <DocumentsStep data={data} update={update} />}
-              {step === 9 && <SignatureStep data={data} update={update} />}
-              {step === 10 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
-              {step === 11 && <CredentialsStep data={data} update={update} />}
+              {step === 0 && (
+                <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />
+              )}
+              {step === 1 && (
+                <div className="space-y-10">
+                  <KnowYouBetterStep data={data} update={update} />
+                  <div className="border-t border-border/60 pt-8">
+                    <ContactVerificationStep data={data} update={update} />
+                  </div>
+                </div>
+              )}
+              {step === 2 && (
+                <div className="space-y-10">
+                  <WorkProductStep data={data} update={update} />
+                  <div className="border-t border-border/60 pt-8">
+                    <TaxStep data={data} update={update} />
+                  </div>
+                </div>
+              )}
+              {step === 3 && (
+                <div className="space-y-10">
+                  <AccountSetupStep data={data} update={update} />
+                  <div className="border-t border-border/60 pt-8">
+                    <AddressStep data={data} update={update} />
+                  </div>
+                </div>
+              )}
+              {step === 4 && (
+                <div className="space-y-10">
+                  <ConfirmProductsStep data={data} update={update} />
+                  <div className="border-t border-border/60 pt-8">
+                    <DocumentsStep data={data} update={update} />
+                  </div>
+                </div>
+              )}
+              {step === 5 && (
+                <div className="space-y-10">
+                  <SignatureStep data={data} update={update} />
+                  <div className="border-t border-border/60 pt-8">
+                    <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />
+                  </div>
+                </div>
+              )}
+              {step === 6 && <CredentialsStep data={data} update={update} />}
 
               <div className="mt-10 flex items-center justify-between border-t border-border/60 pt-6">
                 <button
