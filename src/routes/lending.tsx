@@ -725,7 +725,7 @@ function LendingPage() {
                       ) : (
                         <div className="rounded-2xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm text-amber-700 dark:text-amber-400 flex items-start gap-3">
                           <AlertTriangle className="h-5 w-5 mt-0.5" />
-                          <p>{t("lending.alt.none")}</p>
+                          <p>{t("lending.alt.noneSubmit")}</p>
                         </div>
                       )
                     )}
@@ -747,7 +747,7 @@ function LendingPage() {
                   {product !== "credit_card" && <Row k={t("lending.review.tenor")} v={`${effectiveTenor} ${t("lending.review.months")}`} />}
                   <Row k={t("lending.review.installment")} v={fmtEGP(installment)} />
                   <Row k={t("lending.review.dbr")} v={pct(dbr)} />
-                  <Row k={t("lending.review.decision")} v={t(`lending.decision.${decision.decision}`)} />
+                  <Row k={t("lending.review.decision")} v={t(`lending.decision.${effectiveDecision ?? decision.decision}`)} />
                 </div>
 
                 <div className="rounded-2xl border border-border p-5 space-y-4">
