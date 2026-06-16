@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Check, LogIn, Upload, CheckCircle2, IdCard, Wallet, Users, PiggyBank, Banknote, CalendarClock, Pencil, ClipboardCheck, PhoneCall, Sparkles, FileText, Eye, Trash2, Info, Plus, X, BookUser, ShieldCheck, Smartphone, KeyRound, Globe, Loader2, BookmarkPlus } from "lucide-react";
 import sumergeLogo from "@/assets/sumerge-logo.png.asset.json";
 import Footer from "@/components/site/Footer";
+import { useLang } from "@/lib/i18n";
+import SessionTimeout from "@/components/SessionTimeout";
+import { auditLog } from "@/lib/audit";
+import { SelfieStep, ConfirmProductsStep, ConsentsStep, DocumentsStep, SignatureStep, ReviewStep, isConsentsValid, isDocumentsValid } from "@/components/onboarding/ExtendedSteps";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -23,14 +27,20 @@ const steps = [
   "Tax details",
   "Address details",
   "Create login credentials",
+  "Selfie & liveness",
+  "Confirm products",
+  "Review consents",
+  "Upload documents",
+  "Digital signature",
+  "Review & submit",
 ] as const;
 
 function Onboarding() {
   const [step, setStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
   const [residencyType, setResidencyType] = useState<"" | "egyptian" | "foreign">("");
-  const [lang, setLang] = useState<"en" | "ar">("en");
-  const [showArNote, setShowArNote] = useState(false);
+  const { lang, setLang } = useLang();
+  const router = useRouter();
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [otpStage, setOtpStage] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
@@ -135,10 +145,7 @@ function Onboarding() {
     return () => clearTimeout(t);
   }, [data.idDoc]);
 
-  const handleLang = (l: "en" | "ar") => {
-    setLang(l);
-    setShowArNote(l === "ar");
-  };
+  const handleLang = (l: "en" | "ar") => setLang(l);
 
   const selectResidency = (r: "egyptian" | "foreign") => {
     setResidencyType(r);
@@ -183,9 +190,20 @@ function Onboarding() {
         const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
         return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit && !!data.mfaMethod;
       }
+      case 7: return !!(data as any).selfieDone;
+      case 8: return ((data as any).confirmedProducts || []).length > 0;
+      case 9: return isConsentsValid(data);
+      case 10: return isDocumentsValid(data);
+      case 11: return !!(data as any).signedAt;
+      case 12: return true;
       default: return true;
     }
   })();
+
+  const onFinalSubmit = () => {
+    auditLog("application.submit", { ref: refId }, refId);
+    router.navigate({ to: "/welcome" });
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[linear-gradient(180deg,#dff0ea_0%,#e6f3ee_50%,#edf6f2_100%)]">
@@ -196,13 +214,6 @@ function Onboarding() {
           <div className="flex items-start gap-3 rounded-xl border border-secondary/40 bg-secondary/15 px-4 py-3 text-sm text-foreground">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
             <p><span className="font-semibold">Welcome back</span> — resuming your application. Your reference is <span className="font-mono font-bold">{refId}</span>.</p>
-          </div>
-        </div>
-      )}
-      {showArNote && (
-        <div className="mx-auto mt-4 max-w-3xl px-4 sm:px-6">
-          <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary font-medium">
-            Arabic interface coming soon.
           </div>
         </div>
       )}
@@ -231,6 +242,12 @@ function Onboarding() {
               {step === 4 && <TaxStep data={data} update={update} />}
               {step === 5 && <AddressStep data={data} update={update} />}
               {step === 6 && <CredentialsStep data={data} update={update} />}
+              {step === 7 && <SelfieStep data={data} update={update} />}
+              {step === 8 && <ConfirmProductsStep data={data} update={update} />}
+              {step === 9 && <ConsentsStep data={data} update={update} />}
+              {step === 10 && <DocumentsStep data={data} update={update} />}
+              {step === 11 && <SignatureStep data={data} update={update} />}
+              {step === 12 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
 
               <div className="mt-10 flex items-center justify-between border-t border-border/60 pt-6">
                 <button
@@ -254,7 +271,7 @@ function Onboarding() {
                 ) : (
                   <Button
                     size="lg"
-                    onClick={next}
+                    onClick={step === steps.length - 1 ? onFinalSubmit : next}
                     disabled={!canContinue}
                     className="h-11 rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2"
                   >
@@ -270,6 +287,7 @@ function Onboarding() {
       </main>
       <Footer />
       {showSaveModal && <SaveModal refId={refId} onClose={() => setShowSaveModal(false)} />}
+      <SessionTimeout onSignOut={() => router.navigate({ to: "/" })} />
     </div>
   );
 }
