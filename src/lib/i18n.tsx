@@ -137,6 +137,7 @@ export const DICT: Dict = {
   // lending — alternatives
   "lending.alt.intro": { en: "Choose an alternative that fits within policy:", ar: "اختر بديلًا يتوافق مع السياسة:" },
   "lending.alt.none": { en: "No policy-compliant alternative is available; case will be referred to Credit Risk.", ar: "لا يوجد بديل متوافق مع السياسة؛ سيُحال الطلب إلى إدارة مخاطر الائتمان." },
+  "lending.alt.noneSubmit": { en: "No policy-compliant alternative is available; this case will be submitted for Credit Risk review.", ar: "لا يوجد بديل متوافق مع السياسة؛ سيتم تقديم الطلب لمراجعة إدارة مخاطر الائتمان." },
   "lending.alt.longerTenor": { en: "Longer tenor", ar: "مدة سداد أطول" },
   "lending.alt.lowerAmount": { en: "Lower amount", ar: "مبلغ أقل" },
   "lending.alt.combined": { en: "Lower amount + longer tenor", ar: "مبلغ أقل + مدة أطول" },
@@ -173,6 +174,8 @@ export const DICT: Dict = {
   "lending.nav.cancel": { en: "Cancel and return home", ar: "إلغاء والعودة للرئيسية" },
   "lending.welcomeBack": { en: "Welcome back — we've restored your draft.", ar: "أهلًا بعودتك — تم استرجاع مسودتك." },
   "lending.saved": { en: "Draft saved. You can resume from the same device.", ar: "تم حفظ المسودة. يمكنك المتابعة من نفس الجهاز." },
+  "lending.savedRef": { en: "Reference {ref} saved on this device. Resume later from {path}.", ar: "تم حفظ المرجع {ref} على هذا الجهاز. يمكنك المتابعة لاحقًا من {path}." },
+  "lending.savedLocalOnly": { en: "This draft is stored on this device only.", ar: "تُحفظ المسودة على هذا الجهاز فقط." },
   // lending — validation
   "lending.validation.amountRange": { en: "Amount must be between {min} and {max}.", ar: "يجب أن يكون المبلغ بين {min} و{max}." },
   "lending.validation.tenorRange": { en: "Tenor must be between {min} and {max} months.", ar: "يجب أن تكون المدة بين {min} و{max} شهرًا." },
@@ -183,8 +186,16 @@ export const DICT: Dict = {
   "lending.success.stage.screening": { en: "Compliance & risk screening", ar: "فحوصات الالتزام والمخاطر" },
   "lending.success.stage.recorded": { en: "Credit decision recorded", ar: "تم تسجيل قرار الائتمان" },
   "lending.success.stage.disbursement": { en: "Disbursement / card issuance", ar: "الصرف / إصدار البطاقة" },
+  "lending.success.bodyReferred": { en: "Your application has been submitted and is pending manual credit risk review. We'll contact you with the outcome.", ar: "تم تقديم طلبك وهو قيد المراجعة اليدوية لإدارة مخاطر الائتمان. سنتواصل معك بالنتيجة." },
+  "lending.success.stage.pendingRisk": { en: "Pending Credit Risk review", ar: "بانتظار مراجعة إدارة المخاطر" },
+  "lending.success.stage.finalPending": { en: "Final approval / booking pending", ar: "الموافقة النهائية / التسجيل قيد الانتظار" },
   "lending.success.backHome": { en: "Back to home", ar: "العودة للرئيسية" },
   "lending.success.track": { en: "Track application", ar: "تتبع الطلب" },
+  // landing — lending teaser
+  "home.lending.kicker": { en: "Retail lending", ar: "التمويل الشخصي" },
+  "home.lending.title": { en: "Need a credit card, loan or mortgage?", ar: "تحتاج بطاقة ائتمان أو قرضًا أو رهنًا عقاريًا؟" },
+  "home.lending.body": { en: "Apply for SUMERGE retail lending products in minutes — fully digital.", ar: "تقدّم بطلب منتجات التمويل الشخصي من سوميرج في دقائق — رقميًا بالكامل." },
+  "home.lending.cta": { en: "Apply for loan / card", ar: "تقديم قرض / بطاقة" },
 };
 
 const LangCtx = createContext<{ lang: Lang; setLang: (l: Lang) => void; t: (k: string) => string }>({

@@ -177,6 +177,7 @@ function LendingPage() {
   const [lendingRef, setLendingRef] = useState<string>("");
   const [resumed, setResumed] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [resumePath, setResumePath] = useState<string>("");
   const initialized = useRef(false);
 
   // ---------- save / resume ----------
@@ -230,8 +231,9 @@ function LendingPage() {
     };
     try {
       localStorage.setItem(LENDING_STORAGE_KEY, JSON.stringify(draft));
+      setResumePath(`/lending?resume=${lendingRef}`);
       setSavedFlash(true);
-      window.setTimeout(() => setSavedFlash(false), 2400);
+      window.setTimeout(() => setSavedFlash(false), 8000);
     } catch {
       /* quota — ignore */
     }
@@ -251,6 +253,16 @@ function LendingPage() {
 
   const amountInRange = amount >= minAmount && amount <= maxAmount;
   const tenorInRange = product === "credit_card" ? true : (tenor >= minTenor && tenor <= maxTenor);
+
+  // When conditional approval has no compliant alternatives, treat the
+  // effective outcome as a referral to credit risk.
+  const effectiveDecision: LendingDecision | undefined = (() => {
+    if (!decision) return undefined;
+    if (decision.decision === "conditional_approval" && alternatives.length === 0) {
+      return "refer_credit_risk";
+    }
+    return decision.decision;
+  })();
 
   // ---------- handlers ----------
   function onPickProduct(p: LendingProduct) {
@@ -313,16 +325,17 @@ function LendingPage() {
 
   function submit() {
     const ref = lendingRef || lending.generateLendingRef();
+    const finalDecision = effectiveDecision ?? decision!.decision;
     auditLog("lending.submit", {
       ref,
       product,
       amount: effectiveAmount,
       tenor: effectiveTenor,
-      decision: decision?.decision,
+      decision: finalDecision,
     });
     // Clear the draft once the application is submitted.
     try { if (typeof window !== "undefined") localStorage.removeItem(LENDING_STORAGE_KEY); } catch { /* ignore */ }
-    setSubmitted({ ref, decision: decision!.decision });
+    setSubmitted({ ref, decision: finalDecision });
   }
 
   // ---------- step gating ----------
@@ -339,10 +352,12 @@ function LendingPage() {
       case 4: {
         if (!decision) return false;
         if (decision.decision === "outright_reject") return false;
-        if (decision.decision === "refer_credit_risk") return false;
+        if (decision.decision === "refer_credit_risk") return true;
         if (decision.decision === "conditional_approval") {
-          // Must pick a compliant alternative; if none exist, cannot continue.
-          return alternatives.length > 0 && !!chosenAlt;
+          // If compliant alternatives exist, customer must select one.
+          // If none exist, the case becomes a referral and can proceed.
+          if (alternatives.length === 0) return true;
+          return !!chosenAlt;
         }
         return true;
       }
@@ -363,6 +378,20 @@ function LendingPage() {
 
   // ---------- success screen ----------
   if (submitted) {
+    const isReferred = submitted.decision === "refer_credit_risk";
+    const timeline = isReferred
+      ? [
+          { label: t("lending.success.stage.received"), done: true },
+          { label: t("lending.success.stage.screening"), done: true },
+          { label: t("lending.success.stage.pendingRisk"), done: false },
+          { label: t("lending.success.stage.finalPending"), done: false },
+        ]
+      : [
+          { label: t("lending.success.stage.received"), done: true },
+          { label: t("lending.success.stage.screening"), done: true },
+          { label: t("lending.success.stage.recorded"), done: true },
+          { label: t("lending.success.stage.disbursement"), done: false },
+        ];
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <Header />
@@ -372,7 +401,7 @@ function LendingPage() {
               <CheckCircle2 className="h-7 w-7" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight mb-2">{t("lending.success.title")}</h1>
-            <p className="text-muted-foreground mb-6">{t("lending.success.body")}</p>
+            <p className="text-muted-foreground mb-6">{t(isReferred ? "lending.success.bodyReferred" : "lending.success.body")}</p>
             <div className="rounded-2xl border border-border bg-background/60 p-5 text-left space-y-2 mb-6">
               <div className="flex justify-between"><span className="text-muted-foreground text-sm">{t("lending.success.reference")}</span><span className="font-mono font-semibold">{submitted.ref}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground text-sm">{t("lending.review.product")}</span><span className="font-medium">{t(`lending.product.${product}`)}</span></div>
@@ -385,12 +414,7 @@ function LendingPage() {
             </div>
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left">{t("lending.success.timelineTitle")}</p>
-              {[
-                { label: t("lending.success.stage.received"), done: true },
-                { label: t("lending.success.stage.screening"), done: true },
-                { label: t("lending.success.stage.recorded"), done: true },
-                { label: t("lending.success.stage.disbursement"), done: false },
-              ].map((s) => (
+              {timeline.map((s) => (
                 <div key={s.label} className="flex items-center gap-3 text-sm">
                   <span className={`h-2.5 w-2.5 rounded-full ${s.done ? "bg-primary" : "bg-muted-foreground/30"}`} />
                   <span className={s.done ? "" : "text-muted-foreground"}>{s.label}</span>
@@ -428,8 +452,12 @@ function LendingPage() {
             </div>
           )}
           {savedFlash && (
-            <div className="mb-4 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary flex items-center gap-2">
-              <Save className="h-4 w-4" /> {t("lending.saved")}
+            <div className="mb-4 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary flex items-start gap-2">
+              <Save className="h-4 w-4 mt-0.5 shrink-0" />
+              <div className="space-y-1">
+                <p>{interpolate(t("lending.savedRef"), { ref: lendingRef, path: resumePath })}</p>
+                <p className="text-xs opacity-80">{t("lending.savedLocalOnly")}</p>
+              </div>
             </div>
           )}
 
@@ -697,7 +725,7 @@ function LendingPage() {
                       ) : (
                         <div className="rounded-2xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm text-amber-700 dark:text-amber-400 flex items-start gap-3">
                           <AlertTriangle className="h-5 w-5 mt-0.5" />
-                          <p>{t("lending.alt.none")}</p>
+                          <p>{t("lending.alt.noneSubmit")}</p>
                         </div>
                       )
                     )}
@@ -719,7 +747,7 @@ function LendingPage() {
                   {product !== "credit_card" && <Row k={t("lending.review.tenor")} v={`${effectiveTenor} ${t("lending.review.months")}`} />}
                   <Row k={t("lending.review.installment")} v={fmtEGP(installment)} />
                   <Row k={t("lending.review.dbr")} v={pct(dbr)} />
-                  <Row k={t("lending.review.decision")} v={t(`lending.decision.${decision.decision}`)} />
+                  <Row k={t("lending.review.decision")} v={t(`lending.decision.${effectiveDecision ?? decision.decision}`)} />
                 </div>
 
                 <div className="rounded-2xl border border-border p-5 space-y-4">
