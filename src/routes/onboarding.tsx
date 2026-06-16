@@ -148,14 +148,14 @@ function Onboarding() {
       return n;
     });
   const next = () => {
-    if (step === 1 && !otpVerified) {
+    if (step === 2 && !otpVerified) {
       setOtpStage(true);
       return;
     }
     advance();
   };
   const back = () => {
-    if (step === 1 && otpStage) {
+    if (step === 2 && otpStage) {
       setOtpStage(false);
       return;
     }
