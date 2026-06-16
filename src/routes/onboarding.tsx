@@ -1892,14 +1892,12 @@ function AdditionalPersonalDetails({ data, update }: any) {
               {["Single","Married","Divorced","Widowed"].map((m) => <option key={m}>{m}</option>)}
             </select>
           </Field>
-          <div className="md:col-span-2">
-            <Field label="Educational status">
-              <select className={inputCls} value={data.education} onChange={(e) => update("education", e.target.value)}>
-                <option value="">Select</option>
-                {["Illiterate","Primary","Secondary","Post-secondary non-tertiary","Tertiary (undergraduate)","Postgraduate","PhD"].map((m) => <option key={m}>{m}</option>)}
-              </select>
-            </Field>
-          </div>
+          <Field label="Educational status">
+            <select className={inputCls} value={data.education} onChange={(e) => update("education", e.target.value)}>
+              <option value="">Select</option>
+              {["Illiterate","Primary","Secondary","Post-secondary non-tertiary","Tertiary (undergraduate)","Postgraduate","PhD"].map((m) => <option key={m}>{m}</option>)}
+            </select>
+          </Field>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-semibold text-foreground">Do you have other nationalities?</p>
