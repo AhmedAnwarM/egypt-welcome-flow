@@ -312,12 +312,11 @@ function Onboarding() {
                 <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />
               )}
               {step === 1 && (
-                <div className="space-y-10">
+                step1SubStep === 0 ? (
                   <KnowYouBetterStep data={data} update={update} />
-                  <div className="border-t border-border/60 pt-8">
-                    <ContactVerificationStep data={data} update={update} />
-                  </div>
-                </div>
+                ) : (
+                  <ContactVerificationStep data={data} update={update} />
+                )
               )}
               {step === 2 && (
                 <div className="space-y-10">
