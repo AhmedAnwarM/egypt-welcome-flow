@@ -296,15 +296,16 @@ function Onboarding() {
               <CardToolbar onSave={() => setShowSaveModal(true)} />
               {step === 0 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
               {step === 1 && <KnowYouBetterStep data={data} update={update} />}
-              {step === 2 && <WorkProductStep data={data} update={update} />}
-              {step === 3 && <TaxStep data={data} update={update} />}
-              {step === 4 && <AccountSetupStep data={data} update={update} />}
-              {step === 5 && <AddressStep data={data} update={update} />}
-              {step === 6 && <ConfirmProductsStep data={data} update={update} />}
-              {step === 7 && <DocumentsStep data={data} update={update} />}
-              {step === 8 && <SignatureStep data={data} update={update} />}
-              {step === 9 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
-              {step === 10 && <CredentialsStep data={data} update={update} />}
+              {step === 2 && <ContactVerificationStep data={data} update={update} />}
+              {step === 3 && <WorkProductStep data={data} update={update} />}
+              {step === 4 && <TaxStep data={data} update={update} />}
+              {step === 5 && <AccountSetupStep data={data} update={update} />}
+              {step === 6 && <AddressStep data={data} update={update} />}
+              {step === 7 && <ConfirmProductsStep data={data} update={update} />}
+              {step === 8 && <DocumentsStep data={data} update={update} />}
+              {step === 9 && <SignatureStep data={data} update={update} />}
+              {step === 10 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
+              {step === 11 && <CredentialsStep data={data} update={update} />}
 
               <div className="mt-10 flex items-center justify-between border-t border-border/60 pt-6">
                 <button
