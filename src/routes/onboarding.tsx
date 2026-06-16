@@ -1655,6 +1655,7 @@ function TaxStep({ data, update }: any) {
           I declare that the information provided in this section is true, accurate, and complete, and I will notify SUMERGE of any change in circumstances that affects my tax residency status.
         </Consent>
       </div>
+      <AdditionalDeclarations data={data} update={update} />
     </div>
   );
 }
