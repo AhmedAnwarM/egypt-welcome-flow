@@ -64,7 +64,7 @@ function Onboarding() {
     expiry: "",
     employment: "Employed",
     employer: "",
-    jobTitle: "",
+    jobTitle: "Employee",
     businessReg: "",
     income: "",
     sourceOfFunds: "Salary",
