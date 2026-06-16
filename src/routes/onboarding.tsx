@@ -334,7 +334,7 @@ function Onboarding() {
               <CardToolbar onSave={() => setShowSaveModal(true)} />
               {step === 0 && (
                 <div className="space-y-10">
-                  <KnowYouBetterStep data={data} update={update} />
+                  <KnowYouBetterStep data={data} update={update} nidGateDone={nidGateDone} />
                   <div className="border-t border-border/60 pt-8">
                     <ContactVerificationStep data={data} update={update} />
                   </div>
