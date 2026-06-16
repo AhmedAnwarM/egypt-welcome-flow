@@ -20,9 +20,9 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 const steps = [
+  "Verify your identity",
   "Choose your option",
   "Contact information",
-  "Capture National ID",
   "Work and product details",
   "Tax details",
   "Account setup",
