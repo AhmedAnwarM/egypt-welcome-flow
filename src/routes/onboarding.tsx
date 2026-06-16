@@ -33,6 +33,7 @@ function Onboarding() {
   const [step, setStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
   const [residencyType, setResidencyType] = useState<"" | "egyptian" | "foreign">("");
+  const [nidGateDone, setNidGateDone] = useState(false);
   const { lang, setLang } = useLang();
   const router = useRouter();
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -174,6 +175,8 @@ function Onboarding() {
   const selectResidency = (r: "egyptian" | "foreign") => {
     setResidencyType(r);
     const dt = r === "foreign" ? "passport" : "nationalId";
+    if (r === "foreign") setNidGateDone(true);
+    else setNidGateDone(false);
     setData((d) => ({
       ...d,
       docType: dt,
@@ -280,6 +283,20 @@ function Onboarding() {
         <div className="mx-auto max-w-3xl px-6 py-14">
           <CardToolbar onSave={() => setShowSaveModal(true)} />
           <ResidencyPrescreen onSelect={selectResidency} />
+        </div>
+      ) : residencyType === "egyptian" && !nidGateDone ? (
+        <div className="mx-auto max-w-3xl px-6 py-14">
+          <CardToolbar onSave={() => setShowSaveModal(true)} />
+          <NidOtpGate
+            initialNid={data.nationalId}
+            initialMobile={data.phone}
+            onBack={() => setResidencyType("")}
+            onVerified={(nid, mobile) => {
+              setData((d) => ({ ...d, nationalId: nid, phone: mobile, phoneVerified: true }));
+              setNidGateDone(true);
+              auditLog("onboarding.nidOtpVerified", { mobile });
+            }}
+          />
         </div>
       ) : step >= steps.length ? (
         <div className="mx-auto max-w-3xl px-6 py-16">
