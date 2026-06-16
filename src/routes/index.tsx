@@ -226,9 +226,9 @@ function Landing() {
             <p className="text-xs uppercase tracking-[0.18em] text-secondary font-bold mb-2">FAQ</p>
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground tracking-tight">Frequently Asked Questions</h2>
           </div>
-          <Accordion type="single" collapsible className="space-y-3">
+          <Accordion type="single" collapsible defaultValue="q-0" className="space-y-3">
             {FAQS.map((f, i) => (
-              <AccordionItem key={i} value={`q-${i}`} className="bg-card border border-border rounded-xl px-5 last:border-border" defaultValue={i === 0 ? `q-${i}` : undefined as any}>
+              <AccordionItem key={i} value={`q-${i}`} className="bg-card border border-border rounded-xl px-5 last:border-border">
                 <AccordionTrigger className="text-left text-sm font-semibold text-foreground hover:no-underline py-4">
                   {f.q}
                 </AccordionTrigger>
@@ -291,18 +291,6 @@ function Landing() {
           </div>
         </section>
 
-        {/* Final CTA */}
-        <section className="bg-primary text-primary-foreground">
-          <div className="max-w-4xl mx-auto px-6 py-16 text-center">
-            <h2 className="text-3xl lg:text-4xl font-bold tracking-tight mb-3">Ready to bank smarter?</h2>
-            <p className="text-primary-foreground/75 mb-7">Open your SUMERGE personal account today.</p>
-            <Link to="/onboarding">
-              <Button size="lg" className="rounded-full px-7 h-12 bg-secondary hover:bg-secondary/90 text-secondary-foreground group">
-                Get Started <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-              </Button>
-            </Link>
-          </div>
-        </section>
       </main>
 
       <Footer />
