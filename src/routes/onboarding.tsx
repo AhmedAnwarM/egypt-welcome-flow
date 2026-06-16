@@ -25,6 +25,7 @@ const steps = [
   "Capture National ID",
   "Work and product details",
   "Tax details",
+  "Account setup",
   "Address details",
   "Create login credentials",
   "Selfie & liveness",
