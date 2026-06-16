@@ -25,6 +25,7 @@ const steps = [
   "Capture National ID",
   "Work and product details",
   "Tax details",
+  "Account setup",
   "Address details",
   "Create login credentials",
   "Selfie & liveness",
@@ -98,6 +99,46 @@ function Onboarding() {
     crsOther: "" as "" | "yes" | "no",
     crsRows: [] as { country: string; tin: string }[],
     taxDeclaration: false,
+    // Contact extras
+    phone2: "",
+    homePhone: "",
+    statementFrequency: "Monthly" as "Monthly" | "Quarterly",
+    statementDelivery: "Email",
+    correspondenceLanguage: "English" as "Arabic" | "English",
+    // Additional personal details
+    gender: "" as "" | "Male" | "Female",
+    placeOfBirth: "",
+    countryOfBirth: "",
+    maritalStatus: "",
+    education: "",
+    hasOtherNationalities: "" as "" | "yes" | "no",
+    otherNationalities: "",
+    residenceClassification: "" as "" | "resEgy" | "nonResEgy" | "resFor" | "nonResFor",
+    specialNeeds: "" as "" | "yes" | "no",
+    specialNeedsType: "",
+    // Work extras
+    employmentStartDate: "",
+    workPhone: "",
+    previousOccupation: "",
+    expectedTxVolume: "",
+    // Address extras
+    residenceType: "" as "" | "Owned" | "Rented" | "Other",
+    residenceTypeOther: "",
+    // Additional declarations (step 5)
+    realBeneficiary: "" as "" | "yes" | "no",
+    hasPoA: "" as "" | "yes" | "no",
+    hasOtherBankAccounts: "" as "" | "yes" | "no",
+    dealsInSecurities: "" as "" | "yes" | "no",
+    smsConsent: "yes" as "" | "yes" | "no",
+    // Account setup (new step 6)
+    accountPurpose: "",
+    accountCurrency: "",
+    linkDebitCard: "yes" as "" | "yes" | "no",
+    cardType: "Standard" as "Standard" | "Premium",
+    nameOnCard: "",
+    nameOnCardAr: "",
+    authorizedPersons: [] as { cif: string; name: string; authType: string; docType: string }[],
+    phoneBanking: "yes" as "" | "yes" | "no",
   });
   const update = (k: keyof typeof data, v: any) => setData((d) => ({ ...d, [k]: v }));
   const advance = () =>
@@ -163,19 +204,32 @@ function Onboarding() {
   const canContinue = (() => {
     switch (step) {
       case 0: return !!data.productChoice;
-      case 1: return data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail;
+      case 1: return data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail && !!data.statementFrequency && !!data.statementDelivery && !!data.correspondenceLanguage;
       case 2: {
         if (!data.idDoc || data.fullName.trim().length <= 3) return false;
         if (verifyStage !== "done") return false;
         if (data.docType === "passport") {
-          return !!data.passportNumber.trim() && !!data.nationality.trim() && !!data.dob && !!data.expiry;
+          if (!(data.passportNumber.trim() && data.nationality.trim() && data.dob && data.expiry)) return false;
+        } else {
+          if (data.nationalId.length !== 14) return false;
         }
-        return data.nationalId.length === 14;
+        if (!data.gender || !data.placeOfBirth.trim() || !data.countryOfBirth || !data.maritalStatus || !data.education) return false;
+        if (!data.hasOtherNationalities) return false;
+        if (data.hasOtherNationalities === "yes" && !data.otherNationalities.trim()) return false;
+        if (!data.residenceClassification) return false;
+        if (!data.specialNeeds) return false;
+        if (data.specialNeeds === "yes" && !data.specialNeedsType) return false;
+        return true;
       }
       case 3: {
         const baseOk = !!data.employment && !!data.income && !!data.employer.trim() && !!data.jobTitle.trim() && !!data.sourceOfFunds;
         const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
-        return baseOk && (!isBiz || !!data.businessReg.trim());
+        if (!baseOk) return false;
+        if (isBiz && !data.businessReg.trim()) return false;
+        if (!data.expectedTxVolume) return false;
+        if ((data.employment === "Employed" || data.employment === "Self-employed") && !data.employmentStartDate) return false;
+        if (data.employment === "Retired" && !data.previousOccupation.trim()) return false;
+        return true;
       }
       case 4: {
         if (!data.fatcaUs || !data.crsOther || !data.taxDeclaration) return false;
@@ -186,19 +240,30 @@ function Onboarding() {
         }
         if (!data.pepStatus) return false;
         if (data.pepStatus === "yes" && (!data.pepRole.trim() || !data.pepCountry.trim() || !data.pepRelationship.trim() || !data.pepDates.trim())) return false;
+        if (data.realBeneficiary !== "yes") return false;
+        if (!data.hasPoA || !data.hasOtherBankAccounts || !data.dealsInSecurities || !data.smsConsent) return false;
         return true;
       }
-      case 5: return !!data.governorate && !!data.city.trim() && !!data.street.trim();
+      case 5: {
+        if (!data.accountPurpose || !data.accountCurrency || !data.linkDebitCard) return false;
+        if (data.linkDebitCard === "yes" && (!data.cardType || !data.nameOnCard.trim())) return false;
+        return true;
+      }
       case 6: {
+        if (!data.residenceType) return false;
+        if (data.residenceType === "Other" && !data.residenceTypeOther.trim()) return false;
+        return !!data.governorate && !!data.city.trim() && !!data.street.trim();
+      }
+      case 7: {
         const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
         return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit && !!data.mfaMethod;
       }
-      case 7: return !!(data as any).selfieDone;
-      case 8: return ((data as any).confirmedProducts || []).length > 0;
-      case 9: return isConsentsValid(data);
-      case 10: return isDocumentsValid(data);
-      case 11: return !!(data as any).signedAt;
-      case 12: return true;
+      case 8: return !!(data as any).selfieDone;
+      case 9: return ((data as any).confirmedProducts || []).length > 0;
+      case 10: return isConsentsValid(data);
+      case 11: return isDocumentsValid(data);
+      case 12: return !!(data as any).signedAt;
+      case 13: return true;
       default: return true;
     }
   })();
@@ -243,14 +308,15 @@ function Onboarding() {
               {step === 2 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
               {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(0)} />}
               {step === 4 && <TaxStep data={data} update={update} />}
-              {step === 5 && <AddressStep data={data} update={update} />}
-              {step === 6 && <CredentialsStep data={data} update={update} />}
-              {step === 7 && <SelfieStep data={data} update={update} />}
-              {step === 8 && <ConfirmProductsStep data={data} update={update} />}
-              {step === 9 && <ConsentsStep data={data} update={update} />}
-              {step === 10 && <DocumentsStep data={data} update={update} />}
-              {step === 11 && <SignatureStep data={data} update={update} />}
-              {step === 12 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
+              {step === 5 && <AccountSetupStep data={data} update={update} />}
+              {step === 6 && <AddressStep data={data} update={update} />}
+              {step === 7 && <CredentialsStep data={data} update={update} />}
+              {step === 8 && <SelfieStep data={data} update={update} />}
+              {step === 9 && <ConfirmProductsStep data={data} update={update} />}
+              {step === 10 && <ConsentsStep data={data} update={update} />}
+              {step === 11 && <DocumentsStep data={data} update={update} />}
+              {step === 12 && <SignatureStep data={data} update={update} />}
+              {step === 13 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
 
               <div className="mt-10 flex items-center justify-between border-t border-border/60 pt-6">
                 <button
@@ -732,9 +798,59 @@ function ContactStep({ data, update }: any) {
           </div>
         </Field>
         <div className="grid gap-5 md:grid-cols-2">
+          <Field label="Mobile No. 2 (optional)">
+            <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
+              <span className="text-sm font-semibold text-foreground">+20</span>
+              <input
+                className="ml-2 h-full flex-1 bg-transparent text-sm outline-none"
+                placeholder="1XX XXX XXXX"
+                value={data.phone2}
+                onChange={(e) => update("phone2", e.target.value.replace(/\D/g, ""))}
+                maxLength={11}
+              />
+            </div>
+          </Field>
+          <Field label="Home phone (optional)">
+            <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
+              <span className="text-sm font-semibold text-foreground">+20</span>
+              <input
+                className="ml-2 h-full flex-1 bg-transparent text-sm outline-none"
+                placeholder="2 XXXX XXXX"
+                value={data.homePhone}
+                onChange={(e) => update("homePhone", e.target.value.replace(/\D/g, ""))}
+                maxLength={11}
+              />
+            </div>
+          </Field>
+        </div>
+        <div className="grid gap-5 md:grid-cols-2">
           <Field label="Email"><input type="email" className={inputCls} value={data.email} onChange={(e) => update("email", e.target.value)} /></Field>
           <Field label="Confirm Email"><input type="email" className={inputCls} value={data.confirmEmail} onChange={(e) => update("confirmEmail", e.target.value)} /></Field>
         </div>
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field label="Statement frequency">
+            <PillToggle
+              options={[{ v: "Monthly", label: "Monthly" }, { v: "Quarterly", label: "Quarterly" }]}
+              value={data.statementFrequency}
+              onChange={(v) => update("statementFrequency", v)}
+            />
+          </Field>
+          <Field label="Statement delivery method">
+            <select className={inputCls} value={data.statementDelivery} onChange={(e) => update("statementDelivery", e.target.value)}>
+              <option value="">Select method</option>
+              <option>Email</option>
+              <option>Mobile app</option>
+              <option>Post (mailing address)</option>
+            </select>
+          </Field>
+        </div>
+        <Field label="Correspondence language">
+          <PillToggle
+            options={[{ v: "Arabic", label: "Arabic" }, { v: "English", label: "English" }]}
+            value={data.correspondenceLanguage}
+            onChange={(v) => update("correspondenceLanguage", v)}
+          />
+        </Field>
         <div>
           <p className="mb-1.5 text-sm font-semibold text-foreground">Have a promo code? (Optional)</p>
           <input className={inputCls} placeholder="Promo code" value={data.promo} onChange={(e) => update("promo", e.target.value)} />
@@ -763,6 +879,9 @@ function CaptureIdStep({ data, update, goToStep, verifyStage }: any) {
     update("nationalId", "29001011234567");
     update("nationality", "Egyptian");
     update("expiry", "2030-05-12");
+    update("gender", "Male");
+    update("placeOfBirth", "Cairo");
+    update("countryOfBirth", "Egypt");
   };
   const handleUploadPassport = () => {
     update("idDoc", true);
@@ -771,6 +890,9 @@ function CaptureIdStep({ data, update, goToStep, verifyStage }: any) {
     update("nationality", "United Kingdom");
     update("dob", "1990-04-22");
     update("expiry", "2031-09-15");
+    update("gender", "Male");
+    update("placeOfBirth", "London");
+    update("countryOfBirth", "United Kingdom");
   };
   const onDocTypeChange = (v: string) => {
     update("docType", v);
@@ -905,6 +1027,10 @@ function CaptureIdStep({ data, update, goToStep, verifyStage }: any) {
           </div>
         </div>
       )}
+
+      {showOcr && (
+        <AdditionalPersonalDetails data={data} update={update} />
+      )}
     </div>
   );
 }
@@ -1016,6 +1142,8 @@ function SelectionRecap({ data, onChange }: any) {
 function WorkProductStep({ data, update, onChangeProduct }: any) {
   const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
   const employerLabel = isBiz ? "Business name" : "Employer name";
+  const showStartDate = data.employment === "Employed" || data.employment === "Self-employed";
+  const showPrevOcc = data.employment === "Retired";
   return (
     <div>
       <SelectionRecap data={data} onChange={onChangeProduct} />
@@ -1026,10 +1154,10 @@ function WorkProductStep({ data, update, onChangeProduct }: any) {
             {["Employed","Self-employed","Business owner","Student","Retired","Not currently employed"].map((g) => <option key={g}>{g}</option>)}
           </select>
         </Field>
-        <Field label="Monthly income (EGP)">
+        <Field label="Annual income (EGP)">
           <select className={inputCls} value={data.income} onChange={(e) => update("income", e.target.value)}>
             <option value="">Select range</option>
-            {["Less than 10,000","10,000 – 25,000","25,000 – 50,000","50,000 – 100,000","100,000 – 250,000","More than 250,000"].map((g) => <option key={g}>{g}</option>)}
+            {["Less than EGP 5K","EGP 5K–10K","EGP 10K–20K","EGP 20K–30K","EGP 30K–70K","EGP 70K–100K","EGP 100K–200K","EGP 200K–300K","EGP 300K–400K","EGP 400K–1,000K","More than EGP 1,000K"].map((g) => <option key={g}>{g}</option>)}
           </select>
         </Field>
         <div className="md:col-span-2">
@@ -1041,6 +1169,36 @@ function WorkProductStep({ data, update, onChangeProduct }: any) {
             {["Salary","Business income","Investments","Family support","Other"].map((g) => <option key={g}>{g}</option>)}
           </select>
         </Field>
+        {showStartDate && (
+          <Field label="Employment start date">
+            <input type="date" className={inputCls} value={data.employmentStartDate} onChange={(e) => update("employmentStartDate", e.target.value)} />
+          </Field>
+        )}
+        <Field label="Work phone (optional)">
+          <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
+            <span className="text-sm font-semibold text-foreground">+20</span>
+            <input
+              className="ml-2 h-full flex-1 bg-transparent text-sm outline-none"
+              placeholder="2 XXXX XXXX"
+              value={data.workPhone}
+              onChange={(e) => update("workPhone", e.target.value.replace(/\D/g, ""))}
+              maxLength={11}
+            />
+          </div>
+        </Field>
+        {showPrevOcc && (
+          <div className="md:col-span-2">
+            <Field label="Previous occupation"><input className={inputCls} value={data.previousOccupation} onChange={(e) => update("previousOccupation", e.target.value)} /></Field>
+          </div>
+        )}
+        <div className="md:col-span-2">
+          <Field label="Expected monthly transaction volume">
+            <select className={inputCls} value={data.expectedTxVolume} onChange={(e) => update("expectedTxVolume", e.target.value)}>
+              <option value="">Select range</option>
+              {["Under EGP 10,000","EGP 10,000 – 50,000","EGP 50,000 – 200,000","Over EGP 200,000"].map((g) => <option key={g}>{g}</option>)}
+            </select>
+          </Field>
+        </div>
         {isBiz && (
           <div className="md:col-span-2">
             <Field label="Business registration number"><input className={inputCls} value={data.businessReg} onChange={(e) => update("businessReg", e.target.value)} /></Field>
@@ -1078,6 +1236,20 @@ function AddressStep({ data, update }: any) {
   return (
     <div>
       <StepHeader title="Where should we send your card and statements?" subtitle="You can update this later from your account settings." />
+      <div className="mb-6">
+        <Field label="Type of residence">
+          <PillToggle
+            options={[{ v: "Owned", label: "Owned" }, { v: "Rented", label: "Rented" }, { v: "Other", label: "Other" }]}
+            value={data.residenceType}
+            onChange={(v) => update("residenceType", v)}
+          />
+        </Field>
+        {data.residenceType === "Other" && (
+          <div className="mt-3">
+            <Field label="Please specify"><input className={inputCls} value={data.residenceTypeOther} onChange={(e) => update("residenceTypeOther", e.target.value)} /></Field>
+          </div>
+        )}
+      </div>
       {data.docType !== "passport" && (
       <button
         type="button"
@@ -1109,6 +1281,7 @@ function AddressStep({ data, update }: any) {
           <Field label="Postal code (optional)"><input disabled={disabled} className={fieldCls} value={data.postalCode} onChange={(e) => update("postalCode", e.target.value)} /></Field>
         </div>
       </div>
+      <p className="mt-3 text-[12px] text-muted-foreground">This address is used for card delivery and official correspondence.</p>
       {data.docType === "passport" && (
         <div className="mt-8">
           <h3 className="mb-3 text-sm font-bold text-foreground">Proof of residence in Egypt <span className="font-normal text-muted-foreground">(optional)</span></h3>
@@ -1268,6 +1441,26 @@ function Segmented({ value, onChange }: { value: "" | "yes" | "no"; onChange: (v
             type="button"
             onClick={() => onChange(o.v)}
             className={`min-w-[80px] rounded-full px-5 py-1.5 text-sm font-semibold transition-colors ${active ? "bg-secondary text-secondary-foreground" : "text-foreground/70 hover:text-foreground"}`}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function PillToggle<T extends string>({ options, value, onChange }: { options: { v: T; label: string }[]; value: T | ""; onChange: (v: T) => void }) {
+  return (
+    <div className="inline-flex rounded-full border border-border bg-background p-1">
+      {options.map((o) => {
+        const active = value === o.v;
+        return (
+          <button
+            key={o.v}
+            type="button"
+            onClick={() => onChange(o.v)}
+            className={`min-w-[100px] rounded-full px-5 py-1.5 text-sm font-semibold transition-colors ${active ? "bg-secondary text-secondary-foreground" : "text-foreground/70 hover:text-foreground"}`}
           >
             {o.label}
           </button>
@@ -1462,6 +1655,7 @@ function TaxStep({ data, update }: any) {
           I declare that the information provided in this section is true, accurate, and complete, and I will notify SUMERGE of any change in circumstances that affects my tax residency status.
         </Consent>
       </div>
+      <AdditionalDeclarations data={data} update={update} />
     </div>
   );
 }
@@ -1511,3 +1705,327 @@ function SuccessStepInner() {
 // Removed unused icons appease tree-shaking
 void Users;
 void ArrowRight;
+
+const COUNTRIES_FULL = ["Egypt", ...COUNTRIES];
+
+function AdditionalPersonalDetails({ data, update }: any) {
+  const residenceOpts: { v: "resEgy" | "nonResEgy" | "resFor" | "nonResFor"; label: string }[] = [
+    { v: "resEgy", label: "Resident Egyptian" },
+    { v: "nonResEgy", label: "Non-resident Egyptian" },
+    { v: "resFor", label: "Resident foreigner" },
+    { v: "nonResFor", label: "Non-resident foreigner" },
+  ];
+  return (
+    <div className="mt-6 rounded-xl border border-border bg-secondary/30 p-6">
+      <h3 className="text-lg font-bold text-primary">Additional personal details</h3>
+      <p className="mt-1 text-sm text-muted-foreground">Required for account opening per CBE guidelines.</p>
+      <div className="mt-5 space-y-5">
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field label="Gender">
+            <PillToggle
+              options={[{ v: "Male", label: "Male" }, { v: "Female", label: "Female" }]}
+              value={data.gender}
+              onChange={(v) => update("gender", v)}
+            />
+          </Field>
+          <Field label="Place of birth">
+            <input className={inputCls} value={data.placeOfBirth} onChange={(e) => update("placeOfBirth", e.target.value)} />
+          </Field>
+          <Field label="Country of birth">
+            <select className={inputCls} value={data.countryOfBirth} onChange={(e) => update("countryOfBirth", e.target.value)}>
+              <option value="">Select country</option>
+              {COUNTRIES_FULL.map((c) => <option key={c}>{c}</option>)}
+            </select>
+          </Field>
+          <Field label="Marital status">
+            <select className={inputCls} value={data.maritalStatus} onChange={(e) => update("maritalStatus", e.target.value)}>
+              <option value="">Select</option>
+              {["Single","Married","Divorced","Widowed"].map((m) => <option key={m}>{m}</option>)}
+            </select>
+          </Field>
+          <div className="md:col-span-2">
+            <Field label="Educational status">
+              <select className={inputCls} value={data.education} onChange={(e) => update("education", e.target.value)}>
+                <option value="">Select</option>
+                {["Illiterate","Primary","Secondary","Post-secondary non-tertiary","Tertiary (undergraduate)","Postgraduate","PhD"].map((m) => <option key={m}>{m}</option>)}
+              </select>
+            </Field>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-foreground">Do you have other nationalities?</p>
+          <Segmented value={data.hasOtherNationalities} onChange={(v) => update("hasOtherNationalities", v)} />
+        </div>
+        {data.hasOtherNationalities === "yes" && (
+          <Field label="Please state other nationalities">
+            <input className={inputCls} value={data.otherNationalities} onChange={(e) => update("otherNationalities", e.target.value)} />
+          </Field>
+        )}
+        <div>
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Residence classification</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {residenceOpts.map((o) => {
+              const selected = data.residenceClassification === o.v;
+              return (
+                <button
+                  key={o.v}
+                  type="button"
+                  onClick={() => update("residenceClassification", o.v)}
+                  className={`flex items-center justify-between rounded-xl border p-3 text-left text-sm transition-all ${selected ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border bg-background hover:border-primary/40"}`}
+                >
+                  <span className="font-semibold text-foreground">{o.label}</span>
+                  <span className={`h-4 w-4 rounded-full border-2 ${selected ? "border-primary bg-primary" : "border-border"}`} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-foreground">Special needs customer?</p>
+          <Segmented value={data.specialNeeds} onChange={(v) => update("specialNeeds", v)} />
+        </div>
+        {data.specialNeeds === "yes" && (
+          <Field label="Type of special needs">
+            <select className={inputCls} value={data.specialNeedsType} onChange={(e) => update("specialNeedsType", e.target.value)}>
+              <option value="">Select</option>
+              {["Visual impairment","Hearing impairment","Physical disability","Other"].map((m) => <option key={m}>{m}</option>)}
+            </select>
+          </Field>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AdditionalDeclarations({ data, update }: any) {
+  const Row = ({ title, desc, value, onChange, children }: any) => (
+    <div className="rounded-xl border border-border bg-background p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          {desc && <p className="mt-1 text-xs text-muted-foreground">{desc}</p>}
+        </div>
+        <Segmented value={value} onChange={onChange} />
+      </div>
+      {children}
+    </div>
+  );
+  return (
+    <div className="mt-6">
+      <h3 className="text-base font-bold text-primary">Additional declarations</h3>
+      <div className="mt-3 space-y-3">
+        <Row
+          title="I am the real and sole beneficiary of this account"
+          desc="Required by CBE regulations to confirm beneficial ownership."
+          value={data.realBeneficiary}
+          onChange={(v: "yes" | "no") => update("realBeneficiary", v)}
+        >
+          {data.realBeneficiary === "no" && (
+            <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+              Please visit a branch to complete your application with the beneficiary present.
+            </div>
+          )}
+        </Row>
+        <Row
+          title="There is a power of attorney on this account"
+          desc="If yes, you can add authorized persons in the next step."
+          value={data.hasPoA}
+          onChange={(v: "yes" | "no") => update("hasPoA", v)}
+        >
+          {data.hasPoA === "yes" && (
+            <p className="mt-3 text-xs text-muted-foreground">You will be able to add authorized persons in the next step.</p>
+          )}
+        </Row>
+        <Row
+          title="I hold accounts or credit cards with other banks"
+          desc="For our records only."
+          value={data.hasOtherBankAccounts}
+          onChange={(v: "yes" | "no") => update("hasOtherBankAccounts", v)}
+        />
+        <Row
+          title="I deal in securities or investments"
+          desc="May affect your risk classification."
+          value={data.dealsInSecurities}
+          onChange={(v: "yes" | "no") => update("dealsInSecurities", v)}
+        />
+        <Row
+          title="I consent to receive SMS transaction notifications on my registered mobile number"
+          desc="Recommended — receive instant alerts for activity on your account."
+          value={data.smsConsent}
+          onChange={(v: "yes" | "no") => update("smsConsent", v)}
+        />
+      </div>
+    </div>
+  );
+}
+
+function AccountSetupStep({ data, update }: any) {
+  const isEgpOnly = data.productChoice === "prime-saving" || data.productChoice === "current-365";
+  const currencies = isEgpOnly
+    ? ["Egyptian Pound (EGP)"]
+    : ["Egyptian Pound (EGP)","US Dollar (USD)","Euro (EUR)","British Pound (GBP)","Saudi Riyal (SAR)"];
+
+  useEffect(() => {
+    if (isEgpOnly && data.accountCurrency !== "Egyptian Pound (EGP)") {
+      update("accountCurrency", "Egyptian Pound (EGP)");
+    }
+    if (!data.nameOnCard && data.fullName) {
+      update("nameOnCard", data.fullName.slice(0, 26).toUpperCase());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const persons: { cif: string; name: string; authType: string; docType: string }[] = data.authorizedPersons || [];
+  const setPersons = (p: typeof persons) => update("authorizedPersons", p);
+  const addPerson = () => persons.length < 4 && setPersons([...persons, { cif: "", name: "", authType: "Full operation", docType: "Power of attorney" }]);
+  const updPerson = (i: number, patch: Partial<typeof persons[number]>) =>
+    setPersons(persons.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
+  const removePerson = (i: number) => setPersons(persons.filter((_, idx) => idx !== i));
+
+  return (
+    <div>
+      <StepHeader title="Account setup" subtitle="Configure your account, card, and digital services." />
+
+      {/* Section A — Account details */}
+      <section className="rounded-xl border border-border bg-background p-5">
+        <h3 className="text-sm font-bold text-primary">Account details</h3>
+        <div className="mt-4 grid gap-5 md:grid-cols-2">
+          <Field label="Purpose of opening this account">
+            <select className={inputCls} value={data.accountPurpose} onChange={(e) => update("accountPurpose", e.target.value)}>
+              <option value="">Select purpose</option>
+              {["Salary deposit","Savings","Business transactions","Investment","Daily expenses","Other"].map((p) => <option key={p}>{p}</option>)}
+            </select>
+          </Field>
+          <Field label="Account currency">
+            <select disabled={isEgpOnly} className={`${inputCls} ${isEgpOnly ? "bg-secondary/20 cursor-not-allowed" : ""}`} value={data.accountCurrency} onChange={(e) => update("accountCurrency", e.target.value)}>
+              <option value="">Select currency</option>
+              {currencies.map((c) => <option key={c}>{c}</option>)}
+            </select>
+            {isEgpOnly && <p className="mt-1.5 text-xs text-muted-foreground">This account is EGP only.</p>}
+          </Field>
+          <div className="md:col-span-2 flex items-center justify-between rounded-md border border-border bg-secondary/10 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Link account to debit card</p>
+              <p className="text-xs text-muted-foreground">A debit card will be issued and linked to this account.</p>
+            </div>
+            <Segmented value={data.linkDebitCard} onChange={(v: "yes" | "no") => update("linkDebitCard", v)} />
+          </div>
+        </div>
+      </section>
+
+      {/* Section B — Debit card */}
+      {data.linkDebitCard === "yes" && (
+        <section className="mt-5 rounded-xl border border-border bg-background p-5">
+          <h3 className="text-sm font-bold text-primary">Debit card details</h3>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {(["Standard", "Premium"] as const).map((t) => {
+              const selected = data.cardType === t;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => update("cardType", t)}
+                  className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-all ${selected ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border bg-background hover:border-primary/40"}`}
+                >
+                  <span className={`flex h-10 w-10 items-center justify-center rounded-full ${selected ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}>
+                    <Wallet className="h-5 w-5" />
+                  </span>
+                  <div className="flex-1">
+                    <div className="text-sm font-bold text-foreground">{t}</div>
+                    <div className="text-xs text-muted-foreground">{t === "Standard" ? "Everyday banking essentials" : "Enhanced benefits and limits"}</div>
+                  </div>
+                  <span className={`h-4 w-4 rounded-full border-2 ${selected ? "border-primary bg-primary" : "border-border"}`} />
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-4 grid gap-5 md:grid-cols-2">
+            <div>
+              <Field label="Name to be printed on card">
+                <input maxLength={26} className={inputCls} value={data.nameOnCard} onChange={(e) => update("nameOnCard", e.target.value.slice(0, 26))} />
+              </Field>
+              <p className="mt-1 text-[11px] text-muted-foreground text-right">{data.nameOnCard.length}/26</p>
+            </div>
+            <Field label="Name in Arabic (optional)">
+              <input dir="rtl" className={inputCls} value={data.nameOnCardAr} onChange={(e) => update("nameOnCardAr", e.target.value)} />
+            </Field>
+          </div>
+        </section>
+      )}
+
+      {/* Section C — Authorized persons */}
+      <section className="mt-5 rounded-xl border border-border bg-background p-5">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-bold text-primary">Authorized persons</h3>
+          <span className="text-xs text-muted-foreground">{persons.length}/4</span>
+        </div>
+        {data.hasPoA !== "yes" && (
+          <p className="mt-1 text-xs text-muted-foreground">Add authorized persons to operate your account — optional.</p>
+        )}
+        <div className="mt-4 space-y-4">
+          {persons.length === 0 ? (
+            <div className="rounded-md border border-dashed border-border bg-secondary/10 px-4 py-6 text-center text-sm text-muted-foreground">
+              No authorized persons added
+            </div>
+          ) : (
+            persons.map((p, i) => (
+              <div key={i} className="rounded-md border border-border bg-secondary/10 p-4">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Field label="CIF of authorized person">
+                    <input className={inputCls} value={p.cif} onChange={(e) => updPerson(i, { cif: e.target.value })} />
+                  </Field>
+                  <Field label="Full name">
+                    <input className={inputCls} value={p.name} onChange={(e) => updPerson(i, { name: e.target.value })} />
+                  </Field>
+                  <Field label="Authorization type">
+                    <select className={inputCls} value={p.authType} onChange={(e) => updPerson(i, { authType: e.target.value })}>
+                      {["Full operation","Inquiry only","Deposits only"].map((a) => <option key={a}>{a}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Relationship document type">
+                    <select className={inputCls} value={p.docType} onChange={(e) => updPerson(i, { docType: e.target.value })}>
+                      {["Power of attorney","Court order","Other"].map((a) => <option key={a}>{a}</option>)}
+                    </select>
+                  </Field>
+                </div>
+                {i > 0 && (
+                  <div className="mt-3 flex justify-end">
+                    <button type="button" onClick={() => removePerson(i)} className="inline-flex items-center gap-1 text-xs font-semibold text-destructive hover:underline">
+                      <Trash2 className="h-3.5 w-3.5" /> Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+          {persons.length < 4 && (
+            <button type="button" onClick={addPerson} className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline">
+              <Plus className="h-4 w-4" /> Add authorized person
+            </button>
+          )}
+        </div>
+      </section>
+
+      {/* Section D — Digital services */}
+      <section className="mt-5 rounded-xl border border-border bg-background p-5">
+        <h3 className="text-sm font-bold text-primary">Digital services enrollment</h3>
+        <div className="mt-4 space-y-3">
+          <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-secondary/10 p-4">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Subscribe to phone banking</p>
+              <p className="text-xs text-muted-foreground">Access your account 24/7 via our automated phone line.</p>
+            </div>
+            <Segmented value={data.phoneBanking} onChange={(v: "yes" | "no") => update("phoneBanking", v)} />
+          </div>
+          <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-secondary/10 p-4">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Subscribe to internet and mobile banking</p>
+              <p className="text-xs text-muted-foreground">Required — your login credentials are set up in the final step.</p>
+            </div>
+            <span className="inline-flex h-9 items-center rounded-full bg-secondary px-4 text-sm font-semibold text-secondary-foreground">Yes</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
