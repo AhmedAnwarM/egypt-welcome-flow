@@ -40,15 +40,17 @@ export const Route = createFileRoute("/")({
 });
 
 const PRODUCTS = [
-  { icon: Wallet, title: "Everyday Accounts", desc: "EGP current and savings accounts with no monthly fees and instant InstaPay transfers." },
-  { icon: CreditCard, title: "Debit & Credit Cards", desc: "Mastercard debit and credit cards with cashback, online controls, and zero FX markup abroad." },
-  { icon: PiggyBank, title: "Savings & Goals", desc: "Earn competitive returns with flexible savings pots and Sharia-compliant options." },
+  { icon: PiggyBank, title: "Saving Account", desc: "Earn up to 8.75% interest, paid monthly, quarterly, or yearly. Available in EGP and major foreign currencies." },
+  { icon: Wallet, title: "Non-Interest-Bearing Current Account", desc: "Free cash deposits and withdrawals anytime. Cheque book and debit card included. No minimum monthly balance." },
+  { icon: Award, title: "Prime Saving Account", desc: "Tiered interest rates calculated on your lowest monthly balance. EGP only, minimum EGP 5,000 to open." },
+  { icon: CreditCard, title: "Current Account 365 Days", desc: "Daily interest credited every day. Minimum EGP 5,000 to open. Available for individuals and companies." },
 ];
 
 const STEPS = [
-  { num: "01", title: "Verify with Digital ID", desc: "Verify instantly with your Egyptian national ID — no paperwork.", color: "bg-primary text-primary-foreground" },
-  { num: "02", title: "We Review", desc: "Our onboarding team reviews your submission and prepares your account.", color: "bg-secondary text-secondary-foreground" },
-  { num: "03", title: "Account Activated", desc: "Final verification and your personal account is ready to use.", color: "bg-accent text-accent-foreground" },
+  { num: "01", title: "Verify your identity", desc: "Scan your national ID or verify instantly via Haweya. A liveness check confirms it's really you.", color: "bg-primary text-primary-foreground" },
+  { num: "02", title: "Complete your profile", desc: "Fill in your work details, tax residency, and address. Most fields are auto-filled from your ID.", color: "bg-secondary text-secondary-foreground" },
+  { num: "03", title: "Choose your account and sign", desc: "Pick the account that fits you, review your digital agreement, and sign electronically.", color: "bg-accent text-accent-foreground" },
+  { num: "04", title: "Start banking", desc: "Your account is active immediately. Card delivery and full limit activation follow within 24 hours.", color: "bg-primary text-primary-foreground" },
 ];
 
 const ABOUT_TILES = [
@@ -59,11 +61,11 @@ const ABOUT_TILES = [
 ];
 
 const FAQS = [
-  { q: "Who can apply for a SUMERGE retail account?", a: "Any Egyptian resident aged 18 or older with a valid national ID can apply online in minutes." },
-  { q: "What documents are required?", a: "Your national ID and proof of address. Employed applicants can also share a recent salary slip to unlock higher limits." },
-  { q: "How long does the process take?", a: "Most applications are reviewed and activated within 24 hours of submission." },
-  { q: "Can I save and continue later?", a: "Yes — your progress is saved automatically and you can resume anytime via the Track Application page." },
-  { q: "How do I get support?", a: "Call us, email, or chat with us in-app any time. Our Cairo support team is available Sunday to Thursday, 9 AM–6 PM EET." },
+  { q: "Who can apply for a SUMERGE retail account?", a: "Any Egyptian national aged 18 or above with a valid national ID. Foreign nationals with a valid passport can also apply — some account types may have eligibility restrictions." },
+  { q: "What documents are required?", a: "For Egyptian nationals: your national ID (we scan it automatically). For foreign nationals: your passport. You may also be asked for proof of address or income in some cases." },
+  { q: "How long does the process take?", a: "The application takes about 10 minutes. Your account is provisionally active as soon as you submit. Full activation and card delivery follow within 24 hours." },
+  { q: "Can I save and continue later?", a: "Yes. Click 'Save and continue later' on any step. Your reference number lets you pick up exactly where you left off." },
+  { q: "How do I get support?", a: "Call 19786374 (Sun–Thu, 9 AM–6 PM EET), email support@sumerge.eg, or use the live chat button on this page." },
 ];
 
 function Landing() {
@@ -93,20 +95,19 @@ function Landing() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link to="/onboarding">
                   <Button size="lg" className="rounded-full px-7 h-12 bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-glow-secondary group">
-                    Get Started <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                  </Button>
-                </Link>
-                <Link to="/status">
-                  <Button size="lg" variant="outline" className="rounded-full px-7 h-12 border-2 border-primary-foreground/20 bg-primary-foreground/5 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground hover:border-primary-foreground/40">
-                    Track Application
+                    Open your account <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                   </Button>
                 </Link>
               </div>
               <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-primary-foreground/70">
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-secondary" /> Bank-grade security</span>
-                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-secondary" /> Activate in 24 hours</span>
+                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-secondary" /> Account ready in minutes</span>
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-secondary" /> 100% digital onboarding</span>
               </div>
+              <p className="mt-3 flex items-center gap-2 text-xs text-primary-foreground/80">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                Identity verified by Haweya · Certified by the Central Bank of Egypt
+              </p>
             </div>
 
             <div className="relative lg:translate-x-10 xl:translate-x-16">
@@ -121,56 +122,15 @@ function Landing() {
           </div>
         </section>
 
-        {/* Stats strip */}
-        <section className="border-y border-border bg-background">
-          <div className="max-w-6xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {[
-              { v: "850k+", l: "Customers in Egypt" },
-              { v: "EGP 24B+", l: "Processed annually" },
-              { v: "24 hrs", l: "Average activation" },
-              { v: "24/7", l: "Customer support" },
-            ].map((s) => (
-              <div key={s.l}>
-                <p className="text-2xl lg:text-3xl font-bold text-primary tracking-tight">{s.v}</p>
-                <p className="text-xs text-muted-foreground mt-1">{s.l}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Resume bar */}
-        <section className="bg-muted/40 border-b border-border">
-          <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">Already started?</span> Enter your reference number to resume your application.
-            </p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                window.location.href = "/onboarding?resume=1";
-              }}
-              className="flex w-full max-w-sm items-center gap-2 sm:w-auto"
-            >
-              <input
-                placeholder="SM-2026-XXXXXX"
-                className="h-9 flex-1 rounded-full border border-border bg-background px-4 text-xs font-mono outline-none focus:border-primary/60 sm:w-52"
-              />
-              <Button type="submit" size="sm" variant="outline" className="rounded-full border-primary/30 text-primary hover:bg-primary/5 hover:text-primary gap-1.5">
-                Resume <ArrowRight className="w-3.5 h-3.5" />
-              </Button>
-            </form>
-          </div>
-        </section>
-
         {/* Products */}
         <section id="products" className="max-w-6xl mx-auto px-6 py-20">
           <div className="mb-10">
-            <p className="text-xs uppercase tracking-[0.18em] text-secondary font-bold mb-2">Our products</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-secondary font-bold mb-2">Accounts</p>
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
-              Everything you need to manage your money
+              Choose the account that fits you
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {PRODUCTS.map((p) => (
               <div key={p.title} className="bg-card border border-border rounded-2xl p-7 hover:border-primary/30 hover:shadow-elegant transition-all">
                 <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-5">
@@ -179,7 +139,7 @@ function Landing() {
                 <h3 className="font-semibold text-foreground mb-2">{p.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-4">{p.desc}</p>
                 <Link to="/onboarding" className="text-xs font-semibold text-secondary hover:underline inline-flex items-center gap-1">
-                  Learn more <ArrowRight className="w-3 h-3" />
+                  Open this account <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
             ))}
@@ -192,13 +152,13 @@ function Landing() {
             <div className="text-center max-w-2xl mx-auto mb-12">
               <p className="text-xs uppercase tracking-[0.18em] text-secondary font-bold mb-2">Account opening</p>
               <h2 className="text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
-                Open your account in 3 simple steps
+                Open your account in 4 simple steps
               </h2>
               <p className="text-muted-foreground mt-3 text-sm">
                 A guided digital journey designed for Egyptian residents — no branch visits required.
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
               {STEPS.map((s) => (
                 <div key={s.num} className="bg-card border border-border rounded-2xl p-7 hover:shadow-elegant transition-all">
                   <span className={`inline-flex items-center justify-center w-11 h-11 rounded-xl font-bold text-sm mb-5 ${s.color}`}>
@@ -208,13 +168,6 @@ function Landing() {
                   <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
                 </div>
               ))}
-            </div>
-            <div className="text-center mt-10">
-              <Link to="/onboarding">
-                <Button size="lg" className="rounded-full px-7 h-12 bg-primary hover:bg-primary/90 text-primary-foreground group">
-                  Start Application <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                </Button>
-              </Link>
             </div>
           </div>
         </section>
@@ -273,7 +226,7 @@ function Landing() {
             <p className="text-xs uppercase tracking-[0.18em] text-secondary font-bold mb-2">FAQ</p>
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground tracking-tight">Frequently Asked Questions</h2>
           </div>
-          <Accordion type="single" collapsible className="space-y-3">
+          <Accordion type="single" collapsible defaultValue="q-0" className="space-y-3">
             {FAQS.map((f, i) => (
               <AccordionItem key={i} value={`q-${i}`} className="bg-card border border-border rounded-xl px-5 last:border-border">
                 <AccordionTrigger className="text-left text-sm font-semibold text-foreground hover:no-underline py-4">
@@ -338,18 +291,6 @@ function Landing() {
           </div>
         </section>
 
-        {/* Final CTA */}
-        <section className="bg-primary text-primary-foreground">
-          <div className="max-w-4xl mx-auto px-6 py-16 text-center">
-            <h2 className="text-3xl lg:text-4xl font-bold tracking-tight mb-3">Ready to bank smarter?</h2>
-            <p className="text-primary-foreground/75 mb-7">Open your SUMERGE personal account today.</p>
-            <Link to="/onboarding">
-              <Button size="lg" className="rounded-full px-7 h-12 bg-secondary hover:bg-secondary/90 text-secondary-foreground group">
-                Get Started <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-              </Button>
-            </Link>
-          </div>
-        </section>
       </main>
 
       <Footer />
