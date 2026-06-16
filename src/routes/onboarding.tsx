@@ -164,8 +164,13 @@ function Onboarding() {
       setResidencyType("egyptian");
       setStep(0);
       setMaxStep(0);
+      setStep1SubStep(0);
     }
   }, []);
+
+  useEffect(() => {
+    if (step !== 1) setStep1SubStep(0);
+  }, [step]);
 
   // Step 3 verification simulation: when ID doc uploaded, cycle through statuses
   useEffect(() => {
