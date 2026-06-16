@@ -339,21 +339,21 @@ export function ReviewStep({ data, goToStep }: any) {
         <Row label="Nationality" value={data.nationality} step={0} />
       </Section>
       <Section title="Work & income" icon={Wallet}>
-        <Row label="Employment" value={data.employment} step={3} />
-        <Row label="Employer" value={data.employer} step={3} />
-        <Row label="Monthly income" value={data.income} step={3} />
+        <Row label="Employment" value={data.employment} step={2} />
+        <Row label="Employer" value={data.employer} step={2} />
+        <Row label="Monthly income" value={data.income} step={2} />
       </Section>
       <Section title="Address" icon={FileText}>
-        <Row label="Address" value={[data.street, data.city, data.governorate].filter(Boolean).join(", ")} step={6} />
+        <Row label="Address" value={[data.street, data.city, data.governorate].filter(Boolean).join(", ")} step={5} />
       </Section>
       <Section title="Products" icon={Sparkles}>
-        <Row label="Confirmed" value={(data.confirmedProducts || []).join(", ")} step={7} />
+        <Row label="Confirmed" value={(data.confirmedProducts || []).join(", ")} step={6} />
       </Section>
       <Section title="Compliance" icon={ShieldCheck}>
-        <Row label="PEP status" value={data.pepStatus} step={4} />
-        <Row label="US person" value={data.fatcaUs} step={4} />
-        <Row label="Documents uploaded" value={Object.keys(data.documents || {}).length} step={8} />
-        <Row label="Signed at" value={data.signedAt ? new Date(data.signedAt).toLocaleString() : "—"} step={9} />
+        <Row label="PEP status" value={data.pepStatus} step={3} />
+        <Row label="US person" value={data.fatcaUs} step={3} />
+        <Row label="Documents uploaded" value={Object.keys(data.documents || {}).length} step={7} />
+        <Row label="Signed at" value={data.signedAt ? new Date(data.signedAt).toLocaleString() : "—"} step={8} />
       </Section>
     </div>
   );

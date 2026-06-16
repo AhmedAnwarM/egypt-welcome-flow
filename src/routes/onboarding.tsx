@@ -215,8 +215,7 @@ function Onboarding() {
         if (!data.hasPoA || !data.smsConsent) return false;
         return true;
       }
-      case 2: return !!data.productChoice;
-      case 3: {
+      case 2: {
         const baseOk = !!data.employment && !!data.income && !!data.employer.trim() && !!data.jobTitle.trim() && !!data.sourceOfFunds;
         const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
         if (!baseOk) return false;
@@ -226,7 +225,7 @@ function Onboarding() {
         if (data.employment === "Retired" && !data.previousOccupation.trim()) return false;
         return true;
       }
-      case 4: {
+      case 3: {
         if (!data.fatcaUs || !data.crsOther || !data.taxDeclaration) return false;
         if (data.fatcaUs === "yes" && !data.usTin.trim()) return false;
         if (data.crsOther === "yes") {
@@ -237,21 +236,21 @@ function Onboarding() {
         if (data.pepStatus === "yes" && (!data.pepRole.trim() || !data.pepCountry.trim() || !data.pepRelationship.trim() || !data.pepDates.trim())) return false;
         return true;
       }
-      case 5: {
+      case 4: {
         if (!data.accountPurpose || !data.accountCurrency || !data.linkDebitCard) return false;
         if (data.linkDebitCard === "yes" && (!data.cardType || !data.nameOnCard.trim())) return false;
         return true;
       }
-      case 6: {
+      case 5: {
         if (!data.residenceType) return false;
         if (data.residenceType === "Other" && !data.residenceTypeOther.trim()) return false;
         return !!data.governorate && !!data.city.trim() && !!data.street.trim();
       }
-      case 7: return ((data as any).confirmedProducts || []).length > 0;
-      case 8: return isDocumentsValid(data);
-      case 9: return !!(data as any).signedAt;
-      case 10: return true;
-      case 11: {
+      case 6: return ((data as any).confirmedProducts || []).length > 0;
+      case 7: return isDocumentsValid(data);
+      case 8: return !!(data as any).signedAt;
+      case 9: return true;
+      case 10: {
         const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
         return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit;
       }
@@ -293,16 +292,15 @@ function Onboarding() {
               <CardToolbar onSave={() => setShowSaveModal(true)} />
               {step === 0 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
               {step === 1 && <KnowYouBetterStep data={data} update={update} />}
-              {step === 2 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
-              {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(2)} />}
-              {step === 4 && <TaxStep data={data} update={update} />}
-              {step === 5 && <AccountSetupStep data={data} update={update} />}
-              {step === 6 && <AddressStep data={data} update={update} />}
-              {step === 7 && <ConfirmProductsStep data={data} update={update} />}
-              {step === 8 && <DocumentsStep data={data} update={update} />}
-              {step === 9 && <SignatureStep data={data} update={update} />}
-              {step === 10 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
-              {step === 11 && <CredentialsStep data={data} update={update} />}
+              {step === 2 && <WorkProductStep data={data} update={update} />}
+              {step === 3 && <TaxStep data={data} update={update} />}
+              {step === 4 && <AccountSetupStep data={data} update={update} />}
+              {step === 5 && <AddressStep data={data} update={update} />}
+              {step === 6 && <ConfirmProductsStep data={data} update={update} />}
+              {step === 7 && <DocumentsStep data={data} update={update} />}
+              {step === 8 && <SignatureStep data={data} update={update} />}
+              {step === 9 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
+              {step === 10 && <CredentialsStep data={data} update={update} />}
 
               <div className="mt-10 flex items-center justify-between border-t border-border/60 pt-6">
                 <button
@@ -1199,14 +1197,13 @@ function SelectionRecap({ data, onChange }: any) {
   );
 }
 
-function WorkProductStep({ data, update, onChangeProduct }: any) {
+function WorkProductStep({ data, update }: any) {
   const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
   const employerLabel = isBiz ? "Business name" : "Employer name";
   const showStartDate = data.employment === "Employed" || data.employment === "Self-employed";
   const showPrevOcc = data.employment === "Retired";
   return (
     <div>
-      <SelectionRecap data={data} onChange={onChangeProduct} />
       <StepHeader title="Tell us about your work" subtitle="We use this to personalize your account and meet regulatory requirements. Your information is kept confidential." />
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="Employment status">
