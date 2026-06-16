@@ -950,7 +950,6 @@ function VerifiableContactField({
           >
             Verify
           </button>
-          <span className="text-xs text-muted-foreground">Demo: any 6 digits work.</span>
         </div>
       )}
       {err && <p className="mt-1 text-xs font-semibold text-destructive">{err}</p>}
