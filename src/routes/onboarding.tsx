@@ -135,16 +135,18 @@ function Onboarding() {
     phoneBanking: "yes" as "" | "yes" | "no",
   });
   const update = (k: keyof typeof data, v: any) => setData((d) => ({ ...d, [k]: v }));
-  const advance = () =>
-    setStep((s) => {
-      const n = Math.min(steps.length, s + 1);
-      setMaxStep((m) => Math.max(m, n));
-      return n;
-    });
   const next = () => {
+    if (step === 1 && step1SubStep === 0) {
+      setStep1SubStep(1);
+      return;
+    }
     advance();
   };
   const back = () => {
+    if (step === 1 && step1SubStep === 1) {
+      setStep1SubStep(0);
+      return;
+    }
     setStep((s) => Math.max(0, s - 1));
   };
 
