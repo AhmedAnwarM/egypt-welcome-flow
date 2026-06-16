@@ -81,7 +81,10 @@ function Onboarding() {
     agreeTerms: false,
     agreeCredit: false,
     pepStatus: "" as "" | "yes" | "no",
-    pepDetails: "",
+    pepRole: "",
+    pepCountry: "",
+    pepRelationship: "",
+    pepDates: "",
     mfaMethod: "sms" as "sms" | "app",
     idDoc: false,
     // Document type for step 3
@@ -182,7 +185,7 @@ function Onboarding() {
           if (!data.crsRows.some((r: any) => r.country && r.tin.trim())) return false;
         }
         if (!data.pepStatus) return false;
-        if (data.pepStatus === "yes" && !data.pepDetails.trim()) return false;
+        if (data.pepStatus === "yes" && (!data.pepRole.trim() || !data.pepCountry.trim() || !data.pepRelationship.trim() || !data.pepDates.trim())) return false;
         return true;
       }
       case 5: return !!data.governorate && !!data.city.trim() && !!data.street.trim();
@@ -1412,13 +1415,41 @@ function TaxStep({ data, update }: any) {
           <Segmented value={data.pepStatus} onChange={(v: "yes" | "no") => update("pepStatus", v)} />
         </div>
         {data.pepStatus === "yes" && (
-          <div className="mt-4">
-            <Field label="Please provide details (role, country, relationship, dates)">
-              <textarea
-                rows={3}
-                className={`${inputCls} h-auto py-2`}
-                value={data.pepDetails}
-                onChange={(e) => update("pepDetails", e.target.value)}
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <Field label="Role / position">
+              <input
+                type="text"
+                className={inputCls}
+                placeholder="e.g. Member of Parliament"
+                value={data.pepRole}
+                onChange={(e) => update("pepRole", e.target.value)}
+              />
+            </Field>
+            <Field label="Country">
+              <input
+                type="text"
+                className={inputCls}
+                placeholder="e.g. Egypt"
+                value={data.pepCountry}
+                onChange={(e) => update("pepCountry", e.target.value)}
+              />
+            </Field>
+            <Field label="Relationship">
+              <input
+                type="text"
+                className={inputCls}
+                placeholder="Self / spouse / parent / associate"
+                value={data.pepRelationship}
+                onChange={(e) => update("pepRelationship", e.target.value)}
+              />
+            </Field>
+            <Field label="Dates held (from – to)">
+              <input
+                type="text"
+                className={inputCls}
+                placeholder="e.g. 2015 – 2020"
+                value={data.pepDates}
+                onChange={(e) => update("pepDates", e.target.value)}
               />
             </Field>
           </div>
