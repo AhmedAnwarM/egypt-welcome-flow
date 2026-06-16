@@ -81,7 +81,10 @@ function Onboarding() {
     agreeTerms: false,
     agreeCredit: false,
     pepStatus: "" as "" | "yes" | "no",
-    pepDetails: "",
+    pepRole: "",
+    pepCountry: "",
+    pepRelationship: "",
+    pepDates: "",
     mfaMethod: "sms" as "sms" | "app",
     idDoc: false,
     // Document type for step 3
