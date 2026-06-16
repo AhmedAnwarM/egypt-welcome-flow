@@ -308,14 +308,15 @@ function Onboarding() {
               {step === 2 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
               {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(0)} />}
               {step === 4 && <TaxStep data={data} update={update} />}
-              {step === 5 && <AddressStep data={data} update={update} />}
-              {step === 6 && <CredentialsStep data={data} update={update} />}
-              {step === 7 && <SelfieStep data={data} update={update} />}
-              {step === 8 && <ConfirmProductsStep data={data} update={update} />}
-              {step === 9 && <ConsentsStep data={data} update={update} />}
-              {step === 10 && <DocumentsStep data={data} update={update} />}
-              {step === 11 && <SignatureStep data={data} update={update} />}
-              {step === 12 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
+              {step === 5 && <AccountSetupStep data={data} update={update} />}
+              {step === 6 && <AddressStep data={data} update={update} />}
+              {step === 7 && <CredentialsStep data={data} update={update} />}
+              {step === 8 && <SelfieStep data={data} update={update} />}
+              {step === 9 && <ConfirmProductsStep data={data} update={update} />}
+              {step === 10 && <ConsentsStep data={data} update={update} />}
+              {step === 11 && <DocumentsStep data={data} update={update} />}
+              {step === 12 && <SignatureStep data={data} update={update} />}
+              {step === 13 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
 
               <div className="mt-10 flex items-center justify-between border-t border-border/60 pt-6">
                 <button
