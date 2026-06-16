@@ -378,6 +378,20 @@ function LendingPage() {
 
   // ---------- success screen ----------
   if (submitted) {
+    const isReferred = submitted.decision === "refer_credit_risk";
+    const timeline = isReferred
+      ? [
+          { label: t("lending.success.stage.received"), done: true },
+          { label: t("lending.success.stage.screening"), done: true },
+          { label: t("lending.success.stage.pendingRisk"), done: false },
+          { label: t("lending.success.stage.finalPending"), done: false },
+        ]
+      : [
+          { label: t("lending.success.stage.received"), done: true },
+          { label: t("lending.success.stage.screening"), done: true },
+          { label: t("lending.success.stage.recorded"), done: true },
+          { label: t("lending.success.stage.disbursement"), done: false },
+        ];
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <Header />
@@ -387,7 +401,7 @@ function LendingPage() {
               <CheckCircle2 className="h-7 w-7" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight mb-2">{t("lending.success.title")}</h1>
-            <p className="text-muted-foreground mb-6">{t("lending.success.body")}</p>
+            <p className="text-muted-foreground mb-6">{t(isReferred ? "lending.success.bodyReferred" : "lending.success.body")}</p>
             <div className="rounded-2xl border border-border bg-background/60 p-5 text-left space-y-2 mb-6">
               <div className="flex justify-between"><span className="text-muted-foreground text-sm">{t("lending.success.reference")}</span><span className="font-mono font-semibold">{submitted.ref}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground text-sm">{t("lending.review.product")}</span><span className="font-medium">{t(`lending.product.${product}`)}</span></div>
@@ -400,12 +414,7 @@ function LendingPage() {
             </div>
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left">{t("lending.success.timelineTitle")}</p>
-              {[
-                { label: t("lending.success.stage.received"), done: true },
-                { label: t("lending.success.stage.screening"), done: true },
-                { label: t("lending.success.stage.recorded"), done: true },
-                { label: t("lending.success.stage.disbursement"), done: false },
-              ].map((s) => (
+              {timeline.map((s) => (
                 <div key={s.label} className="flex items-center gap-3 text-sm">
                   <span className={`h-2.5 w-2.5 rounded-full ${s.done ? "bg-primary" : "bg-muted-foreground/30"}`} />
                   <span className={s.done ? "" : "text-muted-foreground"}>{s.label}</span>
