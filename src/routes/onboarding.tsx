@@ -57,6 +57,8 @@ function Onboarding() {
     otp: "",
     mobileCode: "",
     emailCode: "",
+    phoneVerified: false,
+    emailVerified: false,
     nationalId: "",
     fullName: "",
     firstName: "",
