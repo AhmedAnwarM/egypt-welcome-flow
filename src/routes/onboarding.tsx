@@ -1705,3 +1705,327 @@ function SuccessStepInner() {
 // Removed unused icons appease tree-shaking
 void Users;
 void ArrowRight;
+
+const COUNTRIES_FULL = ["Egypt", ...COUNTRIES];
+
+function AdditionalPersonalDetails({ data, update }: any) {
+  const residenceOpts: { v: "resEgy" | "nonResEgy" | "resFor" | "nonResFor"; label: string }[] = [
+    { v: "resEgy", label: "Resident Egyptian" },
+    { v: "nonResEgy", label: "Non-resident Egyptian" },
+    { v: "resFor", label: "Resident foreigner" },
+    { v: "nonResFor", label: "Non-resident foreigner" },
+  ];
+  return (
+    <div className="mt-6 rounded-xl border border-border bg-secondary/30 p-6">
+      <h3 className="text-lg font-bold text-primary">Additional personal details</h3>
+      <p className="mt-1 text-sm text-muted-foreground">Required for account opening per CBE guidelines.</p>
+      <div className="mt-5 space-y-5">
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field label="Gender">
+            <PillToggle
+              options={[{ v: "Male", label: "Male" }, { v: "Female", label: "Female" }]}
+              value={data.gender}
+              onChange={(v) => update("gender", v)}
+            />
+          </Field>
+          <Field label="Place of birth">
+            <input className={inputCls} value={data.placeOfBirth} onChange={(e) => update("placeOfBirth", e.target.value)} />
+          </Field>
+          <Field label="Country of birth">
+            <select className={inputCls} value={data.countryOfBirth} onChange={(e) => update("countryOfBirth", e.target.value)}>
+              <option value="">Select country</option>
+              {COUNTRIES_FULL.map((c) => <option key={c}>{c}</option>)}
+            </select>
+          </Field>
+          <Field label="Marital status">
+            <select className={inputCls} value={data.maritalStatus} onChange={(e) => update("maritalStatus", e.target.value)}>
+              <option value="">Select</option>
+              {["Single","Married","Divorced","Widowed"].map((m) => <option key={m}>{m}</option>)}
+            </select>
+          </Field>
+          <div className="md:col-span-2">
+            <Field label="Educational status">
+              <select className={inputCls} value={data.education} onChange={(e) => update("education", e.target.value)}>
+                <option value="">Select</option>
+                {["Illiterate","Primary","Secondary","Post-secondary non-tertiary","Tertiary (undergraduate)","Postgraduate","PhD"].map((m) => <option key={m}>{m}</option>)}
+              </select>
+            </Field>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-foreground">Do you have other nationalities?</p>
+          <Segmented value={data.hasOtherNationalities} onChange={(v) => update("hasOtherNationalities", v)} />
+        </div>
+        {data.hasOtherNationalities === "yes" && (
+          <Field label="Please state other nationalities">
+            <input className={inputCls} value={data.otherNationalities} onChange={(e) => update("otherNationalities", e.target.value)} />
+          </Field>
+        )}
+        <div>
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Residence classification</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {residenceOpts.map((o) => {
+              const selected = data.residenceClassification === o.v;
+              return (
+                <button
+                  key={o.v}
+                  type="button"
+                  onClick={() => update("residenceClassification", o.v)}
+                  className={`flex items-center justify-between rounded-xl border p-3 text-left text-sm transition-all ${selected ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border bg-background hover:border-primary/40"}`}
+                >
+                  <span className="font-semibold text-foreground">{o.label}</span>
+                  <span className={`h-4 w-4 rounded-full border-2 ${selected ? "border-primary bg-primary" : "border-border"}`} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-foreground">Special needs customer?</p>
+          <Segmented value={data.specialNeeds} onChange={(v) => update("specialNeeds", v)} />
+        </div>
+        {data.specialNeeds === "yes" && (
+          <Field label="Type of special needs">
+            <select className={inputCls} value={data.specialNeedsType} onChange={(e) => update("specialNeedsType", e.target.value)}>
+              <option value="">Select</option>
+              {["Visual impairment","Hearing impairment","Physical disability","Other"].map((m) => <option key={m}>{m}</option>)}
+            </select>
+          </Field>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AdditionalDeclarations({ data, update }: any) {
+  const Row = ({ title, desc, value, onChange, children }: any) => (
+    <div className="rounded-xl border border-border bg-background p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          {desc && <p className="mt-1 text-xs text-muted-foreground">{desc}</p>}
+        </div>
+        <Segmented value={value} onChange={onChange} />
+      </div>
+      {children}
+    </div>
+  );
+  return (
+    <div className="mt-6">
+      <h3 className="text-base font-bold text-primary">Additional declarations</h3>
+      <div className="mt-3 space-y-3">
+        <Row
+          title="I am the real and sole beneficiary of this account"
+          desc="Required by CBE regulations to confirm beneficial ownership."
+          value={data.realBeneficiary}
+          onChange={(v: "yes" | "no") => update("realBeneficiary", v)}
+        >
+          {data.realBeneficiary === "no" && (
+            <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+              Please visit a branch to complete your application with the beneficiary present.
+            </div>
+          )}
+        </Row>
+        <Row
+          title="There is a power of attorney on this account"
+          desc="If yes, you can add authorized persons in the next step."
+          value={data.hasPoA}
+          onChange={(v: "yes" | "no") => update("hasPoA", v)}
+        >
+          {data.hasPoA === "yes" && (
+            <p className="mt-3 text-xs text-muted-foreground">You will be able to add authorized persons in the next step.</p>
+          )}
+        </Row>
+        <Row
+          title="I hold accounts or credit cards with other banks"
+          desc="For our records only."
+          value={data.hasOtherBankAccounts}
+          onChange={(v: "yes" | "no") => update("hasOtherBankAccounts", v)}
+        />
+        <Row
+          title="I deal in securities or investments"
+          desc="May affect your risk classification."
+          value={data.dealsInSecurities}
+          onChange={(v: "yes" | "no") => update("dealsInSecurities", v)}
+        />
+        <Row
+          title="I consent to receive SMS transaction notifications on my registered mobile number"
+          desc="Recommended — receive instant alerts for activity on your account."
+          value={data.smsConsent}
+          onChange={(v: "yes" | "no") => update("smsConsent", v)}
+        />
+      </div>
+    </div>
+  );
+}
+
+function AccountSetupStep({ data, update }: any) {
+  const isEgpOnly = data.productChoice === "prime-saving" || data.productChoice === "current-365";
+  const currencies = isEgpOnly
+    ? ["Egyptian Pound (EGP)"]
+    : ["Egyptian Pound (EGP)","US Dollar (USD)","Euro (EUR)","British Pound (GBP)","Saudi Riyal (SAR)"];
+
+  useEffect(() => {
+    if (isEgpOnly && data.accountCurrency !== "Egyptian Pound (EGP)") {
+      update("accountCurrency", "Egyptian Pound (EGP)");
+    }
+    if (!data.nameOnCard && data.fullName) {
+      update("nameOnCard", data.fullName.slice(0, 26).toUpperCase());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const persons: { cif: string; name: string; authType: string; docType: string }[] = data.authorizedPersons || [];
+  const setPersons = (p: typeof persons) => update("authorizedPersons", p);
+  const addPerson = () => persons.length < 4 && setPersons([...persons, { cif: "", name: "", authType: "Full operation", docType: "Power of attorney" }]);
+  const updPerson = (i: number, patch: Partial<typeof persons[number]>) =>
+    setPersons(persons.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
+  const removePerson = (i: number) => setPersons(persons.filter((_, idx) => idx !== i));
+
+  return (
+    <div>
+      <StepHeader title="Account setup" subtitle="Configure your account, card, and digital services." />
+
+      {/* Section A — Account details */}
+      <section className="rounded-xl border border-border bg-background p-5">
+        <h3 className="text-sm font-bold text-primary">Account details</h3>
+        <div className="mt-4 grid gap-5 md:grid-cols-2">
+          <Field label="Purpose of opening this account">
+            <select className={inputCls} value={data.accountPurpose} onChange={(e) => update("accountPurpose", e.target.value)}>
+              <option value="">Select purpose</option>
+              {["Salary deposit","Savings","Business transactions","Investment","Daily expenses","Other"].map((p) => <option key={p}>{p}</option>)}
+            </select>
+          </Field>
+          <Field label="Account currency">
+            <select disabled={isEgpOnly} className={`${inputCls} ${isEgpOnly ? "bg-secondary/20 cursor-not-allowed" : ""}`} value={data.accountCurrency} onChange={(e) => update("accountCurrency", e.target.value)}>
+              <option value="">Select currency</option>
+              {currencies.map((c) => <option key={c}>{c}</option>)}
+            </select>
+            {isEgpOnly && <p className="mt-1.5 text-xs text-muted-foreground">This account is EGP only.</p>}
+          </Field>
+          <div className="md:col-span-2 flex items-center justify-between rounded-md border border-border bg-secondary/10 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Link account to debit card</p>
+              <p className="text-xs text-muted-foreground">A debit card will be issued and linked to this account.</p>
+            </div>
+            <Segmented value={data.linkDebitCard} onChange={(v: "yes" | "no") => update("linkDebitCard", v)} />
+          </div>
+        </div>
+      </section>
+
+      {/* Section B — Debit card */}
+      {data.linkDebitCard === "yes" && (
+        <section className="mt-5 rounded-xl border border-border bg-background p-5">
+          <h3 className="text-sm font-bold text-primary">Debit card details</h3>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {(["Standard", "Premium"] as const).map((t) => {
+              const selected = data.cardType === t;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => update("cardType", t)}
+                  className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-all ${selected ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border bg-background hover:border-primary/40"}`}
+                >
+                  <span className={`flex h-10 w-10 items-center justify-center rounded-full ${selected ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}>
+                    <Wallet className="h-5 w-5" />
+                  </span>
+                  <div className="flex-1">
+                    <div className="text-sm font-bold text-foreground">{t}</div>
+                    <div className="text-xs text-muted-foreground">{t === "Standard" ? "Everyday banking essentials" : "Enhanced benefits and limits"}</div>
+                  </div>
+                  <span className={`h-4 w-4 rounded-full border-2 ${selected ? "border-primary bg-primary" : "border-border"}`} />
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-4 grid gap-5 md:grid-cols-2">
+            <div>
+              <Field label="Name to be printed on card">
+                <input maxLength={26} className={inputCls} value={data.nameOnCard} onChange={(e) => update("nameOnCard", e.target.value.slice(0, 26))} />
+              </Field>
+              <p className="mt-1 text-[11px] text-muted-foreground text-right">{data.nameOnCard.length}/26</p>
+            </div>
+            <Field label="Name in Arabic (optional)">
+              <input dir="rtl" className={inputCls} value={data.nameOnCardAr} onChange={(e) => update("nameOnCardAr", e.target.value)} />
+            </Field>
+          </div>
+        </section>
+      )}
+
+      {/* Section C — Authorized persons */}
+      <section className="mt-5 rounded-xl border border-border bg-background p-5">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-bold text-primary">Authorized persons</h3>
+          <span className="text-xs text-muted-foreground">{persons.length}/4</span>
+        </div>
+        {data.hasPoA !== "yes" && (
+          <p className="mt-1 text-xs text-muted-foreground">Add authorized persons to operate your account — optional.</p>
+        )}
+        <div className="mt-4 space-y-4">
+          {persons.length === 0 ? (
+            <div className="rounded-md border border-dashed border-border bg-secondary/10 px-4 py-6 text-center text-sm text-muted-foreground">
+              No authorized persons added
+            </div>
+          ) : (
+            persons.map((p, i) => (
+              <div key={i} className="rounded-md border border-border bg-secondary/10 p-4">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Field label="CIF of authorized person">
+                    <input className={inputCls} value={p.cif} onChange={(e) => updPerson(i, { cif: e.target.value })} />
+                  </Field>
+                  <Field label="Full name">
+                    <input className={inputCls} value={p.name} onChange={(e) => updPerson(i, { name: e.target.value })} />
+                  </Field>
+                  <Field label="Authorization type">
+                    <select className={inputCls} value={p.authType} onChange={(e) => updPerson(i, { authType: e.target.value })}>
+                      {["Full operation","Inquiry only","Deposits only"].map((a) => <option key={a}>{a}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Relationship document type">
+                    <select className={inputCls} value={p.docType} onChange={(e) => updPerson(i, { docType: e.target.value })}>
+                      {["Power of attorney","Court order","Other"].map((a) => <option key={a}>{a}</option>)}
+                    </select>
+                  </Field>
+                </div>
+                {i > 0 && (
+                  <div className="mt-3 flex justify-end">
+                    <button type="button" onClick={() => removePerson(i)} className="inline-flex items-center gap-1 text-xs font-semibold text-destructive hover:underline">
+                      <Trash2 className="h-3.5 w-3.5" /> Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+          {persons.length < 4 && (
+            <button type="button" onClick={addPerson} className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline">
+              <Plus className="h-4 w-4" /> Add authorized person
+            </button>
+          )}
+        </div>
+      </section>
+
+      {/* Section D — Digital services */}
+      <section className="mt-5 rounded-xl border border-border bg-background p-5">
+        <h3 className="text-sm font-bold text-primary">Digital services enrollment</h3>
+        <div className="mt-4 space-y-3">
+          <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-secondary/10 p-4">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Subscribe to phone banking</p>
+              <p className="text-xs text-muted-foreground">Access your account 24/7 via our automated phone line.</p>
+            </div>
+            <Segmented value={data.phoneBanking} onChange={(v: "yes" | "no") => update("phoneBanking", v)} />
+          </div>
+          <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-secondary/10 p-4">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Subscribe to internet and mobile banking</p>
+              <p className="text-xs text-muted-foreground">Required — your login credentials are set up in the final step.</p>
+            </div>
+            <span className="inline-flex h-9 items-center rounded-full bg-secondary px-4 text-sm font-semibold text-secondary-foreground">Yes</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
