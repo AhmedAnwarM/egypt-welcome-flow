@@ -183,8 +183,8 @@ function Onboarding() {
   };
 
   const canContinue = (() => {
-    switch (step) {
-      case 0: {
+    // Sub-validators (keyed to the original granular step indices)
+    const v0 = () => {
         if (!data.idDoc || data.fullName.trim().length <= 3) return false;
         if (verifyStage !== "done") return false;
         if (data.docType === "passport") {
@@ -193,28 +193,22 @@ function Onboarding() {
           if (data.nationalId.length !== 14) return false;
         }
         return true;
-      }
-      case 1: {
-        // Additional personal details
+    };
+    const v1 = () => {
         if (!data.gender || !data.placeOfBirth.trim() || !data.countryOfBirth || !data.maritalStatus || !data.education) return false;
         if (!data.hasOtherNationalities) return false;
         if (data.hasOtherNationalities === "yes" && !data.otherNationalities.trim()) return false;
         if (!data.residenceClassification) return false;
         if (!data.specialNeeds) return false;
         if (data.specialNeeds === "yes" && !data.specialNeedsType) return false;
-        // Contact info — phone + email entered (verification happens on next step)
         if (!(data.phone.length >= 10 && /\S+@\S+/.test(data.email) && data.email === data.confirmEmail)) return false;
         if (!data.statementFrequency || !data.statementDelivery || !data.correspondenceLanguage) return false;
-        // Additional declarations
         if (data.realBeneficiary !== "yes") return false;
         if (!data.hasPoA || !data.smsConsent) return false;
         return true;
-      }
-      case 2: {
-        // Verify phone & email
-        return !!data.phoneVerified && !!data.emailVerified;
-      }
-      case 3: {
+    };
+    const v2 = () => !!data.phoneVerified && !!data.emailVerified;
+    const v3 = () => {
         const baseOk = !!data.employment && !!data.income && !!data.employer.trim() && !!data.jobTitle.trim() && !!data.sourceOfFunds;
         const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
         if (!baseOk) return false;
@@ -223,8 +217,8 @@ function Onboarding() {
         if ((data.employment === "Employed" || data.employment === "Self-employed") && !data.employmentStartDate) return false;
         if (data.employment === "Retired" && !data.previousOccupation.trim()) return false;
         return true;
-      }
-      case 4: {
+    };
+    const v4 = () => {
         if (!data.fatcaUs || !data.crsOther || !data.taxDeclaration) return false;
         if (data.fatcaUs === "yes" && !data.usTin.trim()) return false;
         if (data.crsOther === "yes") {
@@ -234,25 +228,33 @@ function Onboarding() {
         if (!data.pepStatus) return false;
         if (data.pepStatus === "yes" && (!data.pepRole.trim() || !data.pepCountry.trim() || !data.pepRelationship.trim() || !data.pepDates.trim())) return false;
         return true;
-      }
-      case 5: {
+    };
+    const v5 = () => {
         if (!data.accountPurpose || !data.accountCurrency || !data.linkDebitCard) return false;
         if (data.linkDebitCard === "yes" && (!data.cardType || !data.nameOnCard.trim())) return false;
         return true;
-      }
-      case 6: {
+    };
+    const v6 = () => {
         if (!data.residenceType) return false;
         if (data.residenceType === "Other" && !data.residenceTypeOther.trim()) return false;
         return !!data.governorate && !!data.city.trim() && !!data.street.trim();
-      }
-      case 7: return ((data as any).confirmedProducts || []).length > 0;
-      case 8: return isDocumentsValid(data);
-      case 9: return !!(data as any).signedAt;
-      case 10: return true;
-      case 11: {
+    };
+    const v7 = () => ((data as any).confirmedProducts || []).length > 0;
+    const v8 = () => isDocumentsValid(data);
+    const v9 = () => !!(data as any).signedAt;
+    const v10 = () => true;
+    const v11 = () => {
         const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
         return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit;
-      }
+    };
+    switch (step) {
+      case 0: return v0();
+      case 1: return v1() && v2();
+      case 2: return v3() && v4();
+      case 3: return v5() && v6();
+      case 4: return v7() && v8();
+      case 5: return v9() && v10();
+      case 6: return v11();
       default: return true;
     }
   })();
