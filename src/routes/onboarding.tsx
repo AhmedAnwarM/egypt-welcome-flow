@@ -1281,6 +1281,7 @@ function AddressStep({ data, update }: any) {
           <Field label="Postal code (optional)"><input disabled={disabled} className={fieldCls} value={data.postalCode} onChange={(e) => update("postalCode", e.target.value)} /></Field>
         </div>
       </div>
+      <p className="mt-3 text-[12px] text-muted-foreground">This address is used for card delivery and official correspondence.</p>
       {data.docType === "passport" && (
         <div className="mt-8">
           <h3 className="mb-3 text-sm font-bold text-foreground">Proof of residence in Egypt <span className="font-normal text-muted-foreground">(optional)</span></h3>
