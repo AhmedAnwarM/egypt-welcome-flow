@@ -719,10 +719,9 @@ function NidOtpGate({
   onBack: () => void;
   onVerified: (nid: string, mobile: string) => void;
 }) {
-  type Phase = "upload" | "ocr" | "mobile";
-  const [phase, setPhase] = useState<Phase>("upload");
   const [nidUploaded, setNidUploaded] = useState(false);
   const [ocrRunning, setOcrRunning] = useState(false);
+  const [ocrDone, setOcrDone] = useState(false);
   const [nid, setNid] = useState(initialNid || "");
   const [mobile, setMobile] = useState(initialMobile || "");
   const [sent, setSent] = useState(false);
@@ -734,18 +733,27 @@ function NidOtpGate({
   const mobileValid = /^01\d{9}$/.test(mobile);
   const nidValid = /^\d{14}$/.test(nid);
 
-  const runOcr = async () => {
+  const handleUpload = async () => {
+    setNidUploaded(true);
     setError(null);
-    setPhase("ocr");
     setOcrRunning(true);
     await new Promise((r) => setTimeout(r, 1400));
-    // Derive a plausible 14-digit National ID
     const generated = nid && nidValid
       ? nid
       : "2" + String(Math.floor(900000000000 + Math.random() * 99999999999)).padStart(13, "0").slice(0, 13);
     setNid(generated);
     setOcrRunning(false);
+    setOcrDone(true);
     auditLog("onboarding.nidOcrCompleted", {});
+  };
+
+  const resetUpload = () => {
+    setNidUploaded(false);
+    setOcrRunning(false);
+    setOcrDone(false);
+    setNid("");
+    setSent(false);
+    setOtp("");
   };
 
   const sendOtp = async () => {
@@ -774,46 +782,36 @@ function NidOtpGate({
   };
 
   return (
-    <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
-      {phase === "upload" && (
-        <>
-          <StepHeader
-            title="Upload your National ID"
-            subtitle="Capture or upload your Egyptian National ID. We'll read your ID number from it."
-          />
-          <div className="overflow-hidden rounded-xl border border-border bg-background">
-            <div className="hidden sm:grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <div>Documents</div>
-              <div className="text-center">Status</div>
-              <div className="text-center">Actions</div>
-            </div>
-            <UploadRow
-              label="National ID"
-              fileName="NID.jpg"
-              done={nidUploaded}
-              onClick={() => setNidUploaded(true)}
-              onDelete={() => setNidUploaded(false)}
-            />
-          </div>
-          {error && (
-            <p className="mt-4 rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{error}</p>
-          )}
-          <div className="mt-8 flex items-center justify-between gap-3">
-            <button type="button" onClick={onBack} className="text-sm font-semibold text-muted-foreground hover:text-primary">← Back</button>
-            <Button onClick={runOcr} disabled={!nidUploaded}>
-              Continue <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-        </>
-      )}
+    <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant space-y-8">
+      <StepHeader
+        title="Verify your identity"
+        subtitle="Upload your Egyptian National ID and confirm your mobile number to get started."
+      />
 
-      {phase === "ocr" && (
-        <>
-          <StepHeader
-            title="Reading your National ID"
-            subtitle="We're extracting your ID number from the uploaded card."
+      {/* 1. Upload */}
+      <section>
+        <h3 className="mb-3 text-sm font-semibold text-foreground">1. Upload your National ID</h3>
+        <div className="overflow-hidden rounded-xl border border-border bg-background">
+          <div className="hidden sm:grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <div>Documents</div>
+            <div className="text-center">Status</div>
+            <div className="text-center">Actions</div>
+          </div>
+          <UploadRow
+            label="National ID"
+            fileName="NID.jpg"
+            done={nidUploaded}
+            onClick={handleUpload}
+            onDelete={resetUpload}
           />
-          <div className="rounded-xl border border-border bg-background p-6">
+        </div>
+      </section>
+
+      {/* 2. OCR result */}
+      {nidUploaded && (
+        <section>
+          <h3 className="mb-3 text-sm font-semibold text-foreground">2. Confirm your National ID number</h3>
+          <div className="rounded-xl border border-border bg-background p-5">
             {ocrRunning ? (
               <div className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
@@ -837,21 +835,14 @@ function NidOtpGate({
               </div>
             )}
           </div>
-          <div className="mt-8 flex items-center justify-between gap-3">
-            <button type="button" onClick={() => setPhase("upload")} disabled={ocrRunning} className="text-sm font-semibold text-muted-foreground hover:text-primary disabled:opacity-50">← Back</button>
-            <Button onClick={() => setPhase("mobile")} disabled={ocrRunning || !nidValid}>
-              Continue <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-        </>
+        </section>
       )}
 
-      {phase === "mobile" && (
-        <>
-          <StepHeader
-            title="Verify your mobile number"
-            subtitle="Enter your Egyptian mobile number. We'll send a one-time code to confirm it."
-          />
+      {/* 3. Mobile */}
+      {ocrDone && nidValid && (
+        <section>
+          <h3 className="mb-3 text-sm font-semibold text-foreground">3. Verify your mobile number</h3>
+          <p className="mb-3 text-xs text-muted-foreground">Enter your Egyptian mobile number. We'll send a one-time code to confirm it.</p>
           <Field label="Mobile number">
             <input
               inputMode="tel"
@@ -864,8 +855,14 @@ function NidOtpGate({
             />
           </Field>
 
-          {sent && (
-            <div className="mt-6 rounded-xl border border-border bg-background p-5">
+          {!sent ? (
+            <div className="mt-3">
+              <Button onClick={sendOtp} disabled={sending || !mobileValid} size="sm">
+                {sending ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending</>) : (<>Send code <ArrowRight className="ml-2 h-4 w-4" /></>)}
+              </Button>
+            </div>
+          ) : (
+            <div className="mt-4 rounded-xl border border-border bg-background p-5">
               <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-primary">
                 <KeyRound className="h-4 w-4" /> Enter the 6-digit code sent to {mobile}
               </div>
@@ -886,25 +883,19 @@ function NidOtpGate({
               </button>
             </div>
           )}
-
-          {error && (
-            <p className="mt-4 rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{error}</p>
-          )}
-
-          <div className="mt-8 flex items-center justify-between gap-3">
-            <button type="button" onClick={() => { setSent(false); setOtp(""); setPhase("ocr"); }} className="text-sm font-semibold text-muted-foreground hover:text-primary">← Back</button>
-            {!sent ? (
-              <Button onClick={sendOtp} disabled={sending || !mobileValid}>
-                {sending ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending</>) : (<>Send code <ArrowRight className="ml-2 h-4 w-4" /></>)}
-              </Button>
-            ) : (
-              <Button onClick={verify} disabled={verifying || otp.length !== 6}>
-                {verifying ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying</>) : (<>Verify & continue <ArrowRight className="ml-2 h-4 w-4" /></>)}
-              </Button>
-            )}
-          </div>
-        </>
+        </section>
       )}
+
+      {error && (
+        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{error}</p>
+      )}
+
+      <div className="flex items-center justify-between gap-3 pt-2">
+        <button type="button" onClick={onBack} className="text-sm font-semibold text-muted-foreground hover:text-primary">← Back</button>
+        <Button onClick={verify} disabled={!sent || verifying || otp.length !== 6}>
+          {verifying ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying</>) : (<>Verify & continue <ArrowRight className="ml-2 h-4 w-4" /></>)}
+        </Button>
+      </div>
     </div>
   );
 }
