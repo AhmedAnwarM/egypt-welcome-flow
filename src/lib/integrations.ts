@@ -156,6 +156,32 @@ export const LENDING_RATES: Record<LendingProduct, number> = {
   mortgage: 0.135,
 };
 
+// Product-specific tenor/amount policy bounds. Keep aligned with the wizard UI.
+export const PRODUCT_MIN_TENOR: Record<LendingProduct, number> = {
+  credit_card: 12,
+  personal_loan: 6,
+  auto_loan: 12,
+  mortgage: 60,
+};
+export const PRODUCT_MAX_TENOR: Record<LendingProduct, number> = {
+  credit_card: 12,
+  personal_loan: 60,
+  auto_loan: 84,
+  mortgage: 240,
+};
+export const PRODUCT_MIN_AMOUNT: Record<LendingProduct, number> = {
+  credit_card: 5_000,
+  personal_loan: 10_000,
+  auto_loan: 50_000,
+  mortgage: 200_000,
+};
+export const PRODUCT_MAX_AMOUNT: Record<LendingProduct, number> = {
+  credit_card: 500_000,
+  personal_loan: 2_000_000,
+  auto_loan: 3_000_000,
+  mortgage: 15_000_000,
+};
+
 // Simple monthly installment using flat amortization (M = P * r / (1 - (1+r)^-n)).
 export function estimateInstallment(product: LendingProduct, amount: number, tenorMonths: number) {
   if (!amount || !tenorMonths) return 0;
@@ -217,29 +243,32 @@ export const lending = {
   decide(input: {
     screening: LendingScreening;
     dbr: number;
-  }): { decision: LendingDecision; reason: string } {
+  }): { decision: LendingDecision; reasonKey: string } {
     const { screening, dbr } = input;
     if (screening.amlHit || screening.sanctions || screening.fraud) {
-      return { decision: "outright_reject", reason: "Compliance / fraud screening hit." };
+      return { decision: "outright_reject", reasonKey: "lending.reason.compliance" };
     }
     if (screening.iScore < 580) {
-      return { decision: "outright_reject", reason: "Credit bureau score below minimum." };
+      return { decision: "outright_reject", reasonKey: "lending.reason.scoreLow" };
     }
     if (screening.iScore < 650) {
-      return { decision: "refer_credit_risk", reason: "Credit bureau score requires manual review." };
+      return { decision: "refer_credit_risk", reasonKey: "lending.reason.scoreReview" };
     }
     if (dbr <= 0.5 && screening.iScore >= 680) {
-      return { decision: "instant_pre_approval", reason: "Strong score and affordability within policy." };
+      return { decision: "instant_pre_approval", reasonKey: "lending.reason.strong" };
     }
     if (dbr > 0.5 && screening.iScore >= 650) {
-      return { decision: "conditional_approval", reason: "Affordability exceeds 50% DBR — alternatives proposed." };
+      return { decision: "conditional_approval", reasonKey: "lending.reason.dbrHigh" };
     }
-    return { decision: "refer_credit_risk", reason: "Borderline profile — manual underwriting required." };
+    return { decision: "refer_credit_risk", reasonKey: "lending.reason.borderline" };
   },
 
   /**
-   * Build 2-3 alternative offers that bring DBR within policy by lowering
-   * the requested amount, stretching the tenor, or both.
+   * Build policy-compliant alternative offers that bring DBR within the
+   * maxDbr threshold by lowering the requested amount, stretching the tenor,
+   * or both. Any alternative whose DBR still exceeds the threshold — or whose
+   * amount falls below the product minimum — is dropped. Returns an empty
+   * array when no compliant option exists.
    */
   generateAlternatives(input: {
     product: LendingProduct;
@@ -251,45 +280,77 @@ export const lending = {
   }) {
     const maxDbr = input.maxDbr ?? 0.5;
     const headroom = Math.max(0, maxDbr * input.netIncome - input.existingObligations);
+    if (headroom <= 0) return [];
+
     const isCard = input.product === "credit_card";
+    const minAmount = PRODUCT_MIN_AMOUNT[input.product];
+    const productMaxTenor = PRODUCT_MAX_TENOR[input.product];
+    // Longer tenor never reduces the current tenor.
+    const longerTenor = isCard
+      ? input.tenorMonths
+      : Math.min(productMaxTenor, input.tenorMonths + 24);
+    const hasLongerTenor = !isCard && longerTenor > input.tenorMonths;
 
-    const longerTenor = isCard ? input.tenorMonths : Math.min(input.tenorMonths + 24, 84);
-    const longerTenorAlt = {
-      label: "Longer tenor",
-      amount: input.amount,
-      tenorMonths: longerTenor,
-    };
+    const candidates: { labelKey: string; amount: number; tenorMonths: number }[] = [];
 
-    // Lower amount so the installment fits the DBR headroom.
-    let lowerAmount = input.amount;
-    if (headroom > 0) {
-      if (isCard) {
-        lowerAmount = Math.max(5000, Math.floor((headroom / 0.05) / 1000) * 1000);
-      } else {
-        const r = LENDING_RATES[input.product] / 12;
-        const factor = (1 - Math.pow(1 + r, -input.tenorMonths)) / r;
-        lowerAmount = Math.max(5000, Math.floor((headroom * factor) / 1000) * 1000);
-      }
-    } else {
-      lowerAmount = Math.max(5000, Math.floor(input.amount * 0.6 / 1000) * 1000);
+    // 1. Longer tenor at the originally requested amount.
+    if (hasLongerTenor) {
+      candidates.push({
+        labelKey: "lending.alt.longerTenor",
+        amount: input.amount,
+        tenorMonths: longerTenor,
+      });
     }
-    const lowerAmountAlt = { label: "Lower amount", amount: lowerAmount, tenorMonths: input.tenorMonths };
 
-    const combinedAlt = {
-      label: "Lower amount + longer tenor",
-      amount: Math.max(5000, Math.floor(((lowerAmount + input.amount) / 2) / 1000) * 1000),
-      tenorMonths: longerTenor,
-    };
+    // 2. Lower amount at the original tenor.
+    let lowerAmount: number;
+    if (isCard) {
+      lowerAmount = Math.floor(headroom / 0.05 / 1000) * 1000;
+    } else {
+      const r = LENDING_RATES[input.product] / 12;
+      const factor = (1 - Math.pow(1 + r, -input.tenorMonths)) / r;
+      lowerAmount = Math.floor((headroom * factor) / 1000) * 1000;
+    }
+    if (lowerAmount >= minAmount && lowerAmount < input.amount) {
+      candidates.push({
+        labelKey: "lending.alt.lowerAmount",
+        amount: lowerAmount,
+        tenorMonths: input.tenorMonths,
+      });
+    }
 
-    const opts = [longerTenorAlt, lowerAmountAlt, combinedAlt];
-    return opts.map((o) => {
-      const installment = estimateInstallment(input.product, o.amount, o.tenorMonths);
-      return {
-        ...o,
-        installment,
-        dbr: dbrRatio(input.existingObligations, installment, input.netIncome),
-      };
-    });
+    // 3. Combined: longer tenor + the highest amount that still fits headroom at that tenor.
+    if (hasLongerTenor) {
+      const r = LENDING_RATES[input.product] / 12;
+      const factor = (1 - Math.pow(1 + r, -longerTenor)) / r;
+      const amt = Math.min(input.amount, Math.floor((headroom * factor) / 1000) * 1000);
+      if (amt >= minAmount) {
+        candidates.push({
+          labelKey: "lending.alt.combined",
+          amount: amt,
+          tenorMonths: longerTenor,
+        });
+      }
+    }
+
+    const seen = new Set<string>();
+    return candidates
+      .map((o) => {
+        const installment = estimateInstallment(input.product, o.amount, o.tenorMonths);
+        return {
+          ...o,
+          installment,
+          dbr: dbrRatio(input.existingObligations, installment, input.netIncome),
+        };
+      })
+      // Hard policy gate: only compliant alternatives are shown.
+      .filter((o) => o.dbr <= maxDbr && o.amount >= minAmount)
+      .filter((o) => {
+        const k = `${o.amount}-${o.tenorMonths}`;
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
   },
 
   // Mocked ETB (existing-to-bank) prefilled customer record.

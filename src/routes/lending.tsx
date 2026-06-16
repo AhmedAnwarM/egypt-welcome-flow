@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CreditCard,
   Wallet,
@@ -17,6 +17,7 @@ import {
   Loader2,
   FileText,
   PenLine,
+  Save,
 } from "lucide-react";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
@@ -36,6 +37,10 @@ import {
   lending,
   estimateInstallment,
   dbrRatio,
+  PRODUCT_MIN_AMOUNT,
+  PRODUCT_MAX_AMOUNT,
+  PRODUCT_MIN_TENOR,
+  PRODUCT_MAX_TENOR,
   type LendingProduct,
   type LendingChannel,
   type LendingCustomerType,
@@ -55,25 +60,21 @@ export const Route = createFileRoute("/lending")({
   component: LendingPage,
 });
 
+const LENDING_STORAGE_KEY = "sumerge.lending.app";
+
 type DocKey = "salary_slip" | "hr_letter" | "bank_statement" | "id_doc" | "collateral";
-const DOC_LABELS: Record<DocKey, string> = {
-  salary_slip: "Latest salary slip",
-  hr_letter: "HR / employer letter",
-  bank_statement: "Bank statement (3 months)",
-  id_doc: "National ID / Passport",
-  collateral: "Collateral / asset document",
-};
+const DOC_KEYS: DocKey[] = ["salary_slip", "hr_letter", "bank_statement", "id_doc", "collateral"];
 
 type Alt = ReturnType<typeof lending.generateAlternatives>[number];
 
 const PRODUCT_META: Record<
   LendingProduct,
-  { icon: typeof CreditCard; defaultAmount: number; defaultTenor: number; minTenor: number; maxTenor: number; minAmount: number; maxAmount: number }
+  { icon: typeof CreditCard; defaultAmount: number; defaultTenor: number }
 > = {
-  credit_card: { icon: CreditCard, defaultAmount: 50000, defaultTenor: 12, minTenor: 12, maxTenor: 12, minAmount: 5000, maxAmount: 500000 },
-  personal_loan: { icon: Wallet, defaultAmount: 100000, defaultTenor: 36, minTenor: 6, maxTenor: 60, minAmount: 10000, maxAmount: 2000000 },
-  auto_loan: { icon: Car, defaultAmount: 400000, defaultTenor: 48, minTenor: 12, maxTenor: 84, minAmount: 50000, maxAmount: 3000000 },
-  mortgage: { icon: Home, defaultAmount: 1500000, defaultTenor: 120, minTenor: 60, maxTenor: 240, minAmount: 200000, maxAmount: 15000000 },
+  credit_card: { icon: CreditCard, defaultAmount: 50_000, defaultTenor: 12 },
+  personal_loan: { icon: Wallet, defaultAmount: 100_000, defaultTenor: 36 },
+  auto_loan: { icon: Car, defaultAmount: 400_000, defaultTenor: 48 },
+  mortgage: { icon: Home, defaultAmount: 1_500_000, defaultTenor: 120 },
 };
 
 const CHANNELS: { id: LendingChannel; icon: typeof Smartphone; key: string }[] = [
@@ -97,6 +98,30 @@ function fmtEGP(n: number) {
 function pct(n: number) {
   return `${(n * 100).toFixed(1)}%`;
 }
+function interpolate(s: string, vars: Record<string, string | number>) {
+  return s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ""));
+}
+
+type SavedDraft = {
+  ref: string;
+  step: number;
+  product: LendingProduct;
+  channel: LendingChannel;
+  customerType: LendingCustomerType;
+  fullName: string;
+  nationalId: string;
+  mobile: string;
+  email: string;
+  identityVerified: boolean;
+  employer: string;
+  employmentType: string;
+  sector: string;
+  netIncome: number;
+  obligations: number;
+  amount: number;
+  tenor: number;
+  docs: Record<DocKey, string | null>;
+};
 
 function LendingPage() {
   const t = useT();
@@ -110,6 +135,10 @@ function LendingPage() {
   const [customerType, setCustomerType] = useState<LendingCustomerType>("ntb");
 
   const meta = PRODUCT_META[product];
+  const minAmount = PRODUCT_MIN_AMOUNT[product];
+  const maxAmount = PRODUCT_MAX_AMOUNT[product];
+  const minTenor = PRODUCT_MIN_TENOR[product];
+  const maxTenor = PRODUCT_MAX_TENOR[product];
 
   const [fullName, setFullName] = useState("");
   const [nationalId, setNationalId] = useState("");
@@ -136,13 +165,77 @@ function LendingPage() {
 
   const [deciding, setDeciding] = useState(false);
   const [screening, setScreening] = useState<LendingScreening | null>(null);
-  const [decision, setDecision] = useState<{ decision: LendingDecision; reason: string } | null>(null);
+  const [decision, setDecision] = useState<{ decision: LendingDecision; reasonKey: string } | null>(null);
   const [alternatives, setAlternatives] = useState<Alt[]>([]);
   const [chosenAlt, setChosenAlt] = useState<Alt | null>(null);
 
   const [otp, setOtp] = useState("");
   const [signature, setSignature] = useState("");
   const [submitted, setSubmitted] = useState<{ ref: string; decision: LendingDecision } | null>(null);
+
+  // Stable lending reference, generated at the start of the journey.
+  const [lendingRef, setLendingRef] = useState<string>("");
+  const [resumed, setResumed] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+  const initialized = useRef(false);
+
+  // ---------- save / resume ----------
+  useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const resumeRef = params.get("resume");
+    try {
+      const raw = localStorage.getItem(LENDING_STORAGE_KEY);
+      if (raw && resumeRef) {
+        const d = JSON.parse(raw) as SavedDraft;
+        if (d.ref === resumeRef) {
+          setStep(d.step ?? 0);
+          setProduct(d.product);
+          setChannel(d.channel);
+          setCustomerType(d.customerType);
+          setFullName(d.fullName);
+          setNationalId(d.nationalId);
+          setMobile(d.mobile);
+          setEmail(d.email);
+          setIdentityVerified(!!d.identityVerified);
+          setEmployer(d.employer);
+          setEmploymentType(d.employmentType);
+          setSector(d.sector);
+          setNetIncome(d.netIncome);
+          setObligations(d.obligations);
+          setAmount(d.amount);
+          setTenor(d.tenor);
+          setDocs(d.docs);
+          setLendingRef(d.ref);
+          setResumed(true);
+          return;
+        }
+      }
+    } catch {
+      /* ignore corrupt draft */
+    }
+    setLendingRef(lending.generateLendingRef());
+  }, []);
+
+  function saveDraft() {
+    if (typeof window === "undefined" || !lendingRef) return;
+    const draft: SavedDraft = {
+      ref: lendingRef, step, product, channel, customerType,
+      fullName, nationalId, mobile, email, identityVerified,
+      employer, employmentType, sector, netIncome, obligations,
+      amount, tenor, docs,
+    };
+    try {
+      localStorage.setItem(LENDING_STORAGE_KEY, JSON.stringify(draft));
+      setSavedFlash(true);
+      window.setTimeout(() => setSavedFlash(false), 2400);
+    } catch {
+      /* quota — ignore */
+    }
+  }
 
   // ---------- derived ----------
   const effectiveAmount = chosenAlt?.amount ?? amount;
@@ -155,6 +248,9 @@ function LendingPage() {
     () => dbrRatio(obligations, installment, netIncome),
     [obligations, installment, netIncome],
   );
+
+  const amountInRange = amount >= minAmount && amount <= maxAmount;
+  const tenorInRange = product === "credit_card" ? true : (tenor >= minTenor && tenor <= maxTenor);
 
   // ---------- handlers ----------
   function onPickProduct(p: LendingProduct) {
@@ -216,7 +312,7 @@ function LendingPage() {
   }
 
   function submit() {
-    const ref = lending.generateLendingRef();
+    const ref = lendingRef || lending.generateLendingRef();
     auditLog("lending.submit", {
       ref,
       product,
@@ -224,6 +320,8 @@ function LendingPage() {
       tenor: effectiveTenor,
       decision: decision?.decision,
     });
+    // Clear the draft once the application is submitted.
+    try { if (typeof window !== "undefined") localStorage.removeItem(LENDING_STORAGE_KEY); } catch { /* ignore */ }
     setSubmitted({ ref, decision: decision!.decision });
   }
 
@@ -233,16 +331,21 @@ function LendingPage() {
       case 0:
         return !!product && !!channel && !!customerType;
       case 1:
-        return identityVerified && fullName && nationalId.length >= 10 && mobile.length >= 7 && /.+@.+\..+/.test(email);
+        return identityVerified && !!fullName && nationalId.length >= 10 && mobile.length >= 7 && /.+@.+\..+/.test(email);
       case 2:
-        return employer && netIncome > 0 && amount >= meta.minAmount && tenor >= meta.minTenor;
+        return !!employer && netIncome > 0 && amountInRange && tenorInRange;
       case 3:
         return !!docs.salary_slip && !!docs.id_doc && !!docs.bank_statement;
-      case 4:
+      case 4: {
         if (!decision) return false;
         if (decision.decision === "outright_reject") return false;
-        if (decision.decision === "conditional_approval") return !!chosenAlt;
+        if (decision.decision === "refer_credit_risk") return false;
+        if (decision.decision === "conditional_approval") {
+          // Must pick a compliant alternative; if none exist, cannot continue.
+          return alternatives.length > 0 && !!chosenAlt;
+        }
         return true;
+      }
       case 5:
         return otp.length === 6 && signature.trim().length > 2;
       default:
@@ -251,7 +354,7 @@ function LendingPage() {
   })();
 
   function next() {
-    if (step === 0) auditLog("lending.start", { product, channel, customerType });
+    if (step === 0) auditLog("lending.start", { product, channel, customerType, ref: lendingRef });
     setStep((s) => Math.min(s + 1, STEP_KEYS.length - 1));
   }
   function back() {
@@ -271,22 +374,22 @@ function LendingPage() {
             <h1 className="text-2xl font-bold tracking-tight mb-2">{t("lending.success.title")}</h1>
             <p className="text-muted-foreground mb-6">{t("lending.success.body")}</p>
             <div className="rounded-2xl border border-border bg-background/60 p-5 text-left space-y-2 mb-6">
-              <div className="flex justify-between"><span className="text-muted-foreground text-sm">Reference</span><span className="font-mono font-semibold">{submitted.ref}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground text-sm">Product</span><span className="font-medium">{t(`lending.product.${product}`)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground text-sm">Amount</span><span className="font-medium">{fmtEGP(effectiveAmount)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground text-sm">{t("lending.success.reference")}</span><span className="font-mono font-semibold">{submitted.ref}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground text-sm">{t("lending.review.product")}</span><span className="font-medium">{t(`lending.product.${product}`)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground text-sm">{product === "credit_card" ? t("lending.review.limit") : t("lending.review.amount")}</span><span className="font-medium">{fmtEGP(effectiveAmount)}</span></div>
               {product !== "credit_card" && (
-                <div className="flex justify-between"><span className="text-muted-foreground text-sm">Tenor</span><span className="font-medium">{effectiveTenor} months</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground text-sm">{t("lending.review.tenor")}</span><span className="font-medium">{effectiveTenor} {t("lending.review.months")}</span></div>
               )}
-              <div className="flex justify-between"><span className="text-muted-foreground text-sm">Monthly installment</span><span className="font-medium">{fmtEGP(installment)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground text-sm">Decision</span><span className="font-semibold text-primary">{t(`lending.decision.${submitted.decision}`)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground text-sm">{t("lending.review.installment")}</span><span className="font-medium">{fmtEGP(installment)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground text-sm">{t("lending.review.decision")}</span><span className="font-semibold text-primary">{t(`lending.decision.${submitted.decision}`)}</span></div>
             </div>
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left">Status timeline</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-left">{t("lending.success.timelineTitle")}</p>
               {[
-                { label: "Application received", done: true },
-                { label: "Compliance & risk screening", done: true },
-                { label: "Credit decision recorded", done: true },
-                { label: "Disbursement / card issuance", done: false },
+                { label: t("lending.success.stage.received"), done: true },
+                { label: t("lending.success.stage.screening"), done: true },
+                { label: t("lending.success.stage.recorded"), done: true },
+                { label: t("lending.success.stage.disbursement"), done: false },
               ].map((s) => (
                 <div key={s.label} className="flex items-center gap-3 text-sm">
                   <span className={`h-2.5 w-2.5 rounded-full ${s.done ? "bg-primary" : "bg-muted-foreground/30"}`} />
@@ -295,8 +398,8 @@ function LendingPage() {
               ))}
             </div>
             <div className="mt-8 flex gap-3 justify-center">
-              <Button variant="outline" onClick={() => navigate({ to: "/" })}>Back to home</Button>
-              <Button onClick={() => navigate({ to: "/tracking" })}>Track application</Button>
+              <Button variant="outline" onClick={() => navigate({ to: "/" })}>{t("lending.success.backHome")}</Button>
+              <Button onClick={() => navigate({ to: "/tracking" })}>{t("lending.success.track")}</Button>
             </div>
           </div>
         </main>
@@ -314,7 +417,21 @@ function LendingPage() {
           <div className="mb-6">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary mb-2">{t("lending.title")}</p>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t("lending.subtitle")}</h1>
+            {lendingRef && (
+              <p className="mt-2 text-xs text-muted-foreground font-mono">{t("lending.success.reference")}: {lendingRef}</p>
+            )}
           </div>
+
+          {resumed && (
+            <div className="mb-4 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4" /> {t("lending.welcomeBack")}
+            </div>
+          )}
+          {savedFlash && (
+            <div className="mb-4 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary flex items-center gap-2">
+              <Save className="h-4 w-4" /> {t("lending.saved")}
+            </div>
+          )}
 
           {/* Stepper */}
           <ol className="mb-8 flex items-center gap-2 overflow-x-auto pb-2">
@@ -338,7 +455,7 @@ function LendingPage() {
             {step === 0 && (
               <div className="space-y-8">
                 <section>
-                  <h2 className="text-base font-semibold mb-3">Choose a product</h2>
+                  <h2 className="text-base font-semibold mb-3">{t("lending.section.product")}</h2>
                   <div className="grid grid-cols-2 gap-3">
                     {(Object.keys(PRODUCT_META) as LendingProduct[]).map((p) => {
                       const Icon = PRODUCT_META[p].icon;
@@ -359,7 +476,7 @@ function LendingPage() {
                 </section>
 
                 <section>
-                  <h2 className="text-base font-semibold mb-3">Application channel</h2>
+                  <h2 className="text-base font-semibold mb-3">{t("lending.section.channel")}</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {CHANNELS.map((c) => {
                       const Icon = c.icon;
@@ -380,7 +497,7 @@ function LendingPage() {
                 </section>
 
                 <section>
-                  <h2 className="text-base font-semibold mb-3">Customer type</h2>
+                  <h2 className="text-base font-semibold mb-3">{t("lending.section.customer")}</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {(["etb", "ntb"] as LendingCustomerType[]).map((c) => {
                       const active = customerType === c;
@@ -393,7 +510,7 @@ function LendingPage() {
                         >
                           <p className="font-semibold text-sm">{t(`lending.customer.${c}`)}</p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {c === "etb" ? "We'll prefill your details from Core Banking." : "We'll verify your identity via Haweya."}
+                            {t(c === "etb" ? "lending.customer.etbHint" : "lending.customer.ntbHint")}
                           </p>
                         </button>
                       );
@@ -411,9 +528,9 @@ function LendingPage() {
                     <ShieldCheck className="h-5 w-5 text-primary mt-0.5" />
                     <div className="flex-1">
                       <p className="font-semibold text-sm">
-                        {customerType === "etb" ? "Fetch your profile from Core Banking" : "Verify your identity via Haweya"}
+                        {t(customerType === "etb" ? "lending.identity.etbTitle" : "lending.identity.ntbTitle")}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">No real data leaves this device.</p>
+                      <p className="text-xs text-muted-foreground mt-1">{t("lending.identity.privacy")}</p>
                       <Button
                         size="sm"
                         className="mt-3"
@@ -421,22 +538,22 @@ function LendingPage() {
                         onClick={customerType === "etb" ? loadEtb : verifyNtb}
                       >
                         {verifying && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-                        {customerType === "etb" ? "Load my details" : "Verify identity"}
+                        {t(customerType === "etb" ? "lending.identity.load" : "lending.identity.verify")}
                       </Button>
                     </div>
                   </div>
                 ) : (
                   <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 flex items-center gap-3 text-sm">
                     <CheckCircle2 className="h-5 w-5 text-primary" />
-                    Identity verified.
+                    {t("lending.identity.verified")}
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Full name"><Input value={fullName} onChange={(e) => setFullName(e.target.value)} /></Field>
-                  <Field label="National ID"><Input value={nationalId} onChange={(e) => setNationalId(e.target.value)} inputMode="numeric" maxLength={14} /></Field>
-                  <Field label="Mobile"><Input value={mobile} onChange={(e) => setMobile(e.target.value)} inputMode="tel" /></Field>
-                  <Field label="Email"><Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" /></Field>
+                  <Field label={t("lending.field.fullName")}><Input value={fullName} onChange={(e) => setFullName(e.target.value)} /></Field>
+                  <Field label={t("lending.field.nationalId")}><Input value={nationalId} onChange={(e) => setNationalId(e.target.value)} inputMode="numeric" maxLength={14} /></Field>
+                  <Field label={t("lending.field.mobile")}><Input value={mobile} onChange={(e) => setMobile(e.target.value)} inputMode="tel" /></Field>
+                  <Field label={t("lending.field.email")}><Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" /></Field>
                 </div>
               </div>
             )}
@@ -445,32 +562,48 @@ function LendingPage() {
             {step === 2 && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Employer"><Input value={employer} onChange={(e) => setEmployer(e.target.value)} /></Field>
-                  <Field label="Employment type">
+                  <Field label={t("lending.field.employer")}><Input value={employer} onChange={(e) => setEmployer(e.target.value)} /></Field>
+                  <Field label={t("lending.field.employmentType")}>
                     <Select value={employmentType} onValueChange={setEmploymentType}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="permanent">Permanent</SelectItem>
-                        <SelectItem value="contract">Contract</SelectItem>
-                        <SelectItem value="self_employed">Self-employed</SelectItem>
-                        <SelectItem value="government">Government</SelectItem>
+                        <SelectItem value="permanent">{t("lending.empType.permanent")}</SelectItem>
+                        <SelectItem value="contract">{t("lending.empType.contract")}</SelectItem>
+                        <SelectItem value="self_employed">{t("lending.empType.self_employed")}</SelectItem>
+                        <SelectItem value="government">{t("lending.empType.government")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
-                  <Field label="Sector"><Input value={sector} onChange={(e) => setSector(e.target.value)} placeholder="e.g. Technology" /></Field>
-                  <Field label="Net monthly income (EGP)"><Input value={netIncome || ""} onChange={(e) => setNetIncome(Number(e.target.value) || 0)} inputMode="numeric" /></Field>
-                  <Field label="Existing monthly obligations (EGP)"><Input value={obligations || ""} onChange={(e) => setObligations(Number(e.target.value) || 0)} inputMode="numeric" /></Field>
-                  <Field label={product === "credit_card" ? "Requested limit (EGP)" : "Requested amount (EGP)"}>
-                    <Input value={amount || ""} onChange={(e) => { setAmount(Number(e.target.value) || 0); setChosenAlt(null); }} inputMode="numeric" />
+                  <Field label={t("lending.field.sector")}><Input value={sector} onChange={(e) => setSector(e.target.value)} placeholder={t("lending.field.sectorPlaceholder")} /></Field>
+                  <Field label={t("lending.field.netIncome")}><Input value={netIncome || ""} onChange={(e) => setNetIncome(Number(e.target.value) || 0)} inputMode="numeric" /></Field>
+                  <Field label={t("lending.field.obligations")}><Input value={obligations || ""} onChange={(e) => setObligations(Number(e.target.value) || 0)} inputMode="numeric" /></Field>
+                  <Field
+                    label={t(product === "credit_card" ? "lending.field.requestedLimit" : "lending.field.requestedAmount")}
+                    error={amount > 0 && !amountInRange
+                      ? interpolate(t("lending.validation.amountRange"), { min: fmtEGP(minAmount), max: fmtEGP(maxAmount) })
+                      : undefined}
+                  >
+                    <Input
+                      value={amount || ""}
+                      onChange={(e) => { setAmount(Number(e.target.value) || 0); setChosenAlt(null); }}
+                      inputMode="numeric"
+                      aria-invalid={amount > 0 && !amountInRange}
+                    />
                   </Field>
                   {product !== "credit_card" && (
-                    <Field label="Tenor (months)">
+                    <Field
+                      label={t("lending.field.tenor")}
+                      error={tenor > 0 && !tenorInRange
+                        ? interpolate(t("lending.validation.tenorRange"), { min: minTenor, max: maxTenor })
+                        : undefined}
+                    >
                       <Input
                         type="number"
-                        min={meta.minTenor}
-                        max={meta.maxTenor}
+                        min={minTenor}
+                        max={maxTenor}
                         value={tenor || ""}
                         onChange={(e) => { setTenor(Number(e.target.value) || 0); setChosenAlt(null); }}
+                        aria-invalid={tenor > 0 && !tenorInRange}
                       />
                     </Field>
                   )}
@@ -478,11 +611,11 @@ function LendingPage() {
 
                 <div className="rounded-2xl border border-border bg-background/60 p-4 grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground text-xs uppercase tracking-wider">Monthly installment</p>
+                    <p className="text-muted-foreground text-xs uppercase tracking-wider">{t("lending.metric.installment")}</p>
                     <p className="text-lg font-bold">{fmtEGP(installment)}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground text-xs uppercase tracking-wider">Debt burden ratio</p>
+                    <p className="text-muted-foreground text-xs uppercase tracking-wider">{t("lending.metric.dbr")}</p>
                     <p className={`text-lg font-bold ${dbr > 0.5 ? "text-destructive" : "text-primary"}`}>{netIncome ? pct(dbr) : "—"}</p>
                   </div>
                 </div>
@@ -492,13 +625,17 @@ function LendingPage() {
             {/* STEP 3 — documents */}
             {step === 3 && (
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">Upload the required documents. Files stay on this device.</p>
-                {(Object.keys(DOC_LABELS) as DocKey[])
+                <p className="text-sm text-muted-foreground">{t("lending.docs.intro")}</p>
+                {DOC_KEYS
                   .filter((k) => k !== "collateral" || product === "auto_loan" || product === "mortgage")
                   .map((k) => (
                     <DocRow
                       key={k}
-                      label={DOC_LABELS[k]}
+                      label={t(`lending.doc.${k}`)}
+                      optionalLabel={t("lending.doc.optional")}
+                      hint={t("lending.doc.fileHint")}
+                      uploadLabel={t("lending.doc.upload")}
+                      replaceLabel={t("lending.doc.replace")}
                       optional={k === "collateral"}
                       value={docs[k]}
                       onPick={(name) => setDocs((d) => ({ ...d, [k]: name }))}
@@ -512,56 +649,61 @@ function LendingPage() {
               <div className="space-y-6">
                 {!decision && (
                   <div className="rounded-2xl border border-dashed border-border p-6 text-center">
-                    <p className="text-sm text-muted-foreground mb-4">
-                      We'll run AML/PEP, fraud, I-Score and affordability checks now.
-                    </p>
+                    <p className="text-sm text-muted-foreground mb-4">{t("lending.decision.runIntro")}</p>
                     <Button onClick={runDecision} disabled={deciding}>
                       {deciding && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-                      Run automated decisioning
+                      {t("lending.decision.runButton")}
                     </Button>
                   </div>
                 )}
 
                 {decision && screening && (
                   <>
-                    <DecisionBanner decision={decision.decision} reason={decision.reason} t={t} />
+                    <DecisionBanner decision={decision.decision} reason={t(decision.reasonKey)} t={t} />
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                      <Stat label="I-Score" value={String(screening.iScore)} />
-                      <Stat label="DBR" value={pct(dbr)} bad={dbr > 0.5} />
-                      <Stat label="AML / Sanctions" value={screening.amlHit || screening.sanctions ? "Hit" : "Clear"} bad={screening.amlHit || screening.sanctions} />
-                      <Stat label="Fraud" value={screening.fraud ? "Hit" : "Clear"} bad={screening.fraud} />
+                      <Stat label={t("lending.stat.iscore")} value={String(screening.iScore)} />
+                      <Stat label={t("lending.stat.dbr")} value={pct(dbr)} bad={dbr > 0.5} />
+                      <Stat label={t("lending.stat.aml")} value={screening.amlHit || screening.sanctions ? t("lending.stat.hit") : t("lending.stat.clear")} bad={screening.amlHit || screening.sanctions} />
+                      <Stat label={t("lending.stat.fraud")} value={screening.fraud ? t("lending.stat.hit") : t("lending.stat.clear")} bad={screening.fraud} />
                     </div>
 
-                    {alternatives.length > 0 && (
-                      <div className="space-y-3">
-                        <p className="text-sm font-semibold">Choose an alternative that fits within policy:</p>
-                        {alternatives.map((alt, i) => {
-                          const active = chosenAlt === alt;
-                          return (
-                            <button
-                              key={i}
-                              type="button"
-                              onClick={() => {
-                                setChosenAlt(alt);
-                                auditLog("lending.alternativeSelected", { label: alt.label, amount: alt.amount, tenor: alt.tenorMonths });
-                              }}
-                              className={`w-full rounded-2xl border p-4 text-left transition-colors ${active ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border hover:border-primary/40"}`}
-                            >
-                              <p className="font-semibold text-sm">{alt.label}</p>
-                              <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-muted-foreground">
-                                <span>Amount: <strong className="text-foreground">{fmtEGP(alt.amount)}</strong></span>
-                                {product !== "credit_card" && <span>Tenor: <strong className="text-foreground">{alt.tenorMonths}m</strong></span>}
-                                <span>Installment: <strong className="text-foreground">{fmtEGP(alt.installment)}</strong></span>
-                                <span>DBR: <strong className={alt.dbr > 0.5 ? "text-destructive" : "text-foreground"}>{pct(alt.dbr)}</strong></span>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
+                    {decision.decision === "conditional_approval" && (
+                      alternatives.length > 0 ? (
+                        <div className="space-y-3">
+                          <p className="text-sm font-semibold">{t("lending.alt.intro")}</p>
+                          {alternatives.map((alt, i) => {
+                            const active = chosenAlt === alt;
+                            return (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => {
+                                  setChosenAlt(alt);
+                                  auditLog("lending.alternativeSelected", { labelKey: alt.labelKey, amount: alt.amount, tenor: alt.tenorMonths });
+                                }}
+                                className={`w-full rounded-2xl border p-4 text-left transition-colors ${active ? "border-primary ring-2 ring-primary/20 bg-primary/5" : "border-border hover:border-primary/40"}`}
+                              >
+                                <p className="font-semibold text-sm">{t(alt.labelKey)}</p>
+                                <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-muted-foreground">
+                                  <span>{t("lending.alt.amount")}: <strong className="text-foreground">{fmtEGP(alt.amount)}</strong></span>
+                                  {product !== "credit_card" && <span>{t("lending.alt.tenor")}: <strong className="text-foreground">{alt.tenorMonths}{t("lending.alt.months")}</strong></span>}
+                                  <span>{t("lending.alt.installment")}: <strong className="text-foreground">{fmtEGP(alt.installment)}</strong></span>
+                                  <span>{t("lending.alt.dbr")}: <strong className="text-foreground">{pct(alt.dbr)}</strong></span>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm text-amber-700 dark:text-amber-400 flex items-start gap-3">
+                          <AlertTriangle className="h-5 w-5 mt-0.5" />
+                          <p>{t("lending.alt.none")}</p>
+                        </div>
+                      )
                     )}
 
                     {decision.decision === "outright_reject" && (
-                      <p className="text-sm text-muted-foreground">You can return to the home page or apply for a different product later.</p>
+                      <p className="text-sm text-muted-foreground">{t("lending.reject.body")}</p>
                     )}
                   </>
                 )}
@@ -572,47 +714,52 @@ function LendingPage() {
             {step === 5 && decision && (
               <div className="space-y-6">
                 <div className="rounded-2xl border border-border bg-background/60 p-5 space-y-2 text-sm">
-                  <Row k="Product" v={t(`lending.product.${product}`)} />
-                  <Row k={product === "credit_card" ? "Limit" : "Amount"} v={fmtEGP(effectiveAmount)} />
-                  {product !== "credit_card" && <Row k="Tenor" v={`${effectiveTenor} months`} />}
-                  <Row k="Monthly installment" v={fmtEGP(installment)} />
-                  <Row k="DBR" v={pct(dbr)} />
-                  <Row k="Decision" v={t(`lending.decision.${decision.decision}`)} />
+                  <Row k={t("lending.review.product")} v={t(`lending.product.${product}`)} />
+                  <Row k={t(product === "credit_card" ? "lending.review.limit" : "lending.review.amount")} v={fmtEGP(effectiveAmount)} />
+                  {product !== "credit_card" && <Row k={t("lending.review.tenor")} v={`${effectiveTenor} ${t("lending.review.months")}`} />}
+                  <Row k={t("lending.review.installment")} v={fmtEGP(installment)} />
+                  <Row k={t("lending.review.dbr")} v={pct(dbr)} />
+                  <Row k={t("lending.review.decision")} v={t(`lending.decision.${decision.decision}`)} />
                 </div>
 
                 <div className="rounded-2xl border border-border p-5 space-y-4">
                   <div className="flex items-center gap-2 text-sm font-semibold">
-                    <PenLine className="h-4 w-4 text-primary" /> Digital acceptance
+                    <PenLine className="h-4 w-4 text-primary" /> {t("lending.review.signTitle")}
                   </div>
-                  <Field label="6-digit OTP">
+                  <Field label={t("lending.review.otp")}>
                     <Input value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" maxLength={6} placeholder="••••••" />
                   </Field>
-                  <Field label="Type your full name to sign">
-                    <Input value={signature} onChange={(e) => setSignature(e.target.value)} placeholder={fullName || "Your full name"} />
+                  <Field label={t("lending.review.signName")}>
+                    <Input value={signature} onChange={(e) => setSignature(e.target.value)} placeholder={fullName || t("lending.review.signPlaceholder")} />
                   </Field>
                 </div>
               </div>
             )}
 
             {/* Footer nav */}
-            <div className="mt-8 flex items-center justify-between gap-3">
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
               <Button type="button" variant="outline" onClick={back} disabled={step === 0}>
-                <ArrowLeft className="h-4 w-4 mr-1" /> Back
+                <ArrowLeft className="h-4 w-4 mr-1" /> {t("lending.nav.back")}
               </Button>
-              {step < 5 ? (
-                <Button type="button" onClick={next} disabled={!canContinue}>
-                  Continue <ArrowRight className="h-4 w-4 ml-1" />
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="ghost" onClick={saveDraft}>
+                  <Save className="h-4 w-4 mr-1" /> {t("lending.nav.save")}
                 </Button>
-              ) : (
-                <Button type="button" onClick={submit} disabled={!canContinue}>
-                  Submit application <ArrowRight className="h-4 w-4 ml-1" />
-                </Button>
-              )}
+                {step < 5 ? (
+                  <Button type="button" onClick={next} disabled={!canContinue}>
+                    {t("lending.nav.continue")} <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>
+                ) : (
+                  <Button type="button" onClick={submit} disabled={!canContinue}>
+                    {t("lending.nav.submit")} <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            <Link to="/" className="hover:underline">Cancel and return home</Link>
+            <Link to="/" className="hover:underline">{t("lending.nav.cancel")}</Link>
           </p>
         </div>
       </main>
@@ -621,11 +768,12 @@ function LendingPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, error }: { label: string; children: React.ReactNode; error?: string }) {
   return (
     <div className="space-y-1.5">
       <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</Label>
       {children}
+      {error && <p className="text-xs font-medium text-destructive">{error}</p>}
     </div>
   );
 }
@@ -667,7 +815,7 @@ function DecisionBanner({ decision, reason, t }: { decision: LendingDecision; re
   );
 }
 
-function DocRow({ label, value, onPick, optional }: { label: string; value: string | null; onPick: (name: string) => void; optional?: boolean }) {
+function DocRow({ label, value, onPick, optional, optionalLabel, hint, uploadLabel, replaceLabel }: { label: string; value: string | null; onPick: (name: string) => void; optional?: boolean; optionalLabel: string; hint: string; uploadLabel: string; replaceLabel: string }) {
   return (
     <label className="flex items-center justify-between gap-4 rounded-2xl border border-border p-4 cursor-pointer hover:border-primary/40 transition-colors">
       <div className="flex items-center gap-3">
@@ -675,12 +823,12 @@ function DocRow({ label, value, onPick, optional }: { label: string; value: stri
           {value ? <CheckCircle2 className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
         </span>
         <div>
-          <p className="text-sm font-medium">{label} {optional && <span className="text-xs text-muted-foreground">(optional)</span>}</p>
-          <p className="text-xs text-muted-foreground">{value ? value : "PDF, JPG or PNG · up to 5 MB"}</p>
+          <p className="text-sm font-medium">{label} {optional && <span className="text-xs text-muted-foreground">({optionalLabel})</span>}</p>
+          <p className="text-xs text-muted-foreground">{value ? value : hint}</p>
         </div>
       </div>
       <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
-        <Upload className="h-4 w-4" /> {value ? "Replace" : "Upload"}
+        <Upload className="h-4 w-4" /> {value ? replaceLabel : uploadLabel}
       </span>
       <input
         type="file"

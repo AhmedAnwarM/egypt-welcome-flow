@@ -86,3 +86,10 @@ No staff workflow, dashboards, reporting, or tracking integration in this phase.
 - **i18n**: EN + AR strings for all new visible labels in `src/lib/i18n.tsx`; RTL works via existing `LangProvider`.
 - **Entry points**: header link ("Apply for loan / card") and a section on the landing page.
 - **Out of scope this phase**: real backend, real Haweya / I-Score / Core Banking / AML / OCR / SMS / email, internal staff workflow, dashboards, route-level tracking integration.
+
+### Hardening (current)
+- Alternative proposals are policy-gated: `lending.generateAlternatives` only returns options with DBR ≤ 50% and amount ≥ product minimum. Empty list ⇒ UI shows "No policy-compliant alternative is available; case will be referred to Credit Risk" and blocks Continue.
+- Per-product tenor caps (`PRODUCT_MAX_TENOR`): credit card 12, personal loan 60, auto loan 84, mortgage 240. Longer-tenor alternatives never reduce the current tenor.
+- Range validation on the affordability step enforces both min and max for amount (per-product) and tenor (per-product, except credit card which is fixed at 12m). Inline helper text; Continue disabled until in range.
+- Decision reasons returned as i18n keys (`reasonKey`) so EN/AR are both covered. All visible `/lending` strings are translated via `useT()`; unused `lending.step.alternatives` key removed.
+- Save/resume: stable `LN-YYYY-XXXXXX` reference generated on first mount, "Save and continue later" persists non-sensitive draft to `localStorage` (`sumerge.lending.app`). Opening `/lending?resume=<ref>` restores it and shows a "Welcome back" banner. Draft is cleared on submit.
