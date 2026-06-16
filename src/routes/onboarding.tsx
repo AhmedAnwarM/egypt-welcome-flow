@@ -1874,10 +1874,22 @@ function AdditionalPersonalDetails({ data, update }: any) {
   ];
   return (
     <div className="mt-6 rounded-xl border border-border bg-card p-6">
-      <h3 className="text-lg font-bold text-primary">Additional personal details</h3>
+      <h3 className="text-lg font-bold text-primary">Personal Details</h3>
       <p className="mt-1 text-sm text-muted-foreground">Required for account opening per CBE guidelines.</p>
       <div className="mt-5 space-y-5">
         <div className="grid gap-5 md:grid-cols-2">
+          <Field label="Full name">
+            <input className={inputCls} value={data.fullName} onChange={(e) => update("fullName", e.target.value)} placeholder="As shown on National ID" />
+          </Field>
+          <Field label="Date of birth">
+            <input
+              type="date"
+              className={inputCls}
+              value={data.dob}
+              onChange={(e) => update("dob", e.target.value)}
+              max={new Date().toISOString().slice(0, 10)}
+            />
+          </Field>
           <Field label="Gender">
             <PillToggle
               options={[{ v: "Male", label: "Male" }, { v: "Female", label: "Female" }]}
@@ -1892,14 +1904,8 @@ function AdditionalPersonalDetails({ data, update }: any) {
             <input
               className={inputCls}
               value={(() => {
-                const id = (data.nationalId || "").toString();
-                if (id.length !== 14) return "";
-                const century = id[0] === "2" ? 1900 : id[0] === "3" ? 2000 : null;
-                if (!century) return "";
-                const year = century + parseInt(id.slice(1, 3), 10);
-                const month = parseInt(id.slice(3, 5), 10);
-                const day = parseInt(id.slice(5, 7), 10);
-                const dob = new Date(year, month - 1, day);
+                if (!data.dob) return "";
+                const dob = new Date(data.dob);
                 if (isNaN(dob.getTime())) return "";
                 const now = new Date();
                 let age = now.getFullYear() - dob.getFullYear();
@@ -1908,7 +1914,7 @@ function AdditionalPersonalDetails({ data, update }: any) {
                 return age >= 0 && age < 130 ? String(age) : "";
               })()}
               readOnly
-              placeholder="Auto-calculated from National ID"
+              placeholder="Auto-calculated from date of birth"
             />
           </Field>
           <Field label="Country of birth">
