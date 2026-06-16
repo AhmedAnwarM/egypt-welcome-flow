@@ -44,6 +44,11 @@ export default function Header({ refId }: { refId?: string }) {
               {t("nav.track") || "Track / Resume"}
             </Link>
           )}
+          {!isOnboarding && (
+            <Link to="/lending" className="hidden md:inline-block text-sm font-medium text-foreground/80 hover:text-primary transition-colors">
+              {t("nav.lending")}
+            </Link>
+          )}
           <div className="inline-flex shrink-0 items-center rounded-full border border-border bg-background p-0.5 text-[11px] font-semibold">
             <Globe className="mx-1 h-3 w-3 text-muted-foreground" />
             {(["en", "ar"] as const).map((l) => {

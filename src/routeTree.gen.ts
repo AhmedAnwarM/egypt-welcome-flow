@@ -13,6 +13,7 @@ import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as TrackingRouteImport } from './routes/tracking'
 import { Route as StatusRouteImport } from './routes/status'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as LendingRouteImport } from './routes/lending'
 import { Route as IndexRouteImport } from './routes/index'
 
 const WelcomeRoute = WelcomeRouteImport.update({
@@ -35,6 +36,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LendingRoute = LendingRouteImport.update({
+  id: '/lending',
+  path: '/lending',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,6 +49,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/lending': typeof LendingRoute
   '/onboarding': typeof OnboardingRoute
   '/status': typeof StatusRoute
   '/tracking': typeof TrackingRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/lending': typeof LendingRoute
   '/onboarding': typeof OnboardingRoute
   '/status': typeof StatusRoute
   '/tracking': typeof TrackingRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/lending': typeof LendingRoute
   '/onboarding': typeof OnboardingRoute
   '/status': typeof StatusRoute
   '/tracking': typeof TrackingRoute
@@ -65,14 +74,28 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/onboarding' | '/status' | '/tracking' | '/welcome'
+  fullPaths:
+    | '/'
+    | '/lending'
+    | '/onboarding'
+    | '/status'
+    | '/tracking'
+    | '/welcome'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/onboarding' | '/status' | '/tracking' | '/welcome'
-  id: '__root__' | '/' | '/onboarding' | '/status' | '/tracking' | '/welcome'
+  to: '/' | '/lending' | '/onboarding' | '/status' | '/tracking' | '/welcome'
+  id:
+    | '__root__'
+    | '/'
+    | '/lending'
+    | '/onboarding'
+    | '/status'
+    | '/tracking'
+    | '/welcome'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LendingRoute: typeof LendingRoute
   OnboardingRoute: typeof OnboardingRoute
   StatusRoute: typeof StatusRoute
   TrackingRoute: typeof TrackingRoute
@@ -109,6 +132,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lending': {
+      id: '/lending'
+      path: '/lending'
+      fullPath: '/lending'
+      preLoaderRoute: typeof LendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -121,6 +151,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LendingRoute: LendingRoute,
   OnboardingRoute: OnboardingRoute,
   StatusRoute: StatusRoute,
   TrackingRoute: TrackingRoute,

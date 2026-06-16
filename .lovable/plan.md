@@ -64,3 +64,25 @@ The full spec is realistically 6+ months of work even simulated. I'll ship it in
 - A real workflow engine with persisted state machine — Phase 3 dashboards mutate in-memory mock data only.
 
 If you approve, I start Phase 1 immediately. Each later phase is its own request so you can re-scope based on what you actually need.
+
+## Active Phase — Retail Lending MVP
+
+Customer-facing simulated lending journey at `/lending`, fully client-side.
+No staff workflow, dashboards, reporting, or tracking integration in this phase.
+
+- **Products**: Credit Card, Personal Loan, Auto Loan, Mortgage.
+- **Channels**: Mobile/Web, Branch Assisted, Sales/RM.
+- **Customer type**: ETB (mocked Core Banking prefill) or NTB (simulated Haweya/KYC).
+- **Steps**:
+  1. Product & channel
+  2. Profile & identity (national ID, full name, mobile, email)
+  3. Employment & affordability — employer, type, sector, net income, existing obligations, requested amount/limit, tenor; live monthly installment + DBR.
+  4. Documents — fake uploads (salary slip, HR letter, bank statement, ID/passport, optional collateral for auto/mortgage); client state only.
+  5. Automated decisioning — AML/PEP/fraud + I-Score + DBR via `lending.runScreening` and `lending.decide` in `src/lib/integrations.ts`. DBR cap = 50%.
+  6. Alternative proposals — when DBR > 50% but otherwise eligible, `lending.generateAlternatives` returns longer tenor / lower amount / combined options with recalculated installment + DBR.
+  7. Review, OTP/e-sign simulation, submit; success state shows lending reference (`LN-YYYY-XXXXXX`) and status timeline.
+- **Decision rules**: AML/sanctions/fraud → reject; I-Score <580 → reject; 580–649 → refer; DBR ≤50% & ≥680 → instant pre-approval; DBR >50% & ≥650 with no hits → conditional approval w/ alternatives; otherwise → refer.
+- **Audit events**: `lending.start`, `lending.identityVerified`, `lending.decisionCalculated`, `lending.alternativeSelected`, `lending.submit`.
+- **i18n**: EN + AR strings for all new visible labels in `src/lib/i18n.tsx`; RTL works via existing `LangProvider`.
+- **Entry points**: header link ("Apply for loan / card") and a section on the landing page.
+- **Out of scope this phase**: real backend, real Haweya / I-Score / Core Banking / AML / OCR / SMS / email, internal staff workflow, dashboards, route-level tracking integration.

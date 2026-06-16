@@ -144,6 +144,18 @@ function Landing() {
               </div>
             ))}
           </div>
+          <div className="mt-10 rounded-2xl border border-primary/20 bg-primary/5 p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-secondary font-bold mb-1">Retail lending</p>
+              <h3 className="text-lg font-semibold text-foreground">Need a credit card, loan or mortgage?</h3>
+              <p className="text-sm text-muted-foreground mt-1">Apply for SUMERGE retail lending products in minutes — fully digital.</p>
+            </div>
+            <Link to="/lending">
+              <Button size="lg" className="rounded-full px-6">
+                Apply for loan / card <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
         </section>
 
         {/* Account opening steps */}
