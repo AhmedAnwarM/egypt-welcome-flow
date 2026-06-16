@@ -20,7 +20,6 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 const steps = [
-  "Verify your identity",
   "About you & contact",
   "Work & tax details",
   "Account & address",
@@ -37,7 +36,6 @@ function Onboarding() {
   const { lang, setLang } = useLang();
   const router = useRouter();
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [verifyStage, setVerifyStage] = useState<"idle" | "checking" | "done">("idle");
   const [resumed, setResumed] = useState(false);
   const refId = useMemo(() => `SM-2026-${String(Math.floor(100000 + Math.random() * 900000))}`, []);
   const [data, setData] = useState({
@@ -167,45 +165,48 @@ function Onboarding() {
     }
   }, []);
 
-  // Step 3 verification simulation: when ID doc uploaded, cycle through statuses
-  useEffect(() => {
-    if (!data.idDoc) {
-      setVerifyStage("idle");
-      return;
-    }
-    setVerifyStage("checking");
-    const t = setTimeout(() => setVerifyStage("done"), 4500);
-    return () => clearTimeout(t);
-  }, [data.idDoc]);
 
   const handleLang = (l: "en" | "ar") => setLang(l);
 
   const selectResidency = (r: "egyptian" | "foreign") => {
     setResidencyType(r);
     const dt = r === "foreign" ? "passport" : "nationalId";
-    if (r === "foreign") setNidGateDone(true);
-    else setNidGateDone(false);
-    setData((d) => ({
-      ...d,
-      docType: dt,
-      nationality: dt === "nationalId" ? "Egyptian" : "",
-      productChoice: "saving",
-    }));
+    if (r === "foreign") {
+      setNidGateDone(true);
+      setData((d) => ({
+        ...d,
+        docType: dt,
+        nationality: "United Kingdom",
+        productChoice: "saving",
+        fullName: "John Michael Smith",
+        passportNumber: "P12345678",
+        dob: "1990-04-22",
+        expiry: "2031-09-15",
+        gender: "Male",
+        placeOfBirth: "London",
+        countryOfBirth: "United Kingdom",
+      }));
+    } else {
+      setNidGateDone(false);
+      setData((d) => ({
+        ...d,
+        docType: dt,
+        nationality: "Egyptian",
+        productChoice: "saving",
+        fullName: "",
+        passportNumber: "",
+        dob: "",
+        expiry: "",
+        gender: "",
+        placeOfBirth: "",
+        countryOfBirth: "",
+      }));
+    }
   };
 
   const canContinue = (() => {
-    // Sub-validators (keyed to the original granular step indices)
+    // Sub-validators (keyed to the granular step indices)
     const v0 = () => {
-        if (!data.idDoc || data.fullName.trim().length <= 3) return false;
-        if (verifyStage !== "done") return false;
-        if (data.docType === "passport") {
-          if (!(data.passportNumber.trim() && data.nationality.trim() && data.dob && data.expiry)) return false;
-        } else {
-          if (data.nationalId.length !== 14) return false;
-        }
-        return true;
-    };
-    const v1 = () => {
         if (!data.gender || !data.placeOfBirth.trim() || !data.countryOfBirth || !data.maritalStatus || !data.education) return false;
         if (!data.hasOtherNationalities) return false;
         if (data.hasOtherNationalities === "yes" && !data.otherNationalities.trim()) return false;
@@ -218,8 +219,8 @@ function Onboarding() {
         if (!data.hasPoA || !data.smsConsent) return false;
         return true;
     };
-    const v2 = () => !!data.phoneVerified && !!data.emailVerified;
-    const v3 = () => {
+    const v1 = () => !!data.phoneVerified && !!data.emailVerified;
+    const v2 = () => {
         const baseOk = !!data.employment && !!data.income && !!data.employer.trim() && !!data.jobTitle.trim() && !!data.sourceOfFunds;
         const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
         if (!baseOk) return false;
@@ -229,7 +230,7 @@ function Onboarding() {
         if (data.employment === "Retired" && !data.previousOccupation.trim()) return false;
         return true;
     };
-    const v4 = () => {
+    const v3 = () => {
         if (!data.fatcaUs || !data.crsOther || !data.taxDeclaration) return false;
         if (data.fatcaUs === "yes" && !data.usTin.trim()) return false;
         if (data.crsOther === "yes") {
@@ -240,32 +241,31 @@ function Onboarding() {
         if (data.pepStatus === "yes" && (!data.pepRole.trim() || !data.pepCountry.trim() || !data.pepRelationship.trim() || !data.pepDates.trim())) return false;
         return true;
     };
-    const v5 = () => {
+    const v4 = () => {
         if (!data.accountPurpose || !data.accountCurrency || !data.linkDebitCard) return false;
         if (data.linkDebitCard === "yes" && (!data.cardType || !data.nameOnCard.trim())) return false;
         return true;
     };
-    const v6 = () => {
+    const v5 = () => {
         if (!data.residenceType) return false;
         if (data.residenceType === "Other" && !data.residenceTypeOther.trim()) return false;
         return !!data.governorate && !!data.city.trim() && !!data.street.trim();
     };
-    const v7 = () => ((data as any).confirmedProducts || []).length > 0;
-    const v8 = () => isDocumentsValid(data);
-    const v9 = () => !!(data as any).signedAt;
-    const v10 = () => true;
-    const v11 = () => {
+    const v6 = () => ((data as any).confirmedProducts || []).length > 0;
+    const v7 = () => isDocumentsValid(data);
+    const v8 = () => !!(data as any).signedAt;
+    const v9 = () => true;
+    const v10 = () => {
         const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
         return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit;
     };
     switch (step) {
-      case 0: return v0();
-      case 1: return v1() && v2();
-      case 2: return v3() && v4();
-      case 3: return v5() && v6();
-      case 4: return v7() && v8();
-      case 5: return v9() && v10();
-      case 6: return v11();
+      case 0: return v0() && v1();
+      case 1: return v2() && v3();
+      case 2: return v4() && v5();
+      case 3: return v6() && v7();
+      case 4: return v8() && v9();
+      case 5: return v10();
       default: return true;
     }
   })();
@@ -300,7 +300,18 @@ function Onboarding() {
             initialMobile={data.phone}
             onBack={() => setResidencyType("")}
             onVerified={(nid, mobile) => {
-              setData((d) => ({ ...d, nationalId: nid, phone: mobile, phoneVerified: true }));
+              setData((d) => ({
+                ...d,
+                nationalId: nid,
+                phone: mobile,
+                phoneVerified: true,
+                fullName: d.docType === "nationalId" ? "Mohamed Ahmed Hassan" : d.fullName,
+                nationality: d.docType === "nationalId" ? "Egyptian" : d.nationality,
+                expiry: d.docType === "nationalId" ? "2030-05-12" : d.expiry,
+                gender: d.docType === "nationalId" ? "Male" : d.gender,
+                placeOfBirth: d.docType === "nationalId" ? "Cairo" : d.placeOfBirth,
+                countryOfBirth: d.docType === "nationalId" ? "Egypt" : d.countryOfBirth,
+              }));
               setNidGateDone(true);
               auditLog("onboarding.nidOtpVerified", { mobile });
             }}
@@ -317,9 +328,6 @@ function Onboarding() {
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
               <CardToolbar onSave={() => setShowSaveModal(true)} />
               {step === 0 && (
-                <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />
-              )}
-              {step === 1 && (
                 <div className="space-y-10">
                   <KnowYouBetterStep data={data} update={update} />
                   <div className="border-t border-border/60 pt-8">
@@ -327,7 +335,7 @@ function Onboarding() {
                   </div>
                 </div>
               )}
-              {step === 2 && (
+              {step === 1 && (
                 <div className="space-y-10">
                   <WorkProductStep data={data} update={update} />
                   <div className="border-t border-border/60 pt-8">
@@ -335,7 +343,7 @@ function Onboarding() {
                   </div>
                 </div>
               )}
-              {step === 3 && (
+              {step === 2 && (
                 <div className="space-y-10">
                   <AccountSetupStep data={data} update={update} />
                   <div className="border-t border-border/60 pt-8">
@@ -343,7 +351,7 @@ function Onboarding() {
                   </div>
                 </div>
               )}
-              {step === 4 && (
+              {step === 3 && (
                 <div className="space-y-10">
                   <ConfirmProductsStep data={data} update={update} />
                   <div className="border-t border-border/60 pt-8">
@@ -351,7 +359,7 @@ function Onboarding() {
                   </div>
                 </div>
               )}
-              {step === 5 && (
+              {step === 4 && (
                 <div className="space-y-10">
                   <SignatureStep data={data} update={update} />
                   <div className="border-t border-border/60 pt-8">
@@ -359,7 +367,7 @@ function Onboarding() {
                   </div>
                 </div>
               )}
-              {step === 6 && <CredentialsStep data={data} update={update} />}
+              {step === 5 && <CredentialsStep data={data} update={update} />}
 
               <div className="mt-10 flex items-center justify-between border-t border-border/60 pt-6">
                 <button
@@ -1208,175 +1216,6 @@ function VerifiableContactField({
   );
 }
 
-function CaptureIdStep({ data, update, goToStep, verifyStage }: any) {
-  const isPassport = data.docType === "passport";
-  const impliedResidency = isPassport ? "foreign" : "egyptian";
-  // Look up selected product's availability — kept in sync with ChooseOptionStep (placeholder all-allowed).
-  const PRODUCT_AVAILABILITY: Record<string, string[]> = {
-    "saving": ["egyptian", "foreign"],
-    "current": ["egyptian", "foreign"],
-    "prime-saving": ["egyptian", "foreign"],
-    "current-365": ["egyptian", "foreign"],
-  };
-  const productAvail = PRODUCT_AVAILABILITY[data.productChoice] || ["egyptian", "foreign"];
-  const mismatch = data.productChoice && !productAvail.includes(impliedResidency);
-  const handleUploadNid = () => {
-    update("idDoc", true);
-    update("fullName", "Mohamed Ahmed Hassan");
-    update("nationalId", "29001011234567");
-    update("nationality", "Egyptian");
-    update("expiry", "2030-05-12");
-    update("gender", "Male");
-    update("placeOfBirth", "Cairo");
-    update("countryOfBirth", "Egypt");
-  };
-  const handleUploadPassport = () => {
-    update("idDoc", true);
-    update("fullName", "John Michael Smith");
-    update("passportNumber", "P12345678");
-    update("nationality", "United Kingdom");
-    update("dob", "1990-04-22");
-    update("expiry", "2031-09-15");
-    update("gender", "Male");
-    update("placeOfBirth", "London");
-    update("countryOfBirth", "United Kingdom");
-  };
-  const onDocTypeChange = (v: string) => {
-    update("docType", v);
-    // Reset upload + OCR fields when switching
-    update("idDoc", false);
-    update("fullName", "");
-    update("nationalId", "");
-    update("passportNumber", "");
-    update("nationality", v === "nationalId" ? "Egyptian" : "");
-    update("dob", "");
-    update("expiry", "");
-  };
-  const showOcr = data.idDoc && verifyStage === "done";
-  const showChecking = data.idDoc && verifyStage === "checking";
-  return (
-    <div>
-      <StepHeader title="Verify your identity" subtitle="Choose the document you'd like to use to verify your identity." />
-      {mismatch && (
-        <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4">
-          <p className="text-sm font-semibold text-amber-900">
-            {PRODUCT_LABELS[data.productChoice]} isn't available with this document type. Please go back and choose a different account.
-          </p>
-          <button
-            type="button"
-            onClick={() => goToStep(0)}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-amber-400 bg-background px-4 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"
-          >
-            Back to step 1
-          </button>
-        </div>
-      )}
-      <h3 className="mb-4 text-lg font-bold text-primary">
-        {isPassport
-          ? "Please capture/upload your passport"
-          : "Please capture/upload your National ID"}
-      </h3>
-      <div className="overflow-hidden rounded-xl border border-border bg-background">
-        <div className="hidden sm:grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          <div>Documents</div>
-          <div className="text-center">Status</div>
-          <div className="text-center">Actions</div>
-        </div>
-        {isPassport ? (
-          <UploadRow
-            label="Passport (bio page)"
-            fileName="passport.jpg"
-            done={data.idDoc}
-            onClick={handleUploadPassport}
-            onDelete={() => update("idDoc", false)}
-          />
-        ) : (
-          <UploadRow
-            label="National ID"
-            fileName="NID.jpg"
-            done={data.idDoc}
-            onClick={handleUploadNid}
-            onDelete={() => update("idDoc", false)}
-          />
-        )}
-      </div>
-
-      {showChecking && (
-        <VerifyingCard />
-      )}
-
-      {showOcr && !isPassport && (
-        <div className="mt-8 rounded-xl border border-border bg-card p-6">
-          <div className="flex flex-wrap items-center gap-3">
-            <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
-            <VerifiedBadge />
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">Your personal info has been captured from your National ID</p>
-          <div className="mt-5 rounded-lg border border-border bg-background p-5">
-            <div className="flex items-center gap-3 border-b border-border pb-4">
-              <IdCard className="h-5 w-5 text-primary" />
-              <input
-                className="flex-1 bg-transparent text-base font-semibold outline-none"
-                placeholder="Full name as per National ID"
-                value={data.fullName}
-                onChange={(e) => update("fullName", e.target.value)}
-              />
-            </div>
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
-              <Field label="National ID number">
-                <input inputMode="numeric" maxLength={14} className={inputCls} placeholder="14 digits" value={data.nationalId} onChange={(e) => update("nationalId", e.target.value.replace(/\D/g, ""))} />
-              </Field>
-              <Field label="Nationality">
-                <input readOnly className={`${inputCls} bg-secondary/20 cursor-not-allowed`} value={data.nationality} />
-              </Field>
-              <Field label="Expiry date">
-                <input type="date" className={inputCls} value={data.expiry} onChange={(e) => update("expiry", e.target.value)} />
-              </Field>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showOcr && isPassport && (
-        <div className="mt-8 rounded-xl border border-border bg-card p-6">
-          <div className="flex flex-wrap items-center gap-3">
-            <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
-            <VerifiedBadge />
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">Your personal info has been captured from your passport</p>
-          <div className="mt-5 rounded-lg border border-border bg-background p-5">
-            <div className="flex items-center gap-3 border-b border-border pb-4">
-              <IdCard className="h-5 w-5 text-primary" />
-              <input
-                className="flex-1 bg-transparent text-base font-semibold outline-none"
-                placeholder="Full name as per passport"
-                value={data.fullName}
-                onChange={(e) => update("fullName", e.target.value)}
-              />
-            </div>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <Field label="Passport number">
-                <input className={inputCls} value={data.passportNumber} onChange={(e) => update("passportNumber", e.target.value)} />
-              </Field>
-              <Field label="Nationality">
-                <select className={inputCls} value={data.nationality} onChange={(e) => update("nationality", e.target.value)}>
-                  <option value="">Select country</option>
-                  {COUNTRIES.map((c) => <option key={c}>{c}</option>)}
-                </select>
-              </Field>
-              <Field label="Date of birth">
-                <input type="date" className={inputCls} value={data.dob} onChange={(e) => update("dob", e.target.value)} />
-              </Field>
-              <Field label="Expiry date">
-                <input type="date" className={inputCls} value={data.expiry} onChange={(e) => update("expiry", e.target.value)} />
-              </Field>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function UploadRow({ label, fileName, done, onClick, onDelete, optional }: { label: string; fileName: string; done: boolean; onClick: () => void; onDelete: () => void; optional?: boolean }) {
   return (
@@ -1431,36 +1270,6 @@ const PRODUCT_LABELS: Record<string, string> = {
   "current-365": "Current Account 365 Days",
 };
 
-function VerifyingCard() {
-  const messages = [
-    "Checking document authenticity...",
-    "Verifying against national ID records...",
-    "Extracting your details...",
-  ];
-  const [idx, setIdx] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setIdx((i) => (i + 1) % messages.length), 1500);
-    return () => clearInterval(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  return (
-    <div className="mt-8 flex items-center gap-4 rounded-xl border border-secondary/40 bg-secondary/20 p-5">
-      <Loader2 className="h-6 w-6 shrink-0 animate-spin text-primary" />
-      <div>
-        <p className="text-sm font-bold text-primary">Verifying your document</p>
-        <p className="mt-0.5 text-sm text-foreground/80">{messages[idx]}</p>
-      </div>
-    </div>
-  );
-}
-
-function VerifiedBadge() {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
-      <ShieldCheck className="h-3.5 w-3.5" /> Verified
-    </span>
-  );
-}
 
 function SelectionRecap({ data, onChange }: any) {
   const label = PRODUCT_LABELS[data.productChoice] || "Account selected";
