@@ -187,6 +187,7 @@ function Onboarding() {
           gender: "Male",
           placeOfBirth: "London",
           countryOfBirth: "United Kingdom",
+          jobTitle: "Marketing Manager",
         }));
       } else {
       setNidGateDone(false);
@@ -316,6 +317,7 @@ function Onboarding() {
                 gender: d.docType === "nationalId" ? "Male" : d.gender,
                 placeOfBirth: d.docType === "nationalId" ? "Cairo" : d.placeOfBirth,
                 countryOfBirth: d.docType === "nationalId" ? "Egypt" : d.countryOfBirth,
+                jobTitle: d.docType === "nationalId" ? "Software Engineer" : d.jobTitle,
               }));
               setNidGateDone(true);
               auditLog("onboarding.nidOtpVerified", { mobile });
@@ -342,7 +344,7 @@ function Onboarding() {
               )}
               {step === 1 && (
                 <div className="space-y-10">
-                  <WorkProductStep data={data} update={update} />
+                  <WorkProductStep data={data} update={update} verified={nidGateDone} />
                   <div className="border-t border-border/60 pt-8">
                     <TaxStep data={data} update={update} />
                   </div>
@@ -1296,7 +1298,7 @@ function SelectionRecap({ data, onChange }: any) {
   );
 }
 
-function WorkProductStep({ data, update }: any) {
+function WorkProductStep({ data, update, verified }: any) {
   const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
   const employerLabel = isBiz ? "Business name" : "Employer name";
   const showStartDate = data.employment === "Employed" || data.employment === "Self-employed";
@@ -1319,7 +1321,16 @@ function WorkProductStep({ data, update }: any) {
         <div className="md:col-span-2">
           <Field label={employerLabel}><input className={inputCls} value={data.employer} onChange={(e) => update("employer", e.target.value)} /></Field>
         </div>
-        <Field label="Job title / occupation"><input className={inputCls} value={data.jobTitle} onChange={(e) => update("jobTitle", e.target.value)} /></Field>
+        <Field label="Job title / occupation">
+          <div className="space-y-1">
+            <input className={inputCls} value={data.jobTitle} onChange={(e) => update("jobTitle", e.target.value)} />
+            {verified && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 uppercase tracking-wide">
+                <ShieldCheck className="h-3 w-3" /> Haweya
+              </span>
+            )}
+          </div>
+        </Field>
         <Field label="Source of funds">
           <select className={inputCls} value={data.sourceOfFunds} onChange={(e) => update("sourceOfFunds", e.target.value)}>
             {["Salary","Business income","Investments","Family support","Other"].map((g) => <option key={g}>{g}</option>)}
