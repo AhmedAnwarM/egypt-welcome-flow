@@ -721,8 +721,7 @@ function NidOtpGate({
 }) {
   type Phase = "upload" | "ocr" | "mobile";
   const [phase, setPhase] = useState<Phase>("upload");
-  const [frontFile, setFrontFile] = useState<string>("");
-  const [backFile, setBackFile] = useState<string>("");
+  const [nidUploaded, setNidUploaded] = useState(false);
   const [ocrRunning, setOcrRunning] = useState(false);
   const [nid, setNid] = useState(initialNid || "");
   const [mobile, setMobile] = useState(initialMobile || "");
@@ -734,19 +733,6 @@ function NidOtpGate({
 
   const mobileValid = /^01\d{9}$/.test(mobile);
   const nidValid = /^\d{14}$/.test(nid);
-
-  const pickFile = (which: "front" | "back") => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*,application/pdf";
-    input.onchange = () => {
-      const f = input.files?.[0];
-      if (!f) return;
-      if (which === "front") setFrontFile(f.name);
-      else setBackFile(f.name);
-    };
-    input.click();
-  };
 
   const runOcr = async () => {
     setError(null);
@@ -793,18 +779,28 @@ function NidOtpGate({
         <>
           <StepHeader
             title="Upload your National ID"
-            subtitle="Capture or upload the front and back of your Egyptian National ID. We'll read your ID number from it."
+            subtitle="Capture or upload your Egyptian National ID. We'll read your ID number from it."
           />
-          <div className="grid gap-4 md:grid-cols-2">
-            <NidUploadTile label="National ID — Front" fileName={frontFile} onClick={() => pickFile("front")} />
-            <NidUploadTile label="National ID — Back" fileName={backFile} onClick={() => pickFile("back")} />
+          <div className="overflow-hidden rounded-xl border border-border bg-background">
+            <div className="hidden sm:grid grid-cols-[minmax(0,1fr)_120px_180px] items-center gap-4 border-b border-border bg-background px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div>Documents</div>
+              <div className="text-center">Status</div>
+              <div className="text-center">Actions</div>
+            </div>
+            <UploadRow
+              label="National ID"
+              fileName="NID.jpg"
+              done={nidUploaded}
+              onClick={() => setNidUploaded(true)}
+              onDelete={() => setNidUploaded(false)}
+            />
           </div>
           {error && (
             <p className="mt-4 rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{error}</p>
           )}
           <div className="mt-8 flex items-center justify-between gap-3">
             <button type="button" onClick={onBack} className="text-sm font-semibold text-muted-foreground hover:text-primary">← Back</button>
-            <Button onClick={runOcr} disabled={!frontFile || !backFile}>
+            <Button onClick={runOcr} disabled={!nidUploaded}>
               Continue <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
@@ -913,29 +909,7 @@ function NidOtpGate({
   );
 }
 
-function NidUploadTile({ label, fileName, onClick }: { label: string; fileName: string; onClick: () => void }) {
-  const done = !!fileName;
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`group flex flex-col items-start gap-3 rounded-xl border-2 border-dashed p-5 text-left transition-all ${done ? "border-primary bg-primary/5" : "border-border hover:border-primary hover:bg-primary/5"}`}
-    >
-      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-        <IdCard className="h-5 w-5 text-primary" /> {label}
-      </div>
-      {done ? (
-        <div className="flex items-center gap-2 text-xs font-medium text-primary">
-          <CheckCircle2 className="h-4 w-4" /> {fileName}
-        </div>
-      ) : (
-        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-          <Upload className="h-4 w-4" /> Tap to capture or upload
-        </div>
-      )}
-    </button>
-  );
-}
+
 
 function ChooseOptionStepImpl({ data, update, residencyType }: any) {
   const options = [
