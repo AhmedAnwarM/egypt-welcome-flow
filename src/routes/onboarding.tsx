@@ -798,9 +798,59 @@ function ContactStep({ data, update }: any) {
           </div>
         </Field>
         <div className="grid gap-5 md:grid-cols-2">
+          <Field label="Mobile No. 2 (optional)">
+            <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
+              <span className="text-sm font-semibold text-foreground">+20</span>
+              <input
+                className="ml-2 h-full flex-1 bg-transparent text-sm outline-none"
+                placeholder="1XX XXX XXXX"
+                value={data.phone2}
+                onChange={(e) => update("phone2", e.target.value.replace(/\D/g, ""))}
+                maxLength={11}
+              />
+            </div>
+          </Field>
+          <Field label="Home phone (optional)">
+            <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
+              <span className="text-sm font-semibold text-foreground">+20</span>
+              <input
+                className="ml-2 h-full flex-1 bg-transparent text-sm outline-none"
+                placeholder="2 XXXX XXXX"
+                value={data.homePhone}
+                onChange={(e) => update("homePhone", e.target.value.replace(/\D/g, ""))}
+                maxLength={11}
+              />
+            </div>
+          </Field>
+        </div>
+        <div className="grid gap-5 md:grid-cols-2">
           <Field label="Email"><input type="email" className={inputCls} value={data.email} onChange={(e) => update("email", e.target.value)} /></Field>
           <Field label="Confirm Email"><input type="email" className={inputCls} value={data.confirmEmail} onChange={(e) => update("confirmEmail", e.target.value)} /></Field>
         </div>
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field label="Statement frequency">
+            <PillToggle
+              options={[{ v: "Monthly", label: "Monthly" }, { v: "Quarterly", label: "Quarterly" }]}
+              value={data.statementFrequency}
+              onChange={(v) => update("statementFrequency", v)}
+            />
+          </Field>
+          <Field label="Statement delivery method">
+            <select className={inputCls} value={data.statementDelivery} onChange={(e) => update("statementDelivery", e.target.value)}>
+              <option value="">Select method</option>
+              <option>Email</option>
+              <option>Mobile app</option>
+              <option>Post (mailing address)</option>
+            </select>
+          </Field>
+        </div>
+        <Field label="Correspondence language">
+          <PillToggle
+            options={[{ v: "Arabic", label: "Arabic" }, { v: "English", label: "English" }]}
+            value={data.correspondenceLanguage}
+            onChange={(v) => update("correspondenceLanguage", v)}
+          />
+        </Field>
         <div>
           <p className="mb-1.5 text-sm font-semibold text-foreground">Have a promo code? (Optional)</p>
           <input className={inputCls} placeholder="Promo code" value={data.promo} onChange={(e) => update("promo", e.target.value)} />
