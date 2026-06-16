@@ -1027,6 +1027,10 @@ function CaptureIdStep({ data, update, goToStep, verifyStage }: any) {
           </div>
         </div>
       )}
+
+      {showOcr && (
+        <AdditionalPersonalDetails data={data} update={update} />
+      )}
     </div>
   );
 }
