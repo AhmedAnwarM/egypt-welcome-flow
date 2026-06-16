@@ -1236,6 +1236,20 @@ function AddressStep({ data, update }: any) {
   return (
     <div>
       <StepHeader title="Where should we send your card and statements?" subtitle="You can update this later from your account settings." />
+      <div className="mb-6">
+        <Field label="Type of residence">
+          <PillToggle
+            options={[{ v: "Owned", label: "Owned" }, { v: "Rented", label: "Rented" }, { v: "Other", label: "Other" }]}
+            value={data.residenceType}
+            onChange={(v) => update("residenceType", v)}
+          />
+        </Field>
+        {data.residenceType === "Other" && (
+          <div className="mt-3">
+            <Field label="Please specify"><input className={inputCls} value={data.residenceTypeOther} onChange={(e) => update("residenceTypeOther", e.target.value)} /></Field>
+          </div>
+        )}
+      </div>
       {data.docType !== "passport" && (
       <button
         type="button"
