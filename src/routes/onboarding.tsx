@@ -1142,6 +1142,8 @@ function SelectionRecap({ data, onChange }: any) {
 function WorkProductStep({ data, update, onChangeProduct }: any) {
   const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
   const employerLabel = isBiz ? "Business name" : "Employer name";
+  const showStartDate = data.employment === "Employed" || data.employment === "Self-employed";
+  const showPrevOcc = data.employment === "Retired";
   return (
     <div>
       <SelectionRecap data={data} onChange={onChangeProduct} />
@@ -1152,10 +1154,10 @@ function WorkProductStep({ data, update, onChangeProduct }: any) {
             {["Employed","Self-employed","Business owner","Student","Retired","Not currently employed"].map((g) => <option key={g}>{g}</option>)}
           </select>
         </Field>
-        <Field label="Monthly income (EGP)">
+        <Field label="Annual income (EGP)">
           <select className={inputCls} value={data.income} onChange={(e) => update("income", e.target.value)}>
             <option value="">Select range</option>
-            {["Less than 10,000","10,000 – 25,000","25,000 – 50,000","50,000 – 100,000","100,000 – 250,000","More than 250,000"].map((g) => <option key={g}>{g}</option>)}
+            {["Less than EGP 5K","EGP 5K–10K","EGP 10K–20K","EGP 20K–30K","EGP 30K–70K","EGP 70K–100K","EGP 100K–200K","EGP 200K–300K","EGP 300K–400K","EGP 400K–1,000K","More than EGP 1,000K"].map((g) => <option key={g}>{g}</option>)}
           </select>
         </Field>
         <div className="md:col-span-2">
@@ -1167,6 +1169,36 @@ function WorkProductStep({ data, update, onChangeProduct }: any) {
             {["Salary","Business income","Investments","Family support","Other"].map((g) => <option key={g}>{g}</option>)}
           </select>
         </Field>
+        {showStartDate && (
+          <Field label="Employment start date">
+            <input type="date" className={inputCls} value={data.employmentStartDate} onChange={(e) => update("employmentStartDate", e.target.value)} />
+          </Field>
+        )}
+        <Field label="Work phone (optional)">
+          <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
+            <span className="text-sm font-semibold text-foreground">+20</span>
+            <input
+              className="ml-2 h-full flex-1 bg-transparent text-sm outline-none"
+              placeholder="2 XXXX XXXX"
+              value={data.workPhone}
+              onChange={(e) => update("workPhone", e.target.value.replace(/\D/g, ""))}
+              maxLength={11}
+            />
+          </div>
+        </Field>
+        {showPrevOcc && (
+          <div className="md:col-span-2">
+            <Field label="Previous occupation"><input className={inputCls} value={data.previousOccupation} onChange={(e) => update("previousOccupation", e.target.value)} /></Field>
+          </div>
+        )}
+        <div className="md:col-span-2">
+          <Field label="Expected monthly transaction volume">
+            <select className={inputCls} value={data.expectedTxVolume} onChange={(e) => update("expectedTxVolume", e.target.value)}>
+              <option value="">Select range</option>
+              {["Under EGP 10,000","EGP 10,000 – 50,000","EGP 50,000 – 200,000","Over EGP 200,000"].map((g) => <option key={g}>{g}</option>)}
+            </select>
+          </Field>
+        </div>
         {isBiz && (
           <div className="md:col-span-2">
             <Field label="Business registration number"><input className={inputCls} value={data.businessReg} onChange={(e) => update("businessReg", e.target.value)} /></Field>
