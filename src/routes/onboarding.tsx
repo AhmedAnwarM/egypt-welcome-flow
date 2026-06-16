@@ -7,7 +7,7 @@ import Footer from "@/components/site/Footer";
 import { useLang } from "@/lib/i18n";
 import SessionTimeout from "@/components/SessionTimeout";
 import { auditLog } from "@/lib/audit";
-import { SelfieStep, ConfirmProductsStep, DocumentsStep, SignatureStep, ReviewStep, isDocumentsValid } from "@/components/onboarding/ExtendedSteps";
+import { ConfirmProductsStep, DocumentsStep, SignatureStep, ReviewStep, isDocumentsValid } from "@/components/onboarding/ExtendedSteps";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -21,7 +21,6 @@ export const Route = createFileRoute("/onboarding")({
 
 const steps = [
   "Verify your identity",
-  "Selfie & liveness",
   "Let's get to know you better!",
   "Choose your option",
   "Work and product details",
@@ -199,8 +198,7 @@ function Onboarding() {
         }
         return true;
       }
-      case 1: return !!(data as any).selfieDone;
-      case 2: {
+      case 1: {
         // Additional personal details
         if (!data.gender || !data.placeOfBirth.trim() || !data.countryOfBirth || !data.maritalStatus || !data.education) return false;
         if (!data.hasOtherNationalities) return false;
@@ -217,8 +215,8 @@ function Onboarding() {
         if (!data.hasPoA || !data.hasOtherBankAccounts || !data.dealsInSecurities || !data.smsConsent) return false;
         return true;
       }
-      case 3: return !!data.productChoice;
-      case 4: {
+      case 2: return !!data.productChoice;
+      case 3: {
         const baseOk = !!data.employment && !!data.income && !!data.employer.trim() && !!data.jobTitle.trim() && !!data.sourceOfFunds;
         const isBiz = data.employment === "Self-employed" || data.employment === "Business owner";
         if (!baseOk) return false;
@@ -228,7 +226,7 @@ function Onboarding() {
         if (data.employment === "Retired" && !data.previousOccupation.trim()) return false;
         return true;
       }
-      case 5: {
+      case 4: {
         if (!data.fatcaUs || !data.crsOther || !data.taxDeclaration) return false;
         if (data.fatcaUs === "yes" && !data.usTin.trim()) return false;
         if (data.crsOther === "yes") {
@@ -239,21 +237,21 @@ function Onboarding() {
         if (data.pepStatus === "yes" && (!data.pepRole.trim() || !data.pepCountry.trim() || !data.pepRelationship.trim() || !data.pepDates.trim())) return false;
         return true;
       }
-      case 6: {
+      case 5: {
         if (!data.accountPurpose || !data.accountCurrency || !data.linkDebitCard) return false;
         if (data.linkDebitCard === "yes" && (!data.cardType || !data.nameOnCard.trim())) return false;
         return true;
       }
-      case 7: {
+      case 6: {
         if (!data.residenceType) return false;
         if (data.residenceType === "Other" && !data.residenceTypeOther.trim()) return false;
         return !!data.governorate && !!data.city.trim() && !!data.street.trim();
       }
-      case 8: return ((data as any).confirmedProducts || []).length > 0;
-      case 9: return isDocumentsValid(data);
-      case 10: return !!(data as any).signedAt;
-      case 11: return true;
-      case 12: {
+      case 7: return ((data as any).confirmedProducts || []).length > 0;
+      case 8: return isDocumentsValid(data);
+      case 9: return !!(data as any).signedAt;
+      case 10: return true;
+      case 11: {
         const pwOk = data.password.length >= 8 && data.password === data.confirmPassword;
         return /\S+@\S+/.test(data.email) && pwOk && data.agreeTerms && data.agreeCredit;
       }
@@ -294,18 +292,17 @@ function Onboarding() {
             <div className="rounded-2xl bg-card p-6 md:p-10 shadow-elegant">
               <CardToolbar onSave={() => setShowSaveModal(true)} />
               {step === 0 && <CaptureIdStep data={data} update={update} goToStep={(i: number) => setStep(i)} verifyStage={verifyStage} />}
-              {step === 1 && <SelfieStep data={data} update={update} />}
-              {step === 2 && <KnowYouBetterStep data={data} update={update} />}
-              {step === 3 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
-              {step === 4 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(3)} />}
-              {step === 5 && <TaxStep data={data} update={update} />}
-              {step === 6 && <AccountSetupStep data={data} update={update} />}
-              {step === 7 && <AddressStep data={data} update={update} />}
-              {step === 8 && <ConfirmProductsStep data={data} update={update} />}
-              {step === 9 && <DocumentsStep data={data} update={update} />}
-              {step === 10 && <SignatureStep data={data} update={update} />}
-              {step === 11 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
-              {step === 12 && <CredentialsStep data={data} update={update} />}
+              {step === 1 && <KnowYouBetterStep data={data} update={update} />}
+              {step === 2 && <ChooseOptionStep data={data} update={update} residencyType={residencyType} />}
+              {step === 3 && <WorkProductStep data={data} update={update} onChangeProduct={() => setStep(2)} />}
+              {step === 4 && <TaxStep data={data} update={update} />}
+              {step === 5 && <AccountSetupStep data={data} update={update} />}
+              {step === 6 && <AddressStep data={data} update={update} />}
+              {step === 7 && <ConfirmProductsStep data={data} update={update} />}
+              {step === 8 && <DocumentsStep data={data} update={update} />}
+              {step === 9 && <SignatureStep data={data} update={update} />}
+              {step === 10 && <ReviewStep data={data} goToStep={(i: number) => setStep(i)} />}
+              {step === 11 && <CredentialsStep data={data} update={update} />}
 
               <div className="mt-10 flex items-center justify-between border-t border-border/60 pt-6">
                 <button
@@ -712,7 +709,6 @@ function ChooseOptionStep({ data, update, residencyType }: any) {
   ];
   return (
     <div>
-      <StepHeader title="How can SUMERGE work for you?" subtitle="Explore and select an account that works for you:" />
       <div className="space-y-3">
         {options.map((o) => {
           const Icon = o.icon;
