@@ -761,7 +761,7 @@ function KnowYouBetterStep({ data, update }: any) {
     <div>
       <StepHeader title="Let's get to know you better!" subtitle="Tell us about yourself and how we can reach you." />
       <AdditionalPersonalDetails data={data} update={update} />
-      <div className="mt-6 rounded-xl border border-border bg-secondary/30 p-6">
+      <div className="mt-6 rounded-xl border border-border bg-card p-6">
         <h3 className="text-lg font-bold text-primary">Contact details</h3>
         <p className="mt-1 text-sm text-muted-foreground">We'll verify your mobile number and email in the next step.</p>
         <div className="mt-5 space-y-5">
@@ -850,7 +850,7 @@ function ContactVerificationStep({ data, update }: any) {
   return (
     <div>
       <StepHeader title="Verify your contact details" subtitle="We'll send a one-time code to your mobile and email." />
-      <div className="space-y-5 rounded-xl border border-border bg-secondary/30 p-6">
+      <div className="space-y-5 rounded-xl border border-border bg-card p-6">
         <VerifiableContactField
           label="Mobile Number"
           kind="phone"
@@ -1055,7 +1055,7 @@ function CaptureIdStep({ data, update, goToStep, verifyStage }: any) {
       )}
 
       {showOcr && !isPassport && (
-        <div className="mt-8 rounded-xl border border-border bg-secondary/30 p-6">
+        <div className="mt-8 rounded-xl border border-border bg-card p-6">
           <div className="flex flex-wrap items-center gap-3">
             <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
             <VerifiedBadge />
@@ -1087,7 +1087,7 @@ function CaptureIdStep({ data, update, goToStep, verifyStage }: any) {
       )}
 
       {showOcr && isPassport && (
-        <div className="mt-8 rounded-xl border border-border bg-secondary/30 p-6">
+        <div className="mt-8 rounded-xl border border-border bg-card p-6">
           <div className="flex flex-wrap items-center gap-3">
             <h3 className="text-lg font-bold">Great! Please check the captured details</h3>
             <VerifiedBadge />
@@ -1214,7 +1214,7 @@ function VerifiedBadge() {
 function SelectionRecap({ data, onChange }: any) {
   const label = PRODUCT_LABELS[data.productChoice] || "Account selected";
   return (
-    <div className="mb-6 flex items-center justify-between rounded-xl border border-border bg-secondary/30 p-4">
+    <div className="mb-6 flex items-center justify-between rounded-xl border border-border bg-card p-4">
       <div className="flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Wallet className="h-5 w-5" />
@@ -1813,7 +1813,7 @@ function AdditionalPersonalDetails({ data, update }: any) {
     { v: "nonResFor", label: "Non-resident foreigner" },
   ];
   return (
-    <div className="mt-6 rounded-xl border border-border bg-secondary/30 p-6">
+    <div className="mt-6 rounded-xl border border-border bg-card p-6">
       <h3 className="text-lg font-bold text-primary">Additional personal details</h3>
       <p className="mt-1 text-sm text-muted-foreground">Required for account opening per CBE guidelines.</p>
       <div className="mt-5 space-y-5">
