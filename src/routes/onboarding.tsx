@@ -145,6 +145,14 @@ function Onboarding() {
     advance();
   };
   const back = () => {
+    if (step === 0) {
+      if (residencyType === "egyptian" && nidGateDone) {
+        setNidGateDone(false);
+      } else {
+        setResidencyType("");
+      }
+      return;
+    }
     setStep((s) => Math.max(0, s - 1));
   };
 
@@ -357,7 +365,6 @@ function Onboarding() {
                 <button
                   type="button"
                   onClick={back}
-                  disabled={step === 0}
                   className="inline-flex h-11 items-center rounded-full border border-border bg-background px-6 text-sm font-semibold text-foreground/80 hover:bg-secondary/40 disabled:opacity-40"
                 >
                   Back
