@@ -763,16 +763,20 @@ function KnowYouBetterStep({ data, update }: any) {
       <AdditionalPersonalDetails data={data} update={update} />
       <div className="mt-6 rounded-xl border border-border bg-secondary/30 p-6">
         <h3 className="text-lg font-bold text-primary">Contact details</h3>
-        <p className="mt-1 text-sm text-muted-foreground">We'll verify your mobile number and email separately.</p>
+        <p className="mt-1 text-sm text-muted-foreground">We'll verify your mobile number and email in the next step.</p>
         <div className="mt-5 space-y-5">
-          <VerifiableContactField
-            label="Mobile Number"
-            kind="phone"
-            value={data.phone}
-            verified={!!data.phoneVerified}
-            onChange={(v) => { update("phone", v); if (data.phoneVerified) update("phoneVerified", false); }}
-            onVerified={() => update("phoneVerified", true)}
-          />
+          <Field label="Mobile Number">
+            <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
+              <span className="text-sm font-semibold text-foreground">+20</span>
+              <input
+                className="ml-2 h-full flex-1 bg-transparent text-sm outline-none"
+                placeholder="1XX XXX XXXX"
+                value={data.phone}
+                onChange={(e) => { update("phone", e.target.value.replace(/\D/g, "")); if (data.phoneVerified) update("phoneVerified", false); }}
+                maxLength={11}
+              />
+            </div>
+          </Field>
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Mobile No. 2 (optional)">
             <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
@@ -799,14 +803,14 @@ function KnowYouBetterStep({ data, update }: any) {
             </div>
           </Field>
         </div>
-          <VerifiableContactField
-            label="Email"
-            kind="email"
-            value={data.email}
-            verified={!!data.emailVerified}
-            onChange={(v) => { update("email", v); if (data.emailVerified) update("emailVerified", false); }}
-            onVerified={() => update("emailVerified", true)}
-          />
+          <Field label="Email">
+            <input
+              type="email"
+              className={inputCls}
+              value={data.email}
+              onChange={(e) => { update("email", e.target.value); if (data.emailVerified) update("emailVerified", false); }}
+            />
+          </Field>
           <Field label="Confirm Email">
             <input type="email" className={inputCls} value={data.confirmEmail} onChange={(e) => update("confirmEmail", e.target.value)} />
           </Field>
