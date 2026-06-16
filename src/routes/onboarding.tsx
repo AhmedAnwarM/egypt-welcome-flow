@@ -757,23 +757,23 @@ function ChooseOptionStep({ data, update, residencyType }: any) {
   );
 }
 
-function ContactStep({ data, update }: any) {
+function KnowYouBetterStep({ data, update }: any) {
   return (
     <div>
-      <StepHeader title="Let's get to know you better!" />
-      <div className="space-y-5">
-        <Field label="Mobile Number">
-          <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
-            <span className="text-sm font-semibold text-foreground">+20</span>
-            <input
-              className="ml-2 h-full flex-1 bg-transparent text-sm outline-none"
-              placeholder="1XX XXX XXXX"
-              value={data.phone}
-              onChange={(e) => update("phone", e.target.value.replace(/\D/g, ""))}
-              maxLength={11}
-            />
-          </div>
-        </Field>
+      <StepHeader title="Let's get to know you better!" subtitle="Tell us about yourself and how we can reach you." />
+      <AdditionalPersonalDetails data={data} update={update} />
+      <div className="mt-6 rounded-xl border border-border bg-secondary/30 p-6">
+        <h3 className="text-lg font-bold text-primary">Contact details</h3>
+        <p className="mt-1 text-sm text-muted-foreground">We'll verify your mobile number and email separately.</p>
+        <div className="mt-5 space-y-5">
+          <VerifiableContactField
+            label="Mobile Number"
+            kind="phone"
+            value={data.phone}
+            verified={!!data.phoneVerified}
+            onChange={(v) => { update("phone", v); if (data.phoneVerified) update("phoneVerified", false); }}
+            onVerified={() => update("phoneVerified", true)}
+          />
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Mobile No. 2 (optional)">
             <div className="flex h-12 items-center rounded-md border border-border bg-background px-3">
@@ -800,10 +800,17 @@ function ContactStep({ data, update }: any) {
             </div>
           </Field>
         </div>
-        <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Email"><input type="email" className={inputCls} value={data.email} onChange={(e) => update("email", e.target.value)} /></Field>
-          <Field label="Confirm Email"><input type="email" className={inputCls} value={data.confirmEmail} onChange={(e) => update("confirmEmail", e.target.value)} /></Field>
-        </div>
+          <VerifiableContactField
+            label="Email"
+            kind="email"
+            value={data.email}
+            verified={!!data.emailVerified}
+            onChange={(v) => { update("email", v); if (data.emailVerified) update("emailVerified", false); }}
+            onVerified={() => update("emailVerified", true)}
+          />
+          <Field label="Confirm Email">
+            <input type="email" className={inputCls} value={data.confirmEmail} onChange={(e) => update("confirmEmail", e.target.value)} />
+          </Field>
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Statement frequency">
             <PillToggle
@@ -833,7 +840,95 @@ function ContactStep({ data, update }: any) {
           <input className={inputCls} placeholder="Promo code" value={data.promo} onChange={(e) => update("promo", e.target.value)} />
         </div>
         <p className="text-sm text-muted-foreground">If we sense an issue during your application, we may reach out via email, mobile, or WhatsApp to help you complete the process.</p>
+        </div>
       </div>
+      <AdditionalDeclarations data={data} update={update} />
+    </div>
+  );
+}
+
+function VerifiableContactField({
+  label, kind, value, verified, onChange, onVerified,
+}: {
+  label: string;
+  kind: "phone" | "email";
+  value: string;
+  verified: boolean;
+  onChange: (v: string) => void;
+  onVerified: () => void;
+}) {
+  const [sent, setSent] = useState(false);
+  const [code, setCode] = useState("");
+  const [err, setErr] = useState("");
+  const valid = kind === "phone" ? value.length >= 10 : /\S+@\S+\.\S+/.test(value);
+  const handleSend = () => { setSent(true); setErr(""); setCode(""); };
+  const handleVerify = () => {
+    if (code.length === 6) { onVerified(); setSent(false); setErr(""); }
+    else setErr("Enter the 6-digit code");
+  };
+  return (
+    <div>
+      <Field label={label}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          {kind === "phone" ? (
+            <div className="flex h-12 flex-1 items-center rounded-md border border-border bg-background px-3">
+              <span className="text-sm font-semibold text-foreground">+20</span>
+              <input
+                className="ml-2 h-full flex-1 bg-transparent text-sm outline-none disabled:opacity-70"
+                placeholder="1XX XXX XXXX"
+                value={value}
+                disabled={verified}
+                onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))}
+                maxLength={11}
+              />
+            </div>
+          ) : (
+            <input
+              type="email"
+              className={`${inputCls} flex-1 ${verified ? "opacity-70" : ""}`}
+              value={value}
+              disabled={verified}
+              onChange={(e) => onChange(e.target.value)}
+            />
+          )}
+          {verified ? (
+            <span className="inline-flex h-12 items-center gap-1.5 rounded-full bg-emerald-100 px-4 text-sm font-bold text-emerald-700">
+              <ShieldCheck className="h-4 w-4" /> Verified
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={!valid}
+              className="inline-flex h-12 shrink-0 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {sent ? "Resend code" : `Send ${kind === "phone" ? "SMS" : "email"} code`}
+            </button>
+          )}
+        </div>
+      </Field>
+      {sent && !verified && (
+        <div className="mt-2 flex flex-col gap-2 rounded-lg border border-border bg-background p-3 sm:flex-row sm:items-center">
+          <input
+            inputMode="numeric"
+            maxLength={6}
+            placeholder="Enter 6-digit code"
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+            className={`${inputCls} sm:max-w-[200px]`}
+          />
+          <button
+            type="button"
+            onClick={handleVerify}
+            disabled={code.length !== 6}
+            className="inline-flex h-11 shrink-0 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            Verify
+          </button>
+          <span className="text-xs text-muted-foreground">Demo: any 6 digits work.</span>
+        </div>
+      )}
+      {err && <p className="mt-1 text-xs font-semibold text-destructive">{err}</p>}
     </div>
   );
 }
