@@ -846,6 +846,32 @@ function KnowYouBetterStep({ data, update }: any) {
   );
 }
 
+function ContactVerificationStep({ data, update }: any) {
+  return (
+    <div>
+      <StepHeader title="Verify your contact details" subtitle="We'll send a one-time code to your mobile and email." />
+      <div className="space-y-5 rounded-xl border border-border bg-secondary/30 p-6">
+        <VerifiableContactField
+          label="Mobile Number"
+          kind="phone"
+          value={data.phone}
+          verified={!!data.phoneVerified}
+          onChange={(v) => { update("phone", v); if (data.phoneVerified) update("phoneVerified", false); }}
+          onVerified={() => update("phoneVerified", true)}
+        />
+        <VerifiableContactField
+          label="Email"
+          kind="email"
+          value={data.email}
+          verified={!!data.emailVerified}
+          onChange={(v) => { update("email", v); if (data.emailVerified) update("emailVerified", false); }}
+          onVerified={() => update("emailVerified", true)}
+        />
+      </div>
+    </div>
+  );
+}
+
 function VerifiableContactField({
   label, kind, value, verified, onChange, onVerified,
 }: {
