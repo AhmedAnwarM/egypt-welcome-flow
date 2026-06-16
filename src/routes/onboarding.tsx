@@ -266,7 +266,7 @@ function Onboarding() {
     };
     switch (step) {
       case 0: return v0();
-      case 1: return v1() && v2();
+      case 1: return step1SubStep === 0 ? v1a() : v1b() && v2();
       case 2: return v3() && v4();
       case 3: return v5() && v6();
       case 4: return v7() && v8();
