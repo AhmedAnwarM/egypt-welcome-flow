@@ -1020,11 +1020,11 @@ function ChooseOptionStepImpl({ data, update, residencyType }: any) {
   );
 }
 
-function KnowYouBetterStep({ data, update }: any) {
+function KnowYouBetterStep({ data, update, nidGateDone }: any) {
   return (
     <div>
       <StepHeader title="Let's get to know you better!" subtitle="Tell us about yourself and how we can reach you." />
-      <AdditionalPersonalDetails data={data} update={update} />
+      <AdditionalPersonalDetails data={data} update={update} verified={nidGateDone} />
       <div className="mt-6 rounded-xl border border-border bg-card p-6">
         <h3 className="text-lg font-bold text-primary">Contact details</h3>
         <p className="mt-1 text-sm text-muted-foreground">We'll verify your mobile number and email in the next step.</p>
