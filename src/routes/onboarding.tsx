@@ -32,6 +32,7 @@ const steps = [
 function Onboarding() {
   const [step, setStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
+  const [step1SubStep, setStep1SubStep] = useState(0);
   const [residencyType, setResidencyType] = useState<"" | "egyptian" | "foreign">("");
   const { lang, setLang } = useLang();
   const router = useRouter();
