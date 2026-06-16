@@ -1857,6 +1857,29 @@ function AdditionalPersonalDetails({ data, update }: any) {
           <Field label="Place of birth">
             <input className={inputCls} value={data.placeOfBirth} onChange={(e) => update("placeOfBirth", e.target.value)} />
           </Field>
+          <Field label="Age">
+            <input
+              className={inputCls}
+              value={(() => {
+                const id = (data.nationalId || "").toString();
+                if (id.length !== 14) return "";
+                const century = id[0] === "2" ? 1900 : id[0] === "3" ? 2000 : null;
+                if (!century) return "";
+                const year = century + parseInt(id.slice(1, 3), 10);
+                const month = parseInt(id.slice(3, 5), 10);
+                const day = parseInt(id.slice(5, 7), 10);
+                const dob = new Date(year, month - 1, day);
+                if (isNaN(dob.getTime())) return "";
+                const now = new Date();
+                let age = now.getFullYear() - dob.getFullYear();
+                const m = now.getMonth() - dob.getMonth();
+                if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
+                return age >= 0 && age < 130 ? String(age) : "";
+              })()}
+              readOnly
+              placeholder="Auto-calculated from National ID"
+            />
+          </Field>
           <Field label="Country of birth">
             <select className={inputCls} value={data.countryOfBirth} onChange={(e) => update("countryOfBirth", e.target.value)}>
               <option value="">Select country</option>
