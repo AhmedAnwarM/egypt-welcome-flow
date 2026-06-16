@@ -177,6 +177,7 @@ function LendingPage() {
   const [lendingRef, setLendingRef] = useState<string>("");
   const [resumed, setResumed] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [resumePath, setResumePath] = useState<string>("");
   const initialized = useRef(false);
 
   // ---------- save / resume ----------
@@ -230,8 +231,9 @@ function LendingPage() {
     };
     try {
       localStorage.setItem(LENDING_STORAGE_KEY, JSON.stringify(draft));
+      setResumePath(`/lending?resume=${lendingRef}`);
       setSavedFlash(true);
-      window.setTimeout(() => setSavedFlash(false), 2400);
+      window.setTimeout(() => setSavedFlash(false), 8000);
     } catch {
       /* quota — ignore */
     }
@@ -251,6 +253,16 @@ function LendingPage() {
 
   const amountInRange = amount >= minAmount && amount <= maxAmount;
   const tenorInRange = product === "credit_card" ? true : (tenor >= minTenor && tenor <= maxTenor);
+
+  // When conditional approval has no compliant alternatives, treat the
+  // effective outcome as a referral to credit risk.
+  const effectiveDecision: LendingDecision | undefined = (() => {
+    if (!decision) return undefined;
+    if (decision.decision === "conditional_approval" && alternatives.length === 0) {
+      return "refer_credit_risk";
+    }
+    return decision.decision;
+  })();
 
   // ---------- handlers ----------
   function onPickProduct(p: LendingProduct) {
@@ -313,16 +325,17 @@ function LendingPage() {
 
   function submit() {
     const ref = lendingRef || lending.generateLendingRef();
+    const finalDecision = effectiveDecision ?? decision!.decision;
     auditLog("lending.submit", {
       ref,
       product,
       amount: effectiveAmount,
       tenor: effectiveTenor,
-      decision: decision?.decision,
+      decision: finalDecision,
     });
     // Clear the draft once the application is submitted.
     try { if (typeof window !== "undefined") localStorage.removeItem(LENDING_STORAGE_KEY); } catch { /* ignore */ }
-    setSubmitted({ ref, decision: decision!.decision });
+    setSubmitted({ ref, decision: finalDecision });
   }
 
   // ---------- step gating ----------
@@ -339,10 +352,12 @@ function LendingPage() {
       case 4: {
         if (!decision) return false;
         if (decision.decision === "outright_reject") return false;
-        if (decision.decision === "refer_credit_risk") return false;
+        if (decision.decision === "refer_credit_risk") return true;
         if (decision.decision === "conditional_approval") {
-          // Must pick a compliant alternative; if none exist, cannot continue.
-          return alternatives.length > 0 && !!chosenAlt;
+          // If compliant alternatives exist, customer must select one.
+          // If none exist, the case becomes a referral and can proceed.
+          if (alternatives.length === 0) return true;
+          return !!chosenAlt;
         }
         return true;
       }
