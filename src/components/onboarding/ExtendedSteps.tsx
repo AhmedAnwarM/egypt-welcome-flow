@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Camera, Check, FileText, Pen, ShieldCheck, Sparkles, Wallet, PiggyBank, Users, Banknote, IdCard, Smartphone, Upload, X, Loader2 } from "lucide-react";
 import { biometrics } from "@/lib/integrations";
 import { auditLog } from "@/lib/audit";
@@ -347,7 +347,3 @@ function Section({ title, icon: Icon, children }: any) {
     </div>
   );
 }
-
-/* unused-export guard so tree-shake keeps types */
-export const _kept = [SelfieStep, ConfirmProductsStep, ConsentsStep, DocumentsStep, SignatureStep, ReviewStep];
-useEffect; // silence
